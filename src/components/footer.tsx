@@ -11,7 +11,7 @@ export function Footer({ lang }: { lang: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           <div className="space-y-4 md:col-span-1">
             <Link href={`/${lang}`} className="flex items-center space-x-2 text-foreground">
-              <Image src="/logo.png" alt="JD News Logo" width={100} height={40} className="h-10 w-auto" />
+              <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
             </Link>
             <p className="text-sm">
               Your trusted source for news.
@@ -48,7 +48,7 @@ export function Footer({ lang }: { lang: string }) {
                   Donate <Heart className="w-4 h-4 text-red-500" />
                 </Link>
               </li>
-              <li><Link href="#" className="hover:text-primary">Advertise</Link></li>
+              <li><Link href={`/${lang}/advertise`} className="hover:text-primary">Advertise</Link></li>
               <li><Link href="#" className="hover:text-primary">Careers</Link></li>
             </ul>
           </div>

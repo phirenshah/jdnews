@@ -12,7 +12,7 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Users, DollarSign, CreditCard, LayoutDashboard, ExternalLink, User } from "lucide-react";
+import { Users, DollarSign, CreditCard, LayoutDashboard, ExternalLink, User, Megaphone } from "lucide-react";
 import Link from 'next/link';
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,6 +27,7 @@ const navItems = [
     { href: '/admin/reporters', icon: Users, label: 'Reporters' },
     { href: '/admin/press-cards', icon: CreditCard, label: 'Press Cards' },
     { href: '/admin/donations', icon: DollarSign, label: 'Donations' },
+    { href: '/admin/advertise', icon: Megaphone, label: 'Advertise' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -55,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
-            <Image src="/logo.png" alt="JD News Logo" width={100} height={40} className="h-10 w-auto" />
+            <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
           </div>
         </SidebarHeader>
         <SidebarContent>

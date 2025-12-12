@@ -25,6 +25,7 @@ import Image from 'next/image';
 const navLinks = [
   { name: 'Reporters', href: '/reporters' },
   { name: 'Donate', href: '/donate' },
+  { name: 'Advertise', href: '/advertise' },
 ];
 
 function AuthButton({ lang }: { lang: string }) {
@@ -90,7 +91,7 @@ export function Header({ lang }: { lang: string }) {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href={`/${lang}`} className="flex items-center space-x-2">
-            <Image src="/logo.png" alt="JD News Logo" width={100} height={40} className="h-10 w-auto" />
+            <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
           </Link>
         
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
@@ -126,42 +127,44 @@ export function Header({ lang }: { lang: string }) {
           </div>
 
           <div className="flex items-center md:hidden">
-             <LanguageToggle />
-             <ThemeToggle />
-             <AuthButton lang={lang} />
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle Menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right">
-                <SheetHeader>
-                    <SheetTitle>
-                        <VisuallyHidden>Mobile Navigation Menu</VisuallyHidden>
-                    </SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-4 p-4">
-                  <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Image src="/logo.png" alt="JD News Logo" width={100} height={40} className="h-10 w-auto" />
-                  </Link>
-                  <nav className="flex flex-col gap-4">
-                    <Link href={`/${lang}`} className="text-lg font-medium text-foreground/80 hover:text-primary" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-                    {navLinks.map((link) => (
-                      <Link
-                        key={link.name}
-                        href={`/${lang}${link.href}`}
-                        className="text-lg font-medium text-foreground/80 hover:text-primary"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        {link.name}
+            <div className="flex items-center">
+                <LanguageToggle />
+                <ThemeToggle />
+                <AuthButton lang={lang} />
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Menu className="h-6 w-6" />
+                      <span className="sr-only">Toggle Menu</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right">
+                    <SheetHeader>
+                        <SheetTitle>
+                            <VisuallyHidden>Mobile Navigation Menu</VisuallyHidden>
+                        </SheetTitle>
+                    </SheetHeader>
+                    <div className="flex flex-col gap-4 p-4">
+                      <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
                       </Link>
-                    ))}
-                  </nav>
-                </div>
-              </SheetContent>
-            </Sheet>
+                      <nav className="flex flex-col gap-4">
+                        <Link href={`/${lang}`} className="text-lg font-medium text-foreground/80 hover:text-primary" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
+                        {navLinks.map((link) => (
+                          <Link
+                            key={link.name}
+                            href={`/${lang}${link.href}`}
+                            className="text-lg font-medium text-foreground/80 hover:text-primary"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            {link.name}
+                          </Link>
+                        ))}
+                      </nav>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+            </div>
           </div>
         </div>
       </div>

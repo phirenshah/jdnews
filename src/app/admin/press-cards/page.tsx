@@ -75,7 +75,7 @@ export default function PressCardsAdminPage() {
                 <Card key={reporter.id} className="shadow-md bg-card overflow-hidden">
                     <div className="p-6 bg-primary/10 flex items-center justify-between">
                         <div className="flex items-center gap-2 font-bold text-primary font-headline">
-                            <Image src="/logo.png" alt="JD News" width={75} height={30} className="h-7 w-auto" />
+                            <Image src="/logo.png" alt="JD News" width={90} height={30} className="h-7 w-auto" />
                         </div>
                         <div className="text-xs font-semibold uppercase text-primary">Press</div>
                     </div>
