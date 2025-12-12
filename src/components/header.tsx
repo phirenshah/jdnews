@@ -159,8 +159,10 @@ const MobileNav = ({ lang }: { lang: string }) => {
 export function Header({ lang }: { lang: string }) {
     const [isSearchOpen, setIsSearchOpen] = React.useState(false);
     const searchInputRef = React.useRef<HTMLInputElement>(null);
+    const [isMounted, setIsMounted] = useState(false);
 
     React.useEffect(() => {
+        setIsMounted(true);
         if (isSearchOpen) {
             searchInputRef.current?.focus();
         }
@@ -212,18 +214,22 @@ export function Header({ lang }: { lang: string }) {
                 />
             </div>
           
-          <div className="hidden md:flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle />
-            <AuthButton lang={lang} />
-          </div>
+          {isMounted && (
+            <>
+              <div className="hidden md:flex items-center gap-2">
+                <LanguageToggle />
+                <ThemeToggle />
+                <AuthButton lang={lang} />
+              </div>
 
-          <div className="flex items-center md:hidden">
-            <LanguageToggle />
-            <ThemeToggle />
-            <AuthButton lang={lang} />
-            <MobileNav lang={lang} />
-          </div>
+              <div className="flex items-center md:hidden">
+                <LanguageToggle />
+                <ThemeToggle />
+                <AuthButton lang={lang} />
+                <MobileNav lang={lang} />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>
