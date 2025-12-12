@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -83,8 +84,8 @@ export function Header({ lang }: { lang: string }) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between">
-        <div className="flex items-center">
+      <div className="container flex h-14 items-center">
+        <div className="flex items-center md:flex-1">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="md:hidden mr-2">
@@ -120,27 +121,30 @@ export function Header({ lang }: { lang: string }) {
                     JD News
                 </span>
             </Link>
-            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium ml-6">
+        </div>
+
+        <nav className="hidden md:flex items-center justify-center flex-1">
+          <div className="flex items-center space-x-6 text-sm font-medium">
             {navLinks.map((link) => (
-                <Link
+              <Link
                 key={link.name}
                 href={`/${lang}${link.href}`}
                 className="transition-colors hover:text-foreground/80 text-foreground/60"
-                >
+              >
                 {link.name}
-                </Link>
+              </Link>
             ))}
-            </nav>
-        </div>
+          </div>
+        </nav>
 
-        <div className="flex items-center justify-end space-x-2">
+        <div className="flex items-center justify-end md:flex-1 space-x-2">
           <div className="hidden md:block">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search..."
-                className="pl-9 w-48 lg:w-64"
+                className="pl-9 w-32 lg:w-48"
               />
             </div>
           </div>
