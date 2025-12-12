@@ -20,9 +20,9 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main content */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-9 space-y-8">
           {/* Hero Section */}
           <Card className="overflow-hidden shadow-lg">
             <Link href={`/${lang}/article/${heroArticle.slug}`}>
@@ -87,7 +87,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
         </div>
 
         {/* Sidebar */}
-        <aside className="space-y-8">
+        <aside className="lg:col-span-3 space-y-8">
           <AdContainer type="vertical" />
           
           <Card>
@@ -115,7 +115,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
         </aside>
       </main>
 
-      <div className="my-12">
+      <div className="my-12 flex justify-center">
         <AdContainer type="horizontal" />
       </div>
     </div>
