@@ -17,8 +17,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import React from 'react';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+
 
 const navLinks = [
   { name: 'Home', href: '/' },
@@ -93,6 +95,11 @@ export function Header({ lang }: { lang: string }) {
                   </Button>
               </SheetTrigger>
               <SheetContent side="left">
+                <SheetHeader>
+                    <SheetTitle>
+                        <VisuallyHidden>Mobile Navigation Menu</VisuallyHidden>
+                    </SheetTitle>
+                </SheetHeader>
                   <div className="flex flex-col gap-4 p-4">
                       <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                           <Newspaper className="h-6 w-6 text-primary" />
