@@ -22,8 +22,8 @@ import {
     {
       id: "ad-req-1",
       topic: "New Smartphone Launch",
-      phoneNumber: "+1-202-555-0176",
-      budget: 10000,
+      phoneNumber: "+91 98765 43210",
+      budget: 800000,
       details: "We are launching a new smartphone and want to target tech-savvy readers in major metro areas. Campaign to run for 2 weeks.",
       status: "Pending",
       date: "2024-07-29",
@@ -31,8 +31,8 @@ import {
     {
       id: "ad-req-2",
       topic: "Local Restaurant Opening",
-      phoneNumber: "+91 98765 43210",
-      budget: 2500,
+      phoneNumber: "+91 98765 43211",
+      budget: 200000,
       details: "Grand opening of a new Italian restaurant in downtown. Looking for a full-page feature.",
       status: "Contacted",
       date: "2024-07-28",
@@ -40,8 +40,8 @@ import {
     {
       id: "ad-req-3",
       topic: "E-commerce Summer Sale",
-      phoneNumber: "+44 20 7946 0958",
-      budget: 7500,
+      phoneNumber: "+91 98765 43212",
+      budget: 600000,
       details: "Annual summer sale event. Need banner ads across the website for the month of August.",
       status: "Pending",
       date: "2024-07-28",
@@ -49,8 +49,8 @@ import {
     {
       id: "ad-req-4",
       topic: "Financial Services Webinar",
-      phoneNumber: "+1-312-555-0199",
-      budget: 15000,
+      phoneNumber: "+91 98765 43213",
+      budget: 1200000,
       details: "Promoting a webinar on investment strategies for young professionals. Need sponsored content and email blast.",
       status: "Closed",
       date: "2024-07-25",
@@ -72,7 +72,7 @@ import {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Topic</TableHead>
-                <TableHead>Budget (USD)</TableHead>
+                <TableHead>Budget (INR)</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -83,7 +83,7 @@ import {
                   <TableCell className="font-medium">{req.date}</TableCell>
                   <TableCell className="max-w-xs truncate">{req.topic}</TableCell>
                   <TableCell>
-                    ${req.budget.toLocaleString()}
+                    ₹{req.budget.toLocaleString('en-IN')}
                   </TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm" asChild>

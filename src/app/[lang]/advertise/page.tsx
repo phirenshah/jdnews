@@ -68,16 +68,16 @@ export default function AdvertisePage() {
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="e.g., +1 555-123-4567"
+                      placeholder="e.g., +91 98765 43210"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="budget">Your Budget (USD)</Label>
+                    <Label htmlFor="budget">Your Budget (INR)</Label>
                     <Input
                       id="budget"
                       type="number"
-                      placeholder="e.g., 5000"
+                      placeholder="e.g., 50000"
                       required
                     />
                   </div>
