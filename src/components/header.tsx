@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -86,8 +86,51 @@ function AuthButton({ lang }: { lang: string }) {
   );
 }
 
+const MobileNav = ({ lang }: { lang: string }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
+  return (
+    <div className="flex items-center md:hidden">
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Menu className="h-6 w-6" />
+              <span className="sr-only">Toggle Menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right">
+              <SheetHeader>
+                  <SheetTitle>
+                      <VisuallyHidden>Mobile Navigation Menu</VisuallyHidden>
+                  </SheetTitle>
+              </SheetHeader>
+            <div className="flex flex-col gap-4 p-4">
+              <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+                <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
+              </Link>
+              <nav className="flex flex-col gap-4">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    href={link.href.startsWith('#') ? link.href : `/${lang}${link.href}`}
+                    className="text-lg font-medium text-foreground/80 hover:text-primary"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+              </nav>
+               <div className="mt-4 border-t pt-4">
+                  <AuthButton lang={lang} />
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+    </div>
+  )
+}
+
 export function Header({ lang }: { lang: string }) {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [isSearchOpen, setIsSearchOpen] = React.useState(false);
     const searchInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -96,6 +139,12 @@ export function Header({ lang }: { lang: string }) {
             searchInputRef.current?.focus();
         }
     }, [isSearchOpen]);
+    
+    // Defer rendering of mobile-only components until client-side hydration
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
 
   return (
@@ -152,44 +201,7 @@ export function Header({ lang }: { lang: string }) {
                 <AuthButton lang={lang} />
             </div>
           </div>
-
-          <div className="flex items-center md:hidden">
-              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle Menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right">
-                    <SheetHeader>
-                        <SheetTitle>
-                            <VisuallyHidden>Mobile Navigation Menu</VisuallyHidden>
-                        </SheetTitle>
-                    </SheetHeader>
-                  <div className="flex flex-col gap-4 p-4">
-                    <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
-                    </Link>
-                    <nav className="flex flex-col gap-4">
-                      {navLinks.map((link) => (
-                        <Link
-                          key={link.name}
-                          href={link.href.startsWith('#') ? link.href : `/${lang}${link.href}`}
-                          className="text-lg font-medium text-foreground/80 hover:text-primary"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {link.name}
-                        </Link>
-                      ))}
-                    </nav>
-                     <div className="mt-4 border-t pt-4">
-                        <AuthButton lang={lang} />
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-          </div>
+          {isMounted && <MobileNav lang={lang} />}
         </div>
       </div>
     </header>
