@@ -1,16 +1,15 @@
+'use client';
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { placeholderReporters } from "@/lib/placeholder-data";
 import { PlusCircle, Download } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Image from "next/image";
+import { useMemo } from "react";
+import { useCollection, useFirestore } from "@/firebase";
+import { collection } from "firebase/firestore";
 
 const QrCodeSvg = () => (
     <svg viewBox="0 0 100 100" className="w-16 h-16">
@@ -52,6 +51,14 @@ const QrCodeSvg = () => (
   );
 
 export default function PressCardsAdminPage() {
+    const firestore = useFirestore();
+
+    const authorsCollection = useMemo(
+        () => collection(firestore, 'authors'),
+        [firestore]
+    );
+
+    const { data: authors, isLoading } = useCollection(authorsCollection);
   return (
     <div className="space-y-6">
       <div className="flex items-center">
@@ -69,27 +76,26 @@ export default function PressCardsAdminPage() {
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {placeholderReporters.map((reporter) => {
-            const reporterImage = PlaceHolderImages.find((img) => img.id === reporter.imageId);
+        {authors?.map((reporter: any) => {
             return (
                 <Card key={reporter.id} className="shadow-md bg-card overflow-hidden">
                     <div className="p-6 bg-primary/10 flex items-center justify-between">
                         <div className="flex items-center gap-2 font-bold text-primary font-headline">
-                            <Image src="/logo.png" alt="JD News" width={90} height={0} style={{height: 'auto'}} />
+                            <Image src="/logo.png" alt="JD News" width={90} height="0" style={{height: 'auto'}} />
                         </div>
                         <div className="text-xs font-semibold uppercase text-primary">Press</div>
                     </div>
                     <CardContent className="p-6 flex items-center gap-6">
                         <div className="flex-shrink-0">
                             <Avatar className="h-24 w-24 border-4 border-background ring-2 ring-primary">
-                                {reporterImage && <AvatarImage src={reporterImage.imageUrl} alt={reporter.name}/>}
-                                <AvatarFallback>{reporter.name.charAt(0)}</AvatarFallback>
+                                {reporter.profilePictureUrl && <AvatarImage src={reporter.profilePictureUrl} alt={reporter.firstName}/>}
+                                <AvatarFallback>{reporter.firstName.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </div>
                         <div className="flex-grow">
-                            <h3 className="text-xl font-bold">{reporter.name}</h3>
+                            <h3 className="text-xl font-bold">{reporter.firstName} {reporter.lastName}</h3>
                             <p className="text-primary font-medium">{reporter.title}</p>
-                            <p className="text-sm text-muted-foreground mt-2">ID: {reporter.id.toUpperCase()}</p>
+                            <p className="text-sm text-muted-foreground mt-2">ID: {reporter.id.toUpperCase().substring(0,8)}</p>
                             <p className="text-sm text-muted-foreground">Issued: {reporter.joinedDate}</p>
                         </div>
                     </CardContent>

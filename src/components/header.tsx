@@ -1,13 +1,13 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu, Search, User, X } from 'lucide-react';
+import { Menu, Search, User } from 'lucide-react';
 import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/firebase/auth/use-user';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,20 +21,23 @@ import React, { useEffect, useState } from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { signOut } from 'firebase/auth';
+import { useFirebase } from '@/firebase';
 
 
 const navLinks = [
   { name: 'Home', href: '' },
-  { name: 'Reporters', href: '/reporters' },
+  { name: 'Team', href: '/team' },
   { name: 'About', href: '/about' },
   { name: 'Donate', href: '/donate' },
   { name: 'Advertise', href: '/advertise' },
 ];
 
 function AuthButton({ lang }: { lang: string }) {
-  const { user, logout, loading } = useAuth();
+  const { user, isUserLoading } = useAuth();
+  const { auth } = useFirebase();
 
-  if (loading) {
+  if (isUserLoading) {
     return <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />;
   }
   
@@ -44,15 +47,15 @@ function AuthButton({ lang }: { lang: string }) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
-              <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={user.photoURL || `https://avatar.vercel.sh/${user.email}.png`} alt={user.displayName || 'User'} />
+              <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user.name}</p>
+              <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
               <p className="text-xs leading-none text-muted-foreground">
                 {user.email}
               </p>
@@ -62,13 +65,9 @@ function AuthButton({ lang }: { lang: string }) {
           <Link href={`/${lang}/profile`}>
             <DropdownMenuItem>Profile</DropdownMenuItem>
           </Link>
-          {user.role === 'owner' && (
-            <Link href="/admin">
-              <DropdownMenuItem>Dashboard</DropdownMenuItem>
-            </Link>
-          )}
+          
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout}>
+          <DropdownMenuItem onClick={() => signOut(auth)}>
             Log out
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -89,7 +88,6 @@ function AuthButton({ lang }: { lang: string }) {
 const MobileNav = ({ lang }: { lang: string }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   
-  // Defer rendering of mobile-only components until client-side hydration
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
       setIsMounted(true);
@@ -116,7 +114,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
               </SheetHeader>
             <div className="flex flex-col gap-4 p-4">
               <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
+                <Image src="/logo.png" alt="JD News Logo" width={120} height="0" style={{height: 'auto'}} />
               </Link>
               <nav className="flex flex-col gap-4">
                 {navLinks.map((link) => (
@@ -130,8 +128,19 @@ const MobileNav = ({ lang }: { lang: string }) => {
                   </Link>
                 ))}
               </nav>
-               <div className="mt-4 border-t pt-4">
-                  <AuthButton lang={lang} />
+               <div className="mt-4 border-t pt-4 space-y-4">
+                 <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Auth</span>
+                    <AuthButton lang={lang} />
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Language</span>
+                    <LanguageToggle />
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Theme</span>
+                    <ThemeToggle />
+                 </div>
               </div>
             </div>
           </SheetContent>
@@ -155,13 +164,13 @@ export function Header({ lang }: { lang: string }) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         
-        <div className="flex items-center">
+        <div className="flex items-center mr-8">
           <Link href={`/${lang}`} className="flex items-center">
-            <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
+            <Image src="/logo.png" alt="JD News Logo" width={120} height="0" style={{height: 'auto'}} />
           </Link>
         </div>
         
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium ml-6">
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           {navLinks.map((link) => (
             <Link
               key={link.name}
@@ -198,14 +207,12 @@ export function Header({ lang }: { lang: string }) {
                 </div>
             </div>
           
-          <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
             <LanguageToggle />
             <ThemeToggle />
-            <div className="hidden md:flex">
-                <AuthButton lang={lang} />
-            </div>
-            <MobileNav lang={lang} />
+            <AuthButton lang={lang} />
           </div>
+          <MobileNav lang={lang} />
         </div>
       </div>
     </header>

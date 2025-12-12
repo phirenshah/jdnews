@@ -1,3 +1,4 @@
+'use client';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { placeholderArticles } from "@/lib/placeholder-data";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
     DropdownMenu,
@@ -28,8 +28,55 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useCollection, useFirestore } from "@/firebase";
+import { useMemo, useState } from "react";
+import { collection, serverTimestamp } from "firebase/firestore";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useAuth } from "@/firebase/auth/use-user";
 
 export default function ArticlesAdminPage() {
+    const firestore = useFirestore();
+    const { user } = useAuth();
+    const articlesCollection = useMemo(() => collection(firestore, 'articles'), [firestore]);
+    const { data: articles } = useCollection(articlesCollection);
+
+    const [titleEnglish, setTitleEnglish] = useState('');
+    const [titleGujarati, setTitleGujarati] = useState('');
+    const [contentEnglish, setContentEnglish] = useState('');
+    const [contentGujarati, setContentGujarati] = useState('');
+    const [excerptEnglish, setExcerptEnglish] = useState('');
+    const [excerptGujarati, setExcerptGujarati] = useState('');
+    const [category, setCategory] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
+    
+    const handlePublish = () => {
+        if (!user) return;
+        
+        const articleData = {
+            titleEnglish,
+            titleGujarati,
+            contentEnglish,
+            contentGujarati,
+            excerptEnglish,
+            excerptGujarati,
+            category,
+            imageUrl,
+            authorId: user.uid,
+            publicationDate: serverTimestamp(),
+            tags: category ? [category] : [],
+        };
+        addDocumentNonBlocking(articlesCollection, articleData);
+
+        setTitleEnglish('');
+        setTitleGujarati('');
+        setContentEnglish('');
+        setContentGujarati('');
+        setExcerptEnglish('');
+        setExcerptGujarati('');
+        setCategory('');
+        setImageUrl('');
+    }
+
   return (
     <Tabs defaultValue="all_articles">
         <div className="flex items-center">
@@ -64,14 +111,14 @@ export default function ArticlesAdminPage() {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {placeholderArticles.map((article) => (
+                    {articles?.map((article: any) => (
                         <TableRow key={article.id}>
-                        <TableCell className="font-medium max-w-xs truncate">{article.title.en}</TableCell>
-                        <TableCell>{article.author}</TableCell>
+                        <TableCell className="font-medium max-w-xs truncate">{article.titleEnglish}</TableCell>
+                        <TableCell>{article.authorId}</TableCell>
                         <TableCell>
                             <Badge variant="outline">{article.category}</Badge>
                         </TableCell>
-                        <TableCell>{article.publishedAt}</TableCell>
+                        <TableCell>{article.publicationDate?.toDate().toLocaleDateString()}</TableCell>
                         <TableCell>
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -104,34 +151,44 @@ export default function ArticlesAdminPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="title-en">Title (English)</Label>
-                            <Input id="title-en" placeholder="Enter English title" />
+                            <Input id="title-en" placeholder="Enter English title" value={titleEnglish} onChange={(e) => setTitleEnglish(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="title-gu">Title (Gujarati)</Label>
-                            <Input id="title-gu" placeholder="Enter Gujarati title" />
+                            <Input id="title-gu" placeholder="Enter Gujarati title" value={titleGujarati} onChange={(e) => setTitleGujarati(e.target.value)} />
                         </div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="excerpt-en">Excerpt (English)</Label>
-                            <Textarea id="excerpt-en" placeholder="Short summary in English" />
+                            <Textarea id="excerpt-en" placeholder="Short summary in English" value={excerptEnglish} onChange={(e) => setExcerptEnglish(e.target.value)} />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="excerpt-gu">Excerpt (Gujarati)</Label>
-                            <Textarea id="excerpt-gu" placeholder="Short summary in Gujarati" />
+                            <Textarea id="excerpt-gu" placeholder="Short summary in Gujarati" value={excerptGujarati} onChange={(e) => setExcerptGujarati(e.target.value)} />
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="content-en">Content (English)</Label>
-                            <Textarea id="content-en" placeholder="Full article content in English" rows={10}/>
+                            <Textarea id="content-en" placeholder="Full article content in English" rows={10} value={contentEnglish} onChange={(e) => setContentEnglish(e.target.value)}/>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="content-gu">Content (Gujarati)</Label>
-                            <Textarea id="content-gu" placeholder="Full article content in Gujarati" rows={10} />
+                            <Textarea id="content-gu" placeholder="Full article content in Gujarati" rows={10} value={contentGujarati} onChange={(e) => setContentGujarati(e.target.value)} />
                         </div>
                     </div>
-                    <Button>Publish Article</Button>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="category">Category</Label>
+                            <Input id="category" placeholder="e.g. Politics" value={category} onChange={(e) => setCategory(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="imageUrl">Image URL</Label>
+                            <Input id="imageUrl" placeholder="https://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+                        </div>
+                    </div>
+                    <Button onClick={handlePublish}>Publish Article</Button>
                 </CardContent>
             </Card>
         </TabsContent>

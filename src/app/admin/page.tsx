@@ -1,3 +1,4 @@
+'use client';
 import {
   Card,
   CardContent,
@@ -14,12 +15,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { placeholderArticles, placeholderDonations } from "@/lib/placeholder-data";
+import { placeholderDonations } from "@/lib/placeholder-data";
 import { Badge } from "@/components/ui/badge";
+import { useCollection, useFirestore } from "@/firebase";
+import { useMemo } from "react";
+import { collection } from "firebase/firestore";
 
 export default function AdminDashboard() {
   const recentDonations = placeholderDonations.slice(0, 5);
-  const recentArticles = placeholderArticles.slice(0, 5);
+  const firestore = useFirestore();
+  const articlesCollection = useMemo(() => collection(firestore, 'articles'), [firestore]);
+  const { data: articles } = useCollection(articlesCollection);
+  const recentArticles = articles?.slice(0,5) || [];
+
 
   return (
     <div className="space-y-6">
@@ -30,7 +38,7 @@ export default function AdminDashboard() {
             <Newspaper className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">124</div>
+            <div className="text-2xl font-bold">{articles?.length || 0}</div>
             <p className="text-xs text-muted-foreground">+5 this month</p>
           </CardContent>
         </Card>
@@ -115,11 +123,11 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentArticles.map((article) => (
+                {recentArticles.map((article: any) => (
                   <TableRow key={article.id}>
-                    <TableCell className="font-medium">{article.title.en}</TableCell>
-                    <TableCell>{article.author}</TableCell>
-                    <TableCell>{article.publishedAt}</TableCell>
+                    <TableCell className="font-medium">{article.titleEnglish}</TableCell>
+                    <TableCell>{article.authorId}</TableCell>
+                    <TableCell>{new Date(article.publicationDate).toLocaleDateString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
