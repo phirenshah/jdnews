@@ -1,5 +1,5 @@
 'use client';
-import { use, useMemo, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Reporter } from '@/lib/definitions';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { placeholderReporters } from '@/lib/placeholder-data';
 import { Skeleton } from '@/components/ui/skeleton';
+
 
 const QrCodeSvg = () => (
   <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -72,7 +72,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
         {/* Card Front */}
         <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
             <div className="py-2 flex justify-center items-center border-b">
-                 <Image src="/logo.png" alt="JD News Logo" width={120} height={25} className="dark:invert" />
+                 <Image src="/logo.png" alt="JD News Logo" width={100} height={25} className="dark:invert" />
             </div>
             <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
                 {reporter.profilePictureUrl && (
@@ -137,15 +137,8 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
 
 
 export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const { lang } = use(params);
+  const { lang } = params;
   const [selectedReporter, setSelectedReporter] = useState<Reporter | null>(null);
-
-  const firestore = useFirestore();
-  const authorsCollection = useMemoFirebase(
-    () => collection(firestore, 'authors'),
-    [firestore]
-  );
-  const { data: authors, isLoading } = useCollection<Reporter>(authorsCollection);
 
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
   const subtitle =
@@ -176,18 +169,7 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {isLoading && Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="p-4">
-                <Skeleton className="w-32 h-32 mx-auto rounded-full" />
-              </CardHeader>
-              <CardContent className="p-4 space-y-2">
-                <Skeleton className="h-6 w-3/4 mx-auto" />
-                <Skeleton className="h-4 w-1/2 mx-auto" />
-              </CardContent>
-            </Card>
-          ))}
-          {!isLoading && authors?.map((reporter) => (
+          {placeholderReporters.map((reporter) => (
               <Card
                 key={reporter.id}
                 className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
