@@ -21,10 +21,9 @@ export type Article = {
 
 export type Reporter = {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   title: string;
-  profilePictureUrl: string;
+  imageId: string;
   dob: string;
   contact: string;
   officeLocation: string;

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { placeholderReporters } from '@/lib/placeholder-data';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 
 const QrCodeSvg = () => (
@@ -54,6 +55,8 @@ const QrCodeSvg = () => (
 function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
   const [isFlipped, setIsFlipped] = useState(false);
   
+  const reporterImage = PlaceHolderImages.find((img) => img.id === reporter.imageId);
+
   const t = {
     dob: lang === 'en' ? 'D.O.B' : 'જન્મતારીખ',
     contact: lang === 'en' ? 'Contact' : 'સંપર્ક',
@@ -72,19 +75,19 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
         {/* Card Front */}
         <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
             <div className="py-2 flex justify-center items-center border-b">
-                 <Image src="/logo.png" alt="JD News Logo" width={100} height={25} style={{paddingTop: '4px', paddingBottom: '4px'}} className="dark:invert" />
+                 <Image src="/logo.png" alt="JD News Logo" width={100} height={25} style={{paddingTop: '4px', paddingBottom: '4px'}} />
             </div>
             <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
-                {reporter.profilePictureUrl && (
+                {reporterImage && (
                     <Image
-                        src={reporter.profilePictureUrl}
-                        alt={reporter.firstName}
+                        src={reporterImage.imageUrl}
+                        alt={`${reporter.name}`}
                         width={140}
                         height={140}
                         className="rounded-full border-4 border-primary/50 object-cover mb-4"
                     />
                 )}
-                <h3 className="font-headline text-2xl font-bold">{reporter.firstName} {reporter.lastName}</h3>
+                <h3 className="font-headline text-2xl font-bold">{reporter.name}</h3>
                 <p className="text-primary font-medium">{reporter.title}</p>
                 <div className="border-t w-full my-4"></div>
                 <div className="space-y-2 text-left w-full text-sm">
@@ -111,7 +114,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
         <div className="flip-card-back bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col justify-between p-4 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-card via-card to-muted/50">
             <div className="absolute inset-0 bg-repeat bg-center opacity-5" style={{backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill-rule='evenodd'%3e%3cg fill='%239C92AC' fill-opacity='0.15'%3e%3cpath d='M99 99V0h1v100H0v-1h99zM99 1V0H0v1h99z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`}}></div>
              <div className="text-center relative">
-                <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="mx-auto mb-4 dark:invert" />
+                <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="mx-auto mb-4" />
                 <h3 className="font-bold text-lg">{t.headOffice}</h3>
                 <p className="text-xs text-muted-foreground">201/202, Akhbar Bhavan, Sector 11,</p>
                 <p className="text-xs text-muted-foreground">Near Hotel Haveli, Gandhinagar, Gujarat</p>
@@ -169,37 +172,40 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {placeholderReporters.map((reporter) => (
-              <Card
-                key={reporter.id}
-                className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
-                onClick={() => handleCardClick(reporter)}
-              >
-                <CardHeader className="relative p-4">
-                  <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-background ring-2 ring-primary">
-                    {reporter.profilePictureUrl && (
-                      <Image
-                        src={reporter.profilePictureUrl}
-                        alt={reporter.firstName}
-                        width={128}
-                        height={128}
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                    )}
-                  </div>
-                  {reporter.verified && 
-                    <Badge variant="default" className="absolute top-2 right-2 bg-green-500 hover:bg-green-600">
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Verified
-                    </Badge>
-                  }
-                </CardHeader>
-                <CardContent className="p-4">
-                  <h2 className="text-xl font-bold font-headline">{reporter.firstName} {reporter.lastName}</h2>
-                  <p className="text-primary font-medium">{reporter.title}</p>
-                </CardContent>
-              </Card>
-            ))}
+          {placeholderReporters.map((reporter) => {
+              const reporterImage = PlaceHolderImages.find((img) => img.id === reporter.imageId);
+              return (
+                <Card
+                  key={reporter.id}
+                  className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
+                  onClick={() => handleCardClick(reporter)}
+                >
+                  <CardHeader className="relative p-4">
+                    <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-background ring-2 ring-primary">
+                      {reporterImage && (
+                        <Image
+                          src={reporterImage.imageUrl}
+                          alt={reporter.name}
+                          width={128}
+                          height={128}
+                          className="object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      )}
+                    </div>
+                    {reporter.verified && 
+                      <Badge variant="default" className="absolute top-2 right-2 bg-green-500 hover:bg-green-600">
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Verified
+                      </Badge>
+                    }
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <h2 className="text-xl font-bold font-headline">{reporter.name}</h2>
+                    <p className="text-primary font-medium">{reporter.title}</p>
+                  </CardContent>
+                </Card>
+              )
+            })}
         </div>
       </div>
 
