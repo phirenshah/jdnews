@@ -195,8 +195,8 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
                     <div className="flex flex-col items-center gap-4">
                         {showBoth ? (
                             <div className="flex gap-4">
-                                <PressCard reporter={author} lang={lang} isForExport={true} forceState="front" />
-                                <PressCard reporter={author} lang={lang} isForExport={true} forceState="back" />
+                                <PressCard reporter={author} lang={lang} forceState="front" />
+                                <PressCard reporter={author} lang={lang} forceState="back" />
                             </div>
                         ) : (
                             <PressCard reporter={author} lang={lang} />
