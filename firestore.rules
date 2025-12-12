@@ -2,7 +2,6 @@
  * Core Philosophy: This ruleset implements a dual-access model. Standard users have strict ownership
  * over their personal data (profiles, donations), while a privileged 'admin' role has full
  * control over public content like articles and author profiles. Public content is readable
-
  * by anyone, but can only be managed by admins.
  *
  * Data Structure:
@@ -30,6 +29,7 @@
  *   into distinct top-level collections creates a clear, secure, and performant security model.
  */
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
