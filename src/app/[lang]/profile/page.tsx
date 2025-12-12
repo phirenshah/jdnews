@@ -13,7 +13,7 @@ import { updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
 
-export default function ProfilePage() {
+export default function ProfilePage({ params: { lang } }: { params: { lang: string } }) {
   const { user, isUserLoading } = useAuth();
   const { auth } = useFirebase();
   const router = useRouter();
@@ -25,12 +25,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/login');
+      router.push(`/${lang}/login`);
     }
     if (user) {
         setDisplayName(user.displayName || '');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, lang]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();

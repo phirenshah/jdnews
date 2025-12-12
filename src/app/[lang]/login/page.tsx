@@ -13,8 +13,9 @@ import { useFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
-export default function LoginPage() {
+export default function LoginPage({ params: { lang } }: { params: { lang: string } }) {
   const { auth } = useFirebase();
   const { user, isUserLoading } = useAuth();
   const router = useRouter();
@@ -29,17 +30,16 @@ export default function LoginPage() {
   useEffect(() => {
     if (!isUserLoading && user) {
       // Logic to redirect based on role can be added here later.
-      // For now, redirecting all logged in users to profile.
-      router.push('/profile');
+      router.push(`/${lang}/profile`);
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, lang]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
       toast({ title: "Login Successful" });
-      router.push('/profile');
+      router.push(`/${lang}/profile`);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -62,7 +62,7 @@ export default function LoginPage() {
     try {
       await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
       toast({ title: "Signup Successful" });
-       router.push('/profile');
+       router.push(`/${lang}/profile`);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -71,22 +71,21 @@ export default function LoginPage() {
       });
     }
   };
-  
+
   if (isUserLoading) {
-     return (
-        <div className="flex h-screen items-center justify-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
-        </div>
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <Tabs defaultValue="login" className="w-full max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+       <Tabs defaultValue="login" className="w-full max-w-md">
          <div className="mb-4 flex justify-center">
-             <Link href="/en">
-                <Image src="/logo.png" alt="JD News Logo" width={120} height="0" style={{height: 'auto'}} />
+             <Link href={`/${lang}`}>
+                <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
              </Link>
           </div>
         <TabsList className="grid w-full grid-cols-2">
