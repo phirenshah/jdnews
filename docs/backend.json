@@ -1,0 +1,291 @@
+{
+  "entities": {
+    "Article": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Article",
+      "type": "object",
+      "description": "Represents a news article in the Bilingual News Hub.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Article entity."
+        },
+        "titleEnglish": {
+          "type": "string",
+          "description": "Title of the article in English."
+        },
+        "titleGujarati": {
+          "type": "string",
+          "description": "Title of the article in Gujarati."
+        },
+        "contentEnglish": {
+          "type": "string",
+          "description": "Content of the article in English."
+        },
+        "contentGujarati": {
+          "type": "string",
+          "description": "Content of the article in Gujarati."
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Reference to the Author who wrote the article. (Relationship: Author 1:N Article)"
+        },
+        "publicationDate": {
+          "type": "string",
+          "description": "Date and time the article was published.",
+          "format": "date-time"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the article's main image."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the article (e.g., Politics, Sports)."
+        },
+        "tags": {
+          "type": "array",
+          "description": "List of tags associated with the article.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "titleEnglish",
+        "titleGujarati",
+        "contentEnglish",
+        "contentGujarati",
+        "authorId",
+        "publicationDate"
+      ]
+    },
+    "Author": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Author",
+      "type": "object",
+      "description": "Represents an author or reporter.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Author entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the author."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the author."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the author.",
+          "format": "email"
+        },
+        "bio": {
+          "type": "string",
+          "description": "Short biography of the author."
+        },
+        "profilePictureUrl": {
+          "type": "string",
+          "description": "URL of the author's profile picture."
+        },
+        "qrCodeUrl": {
+          "type": "string",
+          "description": "URL of the author's unique QR code."
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Indicates if the author's authenticity is verified."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email"
+      ]
+    },
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Phone number of the user."
+        },
+        "address": {
+          "type": "string",
+          "description": "Address of the user."
+        },
+        "themePreference": {
+          "type": "string",
+          "description": "User's preferred theme (light, dark, system default)."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email"
+      ]
+    },
+    "Donation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Donation",
+      "type": "object",
+      "description": "Represents a donation made by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Donation entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who made the donation. (Relationship: UserProfile 1:N Donation)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the donation."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency of the donation (e.g., USD, INR)."
+        },
+        "donationDate": {
+          "type": "string",
+          "description": "Date and time the donation was made.",
+          "format": "date-time"
+        },
+        "paymentGateway": {
+          "type": "string",
+          "description": "Payment gateway used for the donation (e.g., Razorpay, Stripe, PayPal)."
+        },
+        "isRecurring": {
+          "type": "boolean",
+          "description": "Indicates if the donation is recurring."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "amount",
+        "currency",
+        "donationDate",
+        "paymentGateway"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information.  Accessible only by the authenticated user. Includes 'userId' as the document ID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, matching the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/authors/{authorId}",
+        "definition": {
+          "entityName": "Author",
+          "schema": {
+            "$ref": "#/backend/entities/Author"
+          },
+          "description": "Stores author profiles. The owner can create and manage authors. Includes 'authorId' as the document ID.",
+          "params": [
+            {
+              "name": "authorId",
+              "description": "The unique identifier for the author."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/articles/{articleId}",
+        "definition": {
+          "entityName": "Article",
+          "schema": {
+            "$ref": "#/backend/entities/Article"
+          },
+          "description": "Stores articles. Includes denormalized 'authorId' for authorization independence. The owner can create, read, update, and delete articles. Users can read articles.",
+          "params": [
+            {
+              "name": "articleId",
+              "description": "The unique identifier for the article."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/donations/{donationId}",
+        "definition": {
+          "entityName": "Donation",
+          "schema": {
+            "$ref": "#/backend/entities/Donation"
+          },
+          "description": "Stores donation information. Includes 'userId' to track the donating user. Only the user and the owner can access.",
+          "params": [
+            {
+              "name": "donationId",
+              "description": "The unique identifier for the donation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{uid}",
+        "definition": {
+          "entityName": "adminRole",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Collection to store admin roles. The existence of a document grants admin privileges. The content of the document is irrelevant.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The Firebase Auth UID of the admin user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It leverages denormalization and structural segregation to simplify security rules and enable secure list operations.\n\n*   **Users (User Profiles):** User profiles are stored under `/users/{userId}`. This path-based ownership ensures that only the authenticated user can access and modify their profile. The `userId` is obtained from `request.auth.uid`.\n*   **Authors (Reporters):** Author profiles are stored in `/authors/{authorId}`. The owner will have admin rights to create and edit authors. A boolean `verified` field indicates authenticity.\n*   **Articles:** Articles are stored in `/articles/{articleId}`. Each article contains an `authorId` field, creating a relationship between the article and the author. The owner can create, read, update, and delete articles. Users can read articles.\n*   **Donations:** Donations are stored in `/donations/{donationId}`. Each donation includes the `userId` of the donating user. This structure simplifies the security rules, ensuring only the user can read or write their donation information. The owner can read all donations.\n*   **Admin Roles:** The existence of a document in `/roles_admin/{uid}` grants admin privileges. This is preferred over custom claims for simplicity and debuggability.\n\n**Authorization Independence:** Achieved through path-based ownership for user profiles and authors, and denormalization of the author's ID within the article document. This eliminates the need for `get()` calls in security rules.\n\n**QAPs (Rules are not Filters):** Segregation of data into separate collections based on access requirements ensures that list operations are secure and efficient. Only the owner has access to articles and authors. Users can read articles."
+  }
+}
