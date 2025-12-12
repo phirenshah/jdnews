@@ -1,15 +1,16 @@
 'use client';
-import { useState } from 'react';
+import { use, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { placeholderReporters } from '@/lib/placeholder-data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Download, X, Building, Phone, Cake, Droplets } from 'lucide-react';
+import { CheckCircle, Download, X, Building, Phone, Cake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Reporter } from '@/lib/definitions';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const QrCodeSvg = () => (
   <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -51,7 +52,6 @@ const QrCodeSvg = () => (
 );
 
 function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
-  const reporterImage = PlaceHolderImages.find((img) => img.id === reporter.imageId);
   const [isFlipped, setIsFlipped] = useState(false);
   
   const t = {
@@ -71,20 +71,20 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
       <div className={cn("flip-card-inner", isFlipped ? 'is-flipped' : '')}>
         {/* Card Front */}
         <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
-            <div className="p-4 flex justify-center items-center">
-                 <Image src="/logo.png" alt="JD News Logo" width={120} height={30} className="dark:invert" />
+            <div className="py-2 flex justify-center items-center border-b">
+                 <Image src="/logo.png" alt="JD News Logo" width={120} height={25} className="dark:invert" />
             </div>
             <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
-                {reporterImage && (
+                {reporter.profilePictureUrl && (
                     <Image
-                        src={reporterImage.imageUrl}
-                        alt={reporter.name}
+                        src={reporter.profilePictureUrl}
+                        alt={reporter.firstName}
                         width={140}
                         height={140}
                         className="rounded-full border-4 border-primary/50 object-cover mb-4"
                     />
                 )}
-                <h3 className="font-headline text-2xl font-bold">{reporter.name}</h3>
+                <h3 className="font-headline text-2xl font-bold">{reporter.firstName} {reporter.lastName}</h3>
                 <p className="text-primary font-medium">{reporter.title}</p>
                 <div className="border-t w-full my-4"></div>
                 <div className="space-y-2 text-left w-full text-sm">
@@ -98,7 +98,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
                     </div>
                      <div className="flex items-center gap-3">
                         <Building className="w-4 h-4 text-muted-foreground"/>
-                        <span className="truncate"><span className="font-semibold">Office:</span> 201, Akhbar Bhavan, Gandhinagar</span>
+                        <span className="truncate"><span className="font-semibold">Office:</span> {reporter.officeLocation}</span>
                     </div>
                 </div>
             </div>
@@ -127,7 +127,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
             </div>
             <div className="text-center relative">
                 <p className="text-primary font-bold text-lg font-headline">{t.tagline}</p>
-                <p className="text-xs text-muted-foreground">www.jdnews.com</p>
+                <p className="text-xs text-muted-foreground">www.jdnews.in</p>
             </div>
         </div>
       </div>
@@ -136,8 +136,16 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
 }
 
 
-export default function ReportersPage({ params: { lang } }: { params: { lang: 'en' | 'gu' } }) {
+export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
+  const { lang } = use(params);
   const [selectedReporter, setSelectedReporter] = useState<Reporter | null>(null);
+
+  const firestore = useFirestore();
+  const authorsCollection = useMemoFirebase(
+    () => collection(firestore, 'authors'),
+    [firestore]
+  );
+  const { data: authors, isLoading } = useCollection<Reporter>(authorsCollection);
 
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
   const subtitle =
@@ -168,9 +176,18 @@ export default function ReportersPage({ params: { lang } }: { params: { lang: 'e
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {placeholderReporters.map((reporter) => {
-            const reporterImage = PlaceHolderImages.find((img) => img.id === reporter.imageId);
-            return (
+          {isLoading && Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="p-4">
+                <Skeleton className="w-32 h-32 mx-auto rounded-full" />
+              </CardHeader>
+              <CardContent className="p-4 space-y-2">
+                <Skeleton className="h-6 w-3/4 mx-auto" />
+                <Skeleton className="h-4 w-1/2 mx-auto" />
+              </CardContent>
+            </Card>
+          ))}
+          {!isLoading && authors?.map((reporter) => (
               <Card
                 key={reporter.id}
                 className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
@@ -178,29 +195,29 @@ export default function ReportersPage({ params: { lang } }: { params: { lang: 'e
               >
                 <CardHeader className="relative p-4">
                   <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-background ring-2 ring-primary">
-                    {reporterImage && (
+                    {reporter.profilePictureUrl && (
                       <Image
-                        src={reporterImage.imageUrl}
-                        alt={reporter.name}
+                        src={reporter.profilePictureUrl}
+                        alt={reporter.firstName}
                         width={128}
                         height={128}
                         className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        data-ai-hint={reporterImage.imageHint}
                       />
                     )}
                   </div>
-                  <Badge variant="default" className="absolute top-2 right-2 bg-green-500 hover:bg-green-600">
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Verified
-                  </Badge>
+                  {reporter.verified && 
+                    <Badge variant="default" className="absolute top-2 right-2 bg-green-500 hover:bg-green-600">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Verified
+                    </Badge>
+                  }
                 </CardHeader>
                 <CardContent className="p-4">
-                  <h2 className="text-xl font-bold font-headline">{reporter.name}</h2>
+                  <h2 className="text-xl font-bold font-headline">{reporter.firstName} {reporter.lastName}</h2>
                   <p className="text-primary font-medium">{reporter.title}</p>
                 </CardContent>
               </Card>
-            );
-          })}
+            ))}
         </div>
       </div>
 

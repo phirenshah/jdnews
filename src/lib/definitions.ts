@@ -21,12 +21,14 @@ export type Article = {
 
 export type Reporter = {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   title: string;
-  imageId: string;
+  profilePictureUrl: string;
   dob: string;
   contact: string;
-  bloodGroup: string;
+  officeLocation: string;
+  verified: boolean;
 };
 
 export type Donation = {
