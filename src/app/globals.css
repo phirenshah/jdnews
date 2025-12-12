@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
+    --background: 210 40% 98%;
     --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
@@ -43,7 +43,7 @@
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 0 0% 98%;
-    --card: 224 71.4% 4.1%;
+    --card: 224 71.4% 6.1%;
     --card-foreground: 0 0% 98%;
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 0 0% 98%;
@@ -81,4 +81,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
+
+@layer components {
+    .halo-effect {
+        @apply shadow-[0_0_20px_theme(colors.primary/0.2),0_0_40px_theme(colors.primary/0.1)];
+    }
 }

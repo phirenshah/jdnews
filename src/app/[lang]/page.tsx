@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AdContainer } from '@/components/ad-container';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 'gu' } }) {
   const heroArticle = placeholderArticles[0];
@@ -24,7 +25,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
         {/* Main content */}
         <div className="lg:col-span-9 space-y-8">
           {/* Hero Section */}
-          <Card className="overflow-hidden shadow-lg">
+          <Card className="overflow-hidden shadow-lg halo-effect">
             <Link href={`/${lang}/article/${heroArticle.slug}`}>
               <div className="relative h-96 w-full">
                 {heroImage && (
@@ -58,7 +59,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
                 (img) => img.id === article.imageId
               );
               return (
-                <Card key={article.id} className="flex flex-col shadow-md">
+                <Card key={article.id} className="flex flex-col shadow-md halo-effect">
                   <Link href={`/${lang}/article/${article.slug}`} className="flex flex-col flex-grow">
                     <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
                       {articleImage && (
@@ -90,7 +91,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
         <aside className="lg:col-span-3 space-y-8">
           <AdContainer type="vertical" />
           
-          <Card>
+          <Card className="halo-effect">
             <CardHeader>
               <CardTitle className="font-headline text-xl">From Other Sources</CardTitle>
             </CardHeader>

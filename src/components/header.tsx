@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -85,28 +84,64 @@ export function Header({ lang }: { lang: string }) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="flex items-center space-x-4">
-            <Link href={`/${lang}`} className="flex items-center space-x-2">
-                <Newspaper className="h-6 w-6 text-primary" />
-                <span className="font-bold sm:inline-block font-headline">
-                    JD News
-                </span>
-            </Link>
-            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-                {navLinks.map((link) => (
-                <Link
-                    key={link.name}
-                    href={`/${lang}${link.href}`}
-                    className="transition-colors hover:text-foreground/80 text-foreground/60"
-                >
-                    {link.name}
-                </Link>
-                ))}
-            </nav>
+        <div className="flex items-center md:hidden">
+           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                      <Menu className="h-6 w-6" />
+                      <span className="sr-only">Toggle Menu</span>
+                  </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                  <div className="flex flex-col gap-4 p-4">
+                      <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Newspaper className="h-6 w-6 text-primary" />
+                          <span className="font-bold font-headline">JD News</span>
+                      </Link>
+                      <nav className="flex flex-col gap-4">
+                      {navLinks.map((link) => (
+                          <Link
+                          key={link.name}
+                          href={`/${lang}${link.href}`}
+                          className="text-lg font-medium text-foreground/80 hover:text-primary"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                          {link.name}
+                          </Link>
+                      ))}
+                      </nav>
+                      <Separator />
+                      <div className='mt-4'>
+                          <AuthButton lang={lang} />
+                      </div>
+                  </div>
+              </SheetContent>
+          </Sheet>
+        </div>
+        
+        <div className="flex-1 flex items-center justify-start md:justify-center">
+          <div className="flex items-center space-x-4">
+              <Link href={`/${lang}`} className="flex items-center space-x-2">
+                  <Newspaper className="h-6 w-6 text-primary" />
+                  <span className="font-bold sm:inline-block font-headline">
+                      JD News
+                  </span>
+              </Link>
+              <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+                  {navLinks.map((link) => (
+                  <Link
+                      key={link.name}
+                      href={`/${lang}${link.href}`}
+                      className="transition-colors hover:text-foreground/80 text-foreground/60"
+                  >
+                      {link.name}
+                  </Link>
+                  ))}
+              </nav>
+          </div>
         </div>
 
-
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex items-center justify-end space-x-2">
           <div className="hidden md:block">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -117,48 +152,13 @@ export function Header({ lang }: { lang: string }) {
               />
             </div>
           </div>
-          <div className="hidden sm:flex items-center space-x-2">
-            <LanguageToggle />
-            <ThemeToggle />
+          <LanguageToggle />
+          <ThemeToggle />
+          <div className="hidden sm:block">
             <Separator orientation="vertical" className="h-6" />
-            <AuthButton lang={lang} />
           </div>
-
-          <div className="flex items-center sm:hidden">
-            <LanguageToggle />
-            <ThemeToggle />
-             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Menu className="h-6 w-6" />
-                        <span className="sr-only">Toggle Menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left">
-                    <div className="flex flex-col gap-4 p-4">
-                        <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                            <Newspaper className="h-6 w-6 text-primary" />
-                            <span className="font-bold font-headline">JD News</span>
-                        </Link>
-                        <nav className="flex flex-col gap-4">
-                        {navLinks.map((link) => (
-                            <Link
-                            key={link.name}
-                            href={`/${lang}${link.href}`}
-                            className="text-lg font-medium text-foreground/80 hover:text-primary"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                            {link.name}
-                            </Link>
-                        ))}
-                        </nav>
-                        <Separator />
-                        <div className='mt-4'>
-                            <AuthButton lang={lang} />
-                        </div>
-                    </div>
-                </SheetContent>
-            </Sheet>
+          <div className="hidden sm:block">
+            <AuthButton lang={lang} />
           </div>
         </div>
       </div>
