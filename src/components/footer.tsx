@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Newspaper, Twitter, Facebook, Instagram } from 'lucide-react';
+import { Newspaper, Twitter, Facebook, Instagram, Heart } from 'lucide-react';
 
 export function Footer({ lang }: { lang: string }) {
   const currentYear = new Date().getFullYear();
@@ -45,7 +45,11 @@ export function Footer({ lang }: { lang: string }) {
           <div>
             <h3 className="font-semibold text-foreground mb-4">Support</h3>
             <ul className="space-y-2">
-              <li><Link href={`/${lang}/donate`} className="hover:text-primary">Donate</Link></li>
+              <li>
+                <Link href={`/${lang}/donate`} className="hover:text-primary flex items-center gap-1.5">
+                  Donate <Heart className="w-4 h-4 text-red-500" />
+                </Link>
+              </li>
               <li><Link href="#" className="hover:text-primary">Advertise</Link></li>
               <li><Link href="#" className="hover:text-primary">Careers</Link></li>
             </ul>
