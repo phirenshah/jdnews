@@ -1,16 +1,15 @@
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { SectionHeader } from '@/components/section-header';
-import { use } from 'react';
 
-export default function PublicLayout({
+export default async function PublicLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ lang: string }>;
+  params: { lang: string };
 }) {
-  const { lang } = use(params);
+  const { lang } = params;
   return (
     <div className="flex min-h-screen flex-col">
       <Header lang={lang} />
