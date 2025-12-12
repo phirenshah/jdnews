@@ -30,7 +30,6 @@ function PressCard({
     (img) => img.id === reporter.imageId
   );
 
-  // This check should be done on client, so window is available.
   const reporterUrl = typeof window !== 'undefined' ? `${window.location.origin}/${lang}/team/${reporter.id}` : '';
 
 
@@ -58,12 +57,13 @@ function PressCard({
       >
         {/* Card Front */}
         <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
-          <div className="py-2 flex justify-center items-center">
+           <div className="py-2 flex justify-center items-center">
             <Image
               src="/logo.png"
               alt="JD News Logo"
               width={100}
               height={0}
+              className="dark:invert-0"
               style={{
                 paddingTop: '4px',
                 paddingBottom: '4px',
@@ -128,7 +128,7 @@ function PressCard({
               alt="JD News Logo"
               width={150}
               height={40}
-              className="mx-auto"
+              className="mx-auto dark:invert-0"
             />
             <h3 className="font-bold text-lg">{t.headOffice}</h3>
             <p className="text-xs text-muted-foreground">
@@ -196,75 +196,85 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
 
   const handleDownload = async () => {
     if (!selectedReporter) return;
-
-    const cardIdFront = 'press-card-export-front';
-    const cardIdBack = 'press-card-export-back';
+  
+    // Create a temporary container for rendering, and ensure it's off-screen
     const exportContainer = document.createElement('div');
     exportContainer.style.position = 'fixed';
     exportContainer.style.left = '-9999px';
     exportContainer.style.top = '-9999px';
+    // Force light theme for canvas rendering
+    exportContainer.className = document.documentElement.className.replace('dark', 'light') + ' light';
     document.body.appendChild(exportContainer);
-
-    // Create temporary containers for front and back
-    const frontContainer = document.createElement('div');
-    frontContainer.id = cardIdFront;
-    frontContainer.className = 'light';
-    const backContainer = document.createElement('div');
-    backContainer.id = cardIdBack;
-    backContainer.className = 'light';
-    exportContainer.appendChild(frontContainer);
-    exportContainer.appendChild(backContainer);
-
-    // Render front and back for export
-    const frontRoot = createRoot(frontContainer);
-    frontRoot.render(
-        <div className="light">
-            <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
-        </div>
-    );
-
-    const backRoot = createRoot(backContainer);
-    const backCard = (
-      <div className="light w-[340px] h-[540px]">
-        <div className="flip-card-inner is-flipped" style={{transform: "none"}}>
-          <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
-        </div>
-      </div>
-    );
-    backRoot.render(backCard);
-
-
-    // Delay to ensure rendering is complete
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const frontElement = document.getElementById(cardIdFront)?.querySelector('.flip-card-front');
-    const backElement = document.getElementById(cardIdBack)?.querySelector('.flip-card-back');
-
-    if (!frontElement || !backElement) {
-        document.body.removeChild(exportContainer);
-        return;
-    };
-
+  
+    // Create a PDF document
     const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'px',
-        format: [380, 580]
+      orientation: 'p',
+      unit: 'px',
+      format: [380, 580]
     });
-    
-    const canvasFront = await html2canvas(frontElement as HTMLElement, {scale: 2});
-    pdf.addImage(canvasFront.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
-    
-    pdf.addPage();
-
-    const canvasBack = await html2canvas(backElement as HTMLElement, {scale: 2});
-    pdf.addImage(canvasBack.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
-
-    pdf.save(`${selectedReporter.name.replace(' ', '-')}-Press-Card.pdf`);
-
-    // Cleanup
-    frontRoot.unmount();
-    backRoot.unmount();
-    document.body.removeChild(exportContainer);
+  
+    try {
+      // --- Render and capture FRONT of the card ---
+      const frontDiv = document.createElement('div');
+      exportContainer.appendChild(frontDiv);
+      const frontRoot = createRoot(frontDiv);
+  
+      // We need to await the rendering before capturing
+      await new Promise<void>(resolve => {
+        frontRoot.render(
+          <div className="w-[340px] h-[540px]">
+            <div className="flip-card-inner">
+              <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
+            </div>
+          </div>
+        );
+        // A short timeout helps ensure all styles and images are loaded
+        setTimeout(resolve, 500);
+      });
+  
+      const frontElement = frontDiv.querySelector('.flip-card-front');
+      if (!frontElement) throw new Error("Front card element not found");
+      const canvasFront = await html2canvas(frontElement as HTMLElement, { scale: 2 });
+      pdf.addImage(canvasFront.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
+      frontRoot.unmount();
+      frontDiv.remove();
+  
+  
+      // --- Render and capture BACK of the card ---
+      pdf.addPage();
+      const backDiv = document.createElement('div');
+      exportContainer.appendChild(backDiv);
+      const backRoot = createRoot(backDiv);
+  
+      // Await rendering for the back side
+      await new Promise<void>(resolve => {
+        backRoot.render(
+          <div className="w-[340px] h-[540px]">
+            <div className="flip-card-inner is-flipped">
+              <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
+            </div>
+          </div>
+        );
+        setTimeout(resolve, 500);
+      });
+  
+      const backElement = backDiv.querySelector('.flip-card-back');
+      if (!backElement) throw new Error("Back card element not found");
+      const canvasBack = await html2canvas(backElement as HTMLElement, { scale: 2, removeContainer: true});
+      pdf.addImage(canvasBack.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
+      backRoot.unmount();
+      backDiv.remove();
+  
+      // --- Save the PDF ---
+      pdf.save(`${selectedReporter.name.replace(' ', '-')}-Press-Card.pdf`);
+  
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      // You might want to show a toast notification to the user here
+    } finally {
+      // --- Cleanup ---
+      document.body.removeChild(exportContainer);
+    }
   };
 
   return (
