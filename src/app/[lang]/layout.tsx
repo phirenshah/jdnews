@@ -4,12 +4,11 @@ import { SectionHeader } from '@/components/section-header';
 
 export default async function PublicLayout({
   children,
-  params,
+  params: { lang },
 }: {
   children: React.ReactNode;
   params: { lang: string };
 }) {
-  const { lang } = params;
   return (
     <div className="flex min-h-screen flex-col">
       <Header lang={lang} />
