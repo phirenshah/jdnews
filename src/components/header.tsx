@@ -6,7 +6,6 @@ import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import {
@@ -28,7 +27,7 @@ const navLinks = [
   { name: 'Donate', href: '/donate' },
 ];
 
-function AuthButton({ lang, isMobile }: { lang: string, isMobile?: boolean }) {
+function AuthButton({ lang }: { lang: string }) {
   const { user, logout, loading } = useAuth();
 
   if (loading) {
@@ -73,20 +72,12 @@ function AuthButton({ lang, isMobile }: { lang: string, isMobile?: boolean }) {
     );
   }
 
-  if (isMobile) {
-    return (
-      <Button variant="ghost" size="icon" asChild>
-        <Link href={`/${lang}/login`}>
-          <User className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">Login</span>
-        </Link>
-      </Button>
-    )
-  }
-
   return (
-    <Button asChild>
-      <Link href={`/${lang}/login`}>Login</Link>
+    <Button variant="ghost" size="icon" asChild>
+      <Link href={`/${lang}/login`}>
+        <User className="h-[1.2rem] w-[1.2rem]" />
+        <span className="sr-only">Login</span>
+      </Link>
     </Button>
   );
 }
@@ -128,7 +119,16 @@ export function Header({ lang }: { lang: string }) {
             </div>
           </div>
           
+          <div className="hidden md:flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+            <AuthButton lang={lang} />
+          </div>
+
           <div className="flex items-center md:hidden">
+             <LanguageToggle />
+             <ThemeToggle />
+             <AuthButton lang={lang} />
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -162,15 +162,6 @@ export function Header({ lang }: { lang: string }) {
                 </div>
               </SheetContent>
             </Sheet>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex">
-              <LanguageToggle />
-              <ThemeToggle />
-              <Separator orientation="vertical" className="h-6" />
-            </div>
-            <AuthButton lang={lang} />
           </div>
         </div>
       </div>
