@@ -1,3 +1,88 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-article",
+      "description": "Main hero article image",
+      "imageUrl": "https://images.unsplash.com/photo-1678211626563-21f0c0751dc5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwb2xpdGljcyUyMGNpdHl8ZW58MHx8fHwxNzY1NTU3NjM2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "politics city"
+    },
+    {
+      "id": "article-1",
+      "description": "Secondary article image 1",
+      "imageUrl": "https://images.unsplash.com/photo-1613575998061-0f59337425f2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx0ZWNobm9sb2d5JTIwYnVzaW5lc3N8ZW58MHx8fHwxNzY1NDc4Mzc2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "technology business"
+    },
+    {
+      "id": "article-2",
+      "description": "Secondary article image 2",
+      "imageUrl": "https://images.unsplash.com/photo-1480180566821-a7d525cdfc5e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzcG9ydHMlMjBzdGFkaXVtfGVufDB8fHx8MTc2NTQ5ODE3MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sports stadium"
+    },
+    {
+      "id": "article-3",
+      "description": "Secondary article image 3",
+      "imageUrl": "https://images.unsplash.com/photo-1503221043305-f7498f8b7888?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx3b3JsZCUyMHRyYXZlbHxlbnwwfHx8fDE3NjU1NTc2MzZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "world travel"
+    },
+    {
+      "id": "article-4",
+      "description": "Secondary article image 4",
+      "imageUrl": "https://images.unsplash.com/photo-1764456247666-0012c5f0bd48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjdWx0dXJlJTIwZXZlbnR8ZW58MHx8fHwxNzY1NTU3NjM2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "culture event"
+    },
+    {
+      "id": "reporter-1",
+      "description": "Reporter profile picture 1",
+      "imageUrl": "https://images.unsplash.com/photo-1521119989659-a83eee488004?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjU0NTgyNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "reporter-2",
+      "description": "Reporter profile picture 2",
+      "imageUrl": "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjU0NTgyNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "reporter-3",
+      "description": "Reporter profile picture 3",
+      "imageUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjU0NTgyNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "reporter-4",
+      "description": "Reporter profile picture 4",
+      "imageUrl": "https://images.unsplash.com/photo-1521119989659-a83eee488004?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjU0NTgyNzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "ad-banner-horizontal",
+      "description": "Horizontal ad banner",
+      "imageUrl": "https://images.unsplash.com/photo-1531169509526-f8f1fdaa4a67?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhYnN0cmFjdCUyMHBhdHRlcm58ZW58MHx8fHwxNzY1NDYwMDYwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract pattern"
+    },
+    {
+      "id": "ad-banner-vertical",
+      "description": "Vertical ad banner",
+      "imageUrl": "https://images.unsplash.com/photo-1548362851-ea052637ad64?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMHRleHR1cmV8ZW58MHx8fHwxNzY1NDQ5MDU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract texture"
+    },
+    {
+      "id": "related-1",
+      "description": "Related story image 1",
+      "imageUrl": "https://images.unsplash.com/photo-1756993263826-9b4bae15e2b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxuZXdzJTIwZGVza3xlbnwwfHx8fDE3NjU1NTc2Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "news desk"
+    },
+    {
+      "id": "related-2",
+      "description": "Related story image 2",
+      "imageUrl": "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxmaW5hbmNlJTIwY2hhcnR8ZW58MHx8fHwxNzY1NDYxNzE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "finance chart"
+    },
+    {
+      "id": "related-3",
+      "description": "Related story image 3",
+      "imageUrl": "https://images.unsplash.com/photo-1611689698949-1e776464ff23?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxoZWFsdGglMjBzY2llbmNlfGVufDB8fHx8MTc2NTU1NzYzN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "health science"
+    }
+  ]
 }
