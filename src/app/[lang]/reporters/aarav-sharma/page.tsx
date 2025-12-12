@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,8 +25,15 @@ export default function ReporterProfilePage() {
     
     const frontCardRef = useRef<HTMLDivElement>(null);
     const backCardRef = useRef<HTMLDivElement>(null);
+    const [clientReporterUrl, setClientReporterUrl] = useState('');
 
     const author = placeholderReporters.find((r) => r.id === 'aarav-sharma');
+    
+    useEffect(() => {
+        if (author) {
+            setClientReporterUrl(`${window.location.origin}/${lang}/reporters/${author.id}`);
+        }
+    }, [lang, author]);
     
     if (!author) {
         notFound();
@@ -34,7 +41,6 @@ export default function ReporterProfilePage() {
     
     const authorImage = PlaceHolderImages.find(img => img.id === author.imageId);
     const authorArticles = placeholderArticles.filter(a => a.author === author.name);
-    const reporterUrl = typeof window !== 'undefined' ? `${window.location.origin}/${lang}/reporters/${author.id}`: '';
 
     const handleDownload = async () => {
         if (!frontCardRef.current || !backCardRef.current) {
@@ -89,7 +95,7 @@ export default function ReporterProfilePage() {
                                 <h3 className="font-bold text-lg mb-4 text-center font-headline">Digital Press Card</h3>
                                 <div className="w-48 h-48 mx-auto bg-white p-2 rounded-md flex items-center justify-center">
                                 <QRCode
-                                    value={reporterUrl}
+                                    value={clientReporterUrl}
                                     size={176}
                                     bgColor="#ffffff"
                                     fgColor="#000000"
@@ -129,7 +135,7 @@ export default function ReporterProfilePage() {
                                 </div>
                                 <div className="flex items-center">
                                 <LinkIcon className="w-5 h-5 mr-3 text-muted-foreground" />
-                                <Link href={reporterUrl} className="text-primary hover:underline truncate">{reporterUrl}</Link>
+                                <Link href={clientReporterUrl} className="text-primary hover:underline truncate">{clientReporterUrl}</Link>
                                 </div>
                             </div>
 
