@@ -17,6 +17,7 @@ import {
   import { Badge } from "@/components/ui/badge";
   
   export default function DonationsAdminPage() {
+    // Admin page for viewing donations
     return (
       <Card>
         <CardHeader>
