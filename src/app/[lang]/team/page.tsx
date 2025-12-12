@@ -217,7 +217,11 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
     exportContainer.style.position = 'fixed';
     exportContainer.style.left = '-9999px';
     exportContainer.style.top = '-9999px';
-    exportContainer.className = document.documentElement.className.replace('dark', '') + ' light';
+    
+    // Force light theme for PDF rendering
+    const existingClasses = document.documentElement.className;
+    exportContainer.className = existingClasses.replace('dark', '') + ' light';
+
     document.body.appendChild(exportContainer);
 
     const pdf = new jsPDF({
@@ -297,40 +301,39 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
             return (
               <Card
                 key={reporter.id}
-                className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
-                
+                className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer group flex flex-col"
+                onClick={() => handleCardClick(reporter)}
               >
-                <Link href={`/${lang}/reporters/${reporter.id}`} className="flex flex-col h-full">
-                    <CardHeader className="relative p-4">
-                    <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-background ring-2 ring-primary">
-                        {reporterImage && (
-                        <Image
-                            src={reporterImage.imageUrl}
-                            alt={reporter.name}
-                            width={128}
-                            height={128}
-                            className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                        )}
-                    </div>
-                    {reporter.verified && (
-                        <Badge
-                        variant="default"
-                        className="absolute top-2 right-2 bg-green-500 hover:bg-green-600"
-                        >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Verified
-                        </Badge>
+                <CardHeader className="relative p-4">
+                  <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-background ring-2 ring-primary">
+                    {reporterImage && (
+                      <Image
+                        src={reporterImage.imageUrl}
+                        alt={reporter.name}
+                        width={128}
+                        height={128}
+                        className="object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
                     )}
-                    </CardHeader>
-                    <CardContent className="p-4 flex-grow flex flex-col justify-center">
-                    <h2 className="text-xl font-bold font-headline">
+                  </div>
+                  {reporter.verified && (
+                    <Badge
+                      variant="default"
+                      className="absolute top-2 right-2 bg-green-500 hover:bg-green-600"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Verified
+                    </Badge>
+                  )}
+                </CardHeader>
+                <CardContent className="p-4 flex-grow flex flex-col justify-center">
+                  <h2 className="text-xl font-bold font-headline">
+                    <Link href={`/${lang}/reporters/${reporter.id}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
                         {reporter.name}
-                    </h2>
-                    <p className="text-primary font-medium">{reporter.title}</p>
-                    </CardContent>
-                </Link>
-                <Button onClick={() => handleCardClick(reporter)} className="m-4">View Press Card</Button>
+                    </Link>
+                  </h2>
+                  <p className="text-primary font-medium">{reporter.title}</p>
+                </CardContent>
               </Card>
             );
           })}
@@ -368,5 +371,3 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
     </>
   );
 }
-
-    
