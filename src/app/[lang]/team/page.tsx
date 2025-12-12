@@ -14,6 +14,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import QRCode from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { createRoot } from 'react-dom/client';
 
 function PressCard({
   reporter,
@@ -28,7 +29,10 @@ function PressCard({
   const reporterImage = PlaceHolderImages.find(
     (img) => img.id === reporter.imageId
   );
-  const reporterUrl = `${window.location.origin}/${lang}/team/${reporter.id}`;
+
+  // This check should be done on client, so window is available.
+  const reporterUrl = typeof window !== 'undefined' ? `${window.location.origin}/${lang}/team/${reporter.id}` : '';
+
 
   const t = {
     dob: lang === 'en' ? 'D.O.B' : 'જન્મતારીખ',
@@ -211,12 +215,12 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
     exportContainer.appendChild(backContainer);
 
     // Render front and back for export
-    const ReactDOM = await import('react-dom');
-    ReactDOM.render(
-      <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />,
-      frontContainer
+    const frontRoot = createRoot(frontContainer);
+    frontRoot.render(
+      <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
     );
 
+    const backRoot = createRoot(backContainer);
     const backCard = (
       <div className="w-[340px] h-[540px]">
         <div className="flip-card-inner is-flipped" style={{transform: "none"}}>
@@ -224,10 +228,8 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
         </div>
       </div>
     );
-     ReactDOM.render(
-        backCard,
-        backContainer
-    );
+    backRoot.render(backCard);
+
 
     // Delay to ensure rendering is complete
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -257,8 +259,8 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
     pdf.save(`${selectedReporter.name.replace(' ', '-')}-Press-Card.pdf`);
 
     // Cleanup
-    ReactDOM.unmountComponentAtNode(frontContainer);
-    ReactDOM.unmountComponentAtNode(backContainer);
+    frontRoot.unmount();
+    backRoot.unmount();
     document.body.removeChild(exportContainer);
   };
 
