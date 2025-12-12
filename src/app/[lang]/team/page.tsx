@@ -74,10 +74,11 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
       <div className={cn("flip-card-inner", isFlipped ? 'is-flipped' : '')}>
         {/* Card Front */}
         <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
-            <div className="py-2 flex justify-center items-center border-b">
-                 <Image src="/logo.png" alt="JD News Logo" width={100} height={25} style={{paddingTop: '4px', paddingBottom: '4px'}} />
+            <div className="py-2 flex justify-center items-center">
+                 <Image src="/logo.png" alt="JD News Logo" width={100} height={0} style={{paddingTop: '4px', paddingBottom: '4px', height: 'auto'}} className="dark:invert-0" />
             </div>
             <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
+                <div className="border-t w-full my-4"></div>
                 {reporterImage && (
                     <Image
                         src={reporterImage.imageUrl}
@@ -89,8 +90,8 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
                 )}
                 <h3 className="font-headline text-2xl font-bold">{reporter.name}</h3>
                 <p className="text-primary font-medium">{reporter.title}</p>
-                <div className="border-t w-full my-4"></div>
-                <div className="space-y-2 text-left w-full text-sm">
+                
+                <div className="space-y-2 text-left w-full text-sm mt-4">
                     <div className="flex items-center gap-3">
                         <Cake className="w-4 h-4 text-muted-foreground"/>
                         <span><span className="font-semibold">{t.dob}:</span> {reporter.dob}</span>
@@ -99,7 +100,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
                         <Phone className="w-4 h-4 text-muted-foreground"/>
                         <span><span className="font-semibold">{t.contact}:</span> {reporter.contact}</span>
                     </div>
-                     <div className="flex items-center gap-3">
+                     <div className="flex items-center gap-3 my-4">
                         <Building className="w-4 h-4 text-muted-foreground"/>
                         <span className="truncate"><span className="font-semibold">Office:</span> {reporter.officeLocation}</span>
                     </div>
@@ -114,7 +115,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
         <div className="flip-card-back bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col justify-between p-4 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-card via-card to-muted/50">
             <div className="absolute inset-0 bg-repeat bg-center opacity-5" style={{backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill-rule='evenodd'%3e%3cg fill='%239C92AC' fill-opacity='0.15'%3e%3cpath d='M99 99V0h1v100H0v-1h99zM99 1V0H0v1h99z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`}}></div>
              <div className="text-center relative">
-                <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="mx-auto mb-4" />
+                <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="mx-auto mb-4 dark:invert-0" />
                 <h3 className="font-bold text-lg">{t.headOffice}</h3>
                 <p className="text-xs text-muted-foreground">201/202, Akhbar Bhavan, Sector 11,</p>
                 <p className="text-xs text-muted-foreground">Near Hotel Haveli, Gandhinagar, Gujarat</p>
