@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu, Search, User } from 'lucide-react';
+import { Menu, Search, User, X } from 'lucide-react';
 import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui
 import React from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 
 const navLinks = [
@@ -87,24 +88,23 @@ function AuthButton({ lang }: { lang: string }) {
 
 export function Header({ lang }: { lang: string }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [isSearchOpen, setIsSearchOpen] = React.useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         
-        {/* Left Section (Logo) */}
-        <div className="flex-1 flex justify-start">
+        <div className="mr-6 flex items-center">
           <Link href={`/${lang}`} className="flex items-center">
             <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
           </Link>
         </div>
         
-        {/* Center Section (Nav) - Hidden on mobile */}
-        <nav className="hidden md:flex flex-1 justify-center items-center space-x-6 text-sm font-medium">
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           {navLinks.map((link) => (
             <Link
               key={link.name}
-              href={`/${lang}${link.href}`}
+              href={link.href.startsWith('#') ? link.href : `/${lang}${link.href}`}
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
               {link.name}
@@ -112,18 +112,42 @@ export function Header({ lang }: { lang: string }) {
           ))}
         </nav>
 
-        {/* Right Section (Actions & Mobile Menu) */}
-        <div className="flex-1 flex justify-end items-center space-x-2">
-          <div className="hidden sm:block">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="pl-9 w-32 lg:w-48"
-              />
+        <div className="flex flex-1 items-center justify-end space-x-2">
+            <div className={cn("relative hidden sm:block", isSearchOpen && "w-full max-w-xs")}>
+                <div className={cn("relative transition-all duration-300", isSearchOpen ? "w-full" : "w-auto")}>
+                    <div className={cn("absolute inset-y-0 left-0 flex items-center pl-3", isSearchOpen ? "pointer-events-none" : "pointer-events-auto")}>
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setIsSearchOpen(true)}
+                            aria-label="Open search"
+                        >
+                            <Search className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                    </div>
+                    <Input
+                        type="search"
+                        placeholder="Search..."
+                        className={cn(
+                            "pl-9 w-full transition-all duration-300 ease-in-out",
+                            isSearchOpen ? "opacity-100" : "opacity-0 w-0"
+                        )}
+                        onBlur={() => setIsSearchOpen(false)}
+                    />
+                    {isSearchOpen && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                            onClick={() => setIsSearchOpen(false)}
+                            aria-label="Close search"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
             </div>
-          </div>
           
           <div className="hidden md:flex items-center gap-2">
             <LanguageToggle />
@@ -131,7 +155,6 @@ export function Header({ lang }: { lang: string }) {
             <AuthButton lang={lang} />
           </div>
 
-          {/* Mobile Menu Area */}
           <div className="flex items-center md:hidden">
               <LanguageToggle />
               <ThemeToggle />
@@ -157,7 +180,7 @@ export function Header({ lang }: { lang: string }) {
                       {navLinks.map((link) => (
                         <Link
                           key={link.name}
-                          href={`/${lang}${link.href}`}
+                          href={link.href.startsWith('#') ? link.href : `/${lang}${link.href}`}
                           className="text-lg font-medium text-foreground/80 hover:text-primary"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
