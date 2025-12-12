@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { Newspaper, Search } from 'lucide-react';
 import { LanguageToggle } from '@/components/language-toggle';
