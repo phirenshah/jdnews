@@ -11,6 +11,7 @@ import { useFirestore, useMemoFirebase } from '@/firebase';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const QrCodeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -35,6 +36,23 @@ const QrCodeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const ReporterCardSkeleton = () => (
+    <Card className="text-center shadow-lg">
+        <CardHeader className="relative">
+            <Skeleton className="w-32 h-32 mx-auto rounded-full" />
+        </CardHeader>
+        <CardContent>
+            <Skeleton className="h-6 w-3/4 mx-auto mb-2" />
+            <Skeleton className="h-4 w-1/2 mx-auto" />
+            <Separator className="my-4" />
+            <div className="flex justify-around items-center text-sm text-muted-foreground">
+                <QrCodeIcon className="h-8 w-8 text-foreground/50" />
+                <Skeleton className="h-4 w-16" />
+            </div>
+        </CardContent>
+    </Card>
+);
+
 export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
   const { lang } = use(params);
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
@@ -56,8 +74,15 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {(isLoading ? placeholderReporters : authors)?.map((reporter: any) => {
-          const reporterImage = PlaceHolderImages.find((img) => img.id === reporter.imageId);
+        {isLoading && (
+            <>
+                <ReporterCardSkeleton />
+                <ReporterCardSkeleton />
+                <ReporterCardSkeleton />
+                <ReporterCardSkeleton />
+            </>
+        )}
+        {!isLoading && authors?.map((reporter: any) => {
           return (
             <Card key={reporter.id} className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
              <Link href={`/${lang}/team/${reporter.id}`}>
@@ -84,7 +109,7 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
                 <h2 className="text-xl font-bold font-headline">{reporter.firstName} {reporter.lastName}</h2>
                 <p className="text-primary font-medium">{reporter.title}</p>
                 <Separator className="my-4" />
-                <div className="flex justify-around text-sm text-muted-foreground">
+                <div className="flex justify-around items-center text-sm text-muted-foreground">
                     <div className="flex items-center space-x-2">
                         <QrCodeIcon className="h-8 w-8 text-foreground" />
                         <span>View Card</span>
