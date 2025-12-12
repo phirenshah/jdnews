@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -43,9 +44,9 @@ import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/no
 import { collection, doc } from "firebase/firestore";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { placeholderReporters } from "@/lib/placeholder-data";
 
 export default function ReportersAdminPage() {
-    const firestore = useFirestore();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -54,38 +55,13 @@ export default function ReportersAdminPage() {
     const [profilePictureUrl, setProfilePictureUrl] = useState("");
 
 
-    const authorsCollection = useMemo(
-        () => collection(firestore, 'authors'),
-        [firestore]
-    );
-
-    const { data: authors, isLoading } = useCollection(authorsCollection);
-    
     const handleAddReporter = () => {
-        if (!firstName || !lastName || !title) return;
-        const newAuthor = {
-            firstName,
-            lastName,
-            title,
-            bio,
-            profilePictureUrl,
-            email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@jdnews.com`,
-            verified: false,
-            joinedDate: new Date().toISOString().split('T')[0],
-            articlesPublished: 0,
-        };
-        addDocumentNonBlocking(authorsCollection, newAuthor);
+        // This is a placeholder as we are not using firebase yet
         setDialogOpen(false);
-        setFirstName("");
-        setLastName("");
-        setTitle("");
-        setBio("");
-        setProfilePictureUrl("");
     };
 
     const handleVerificationChange = (authorId: string, verified: boolean) => {
-      const authorRef = doc(firestore, 'authors', authorId);
-      updateDocumentNonBlocking(authorRef, { verified });
+      // This is a placeholder as we are not using firebase yet
     };
 
   return (
@@ -146,7 +122,6 @@ export default function ReportersAdminPage() {
               <TableHead>Name</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Joined Date</TableHead>
-              <TableHead>Articles</TableHead>
               <TableHead>Verified</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -154,21 +129,19 @@ export default function ReportersAdminPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {authors?.map((reporter: any) => {
+            {placeholderReporters.map((reporter: any) => {
                 return (
                     <TableRow key={reporter.id}>
                         <TableCell className="font-medium">
                             <div className="flex items-center gap-3">
                                 <Avatar>
-                                    {reporter.profilePictureUrl && <AvatarImage src={reporter.profilePictureUrl} alt={reporter.firstName} />}
-                                    <AvatarFallback>{reporter.firstName.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback>{reporter.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                {reporter.firstName} {reporter.lastName}
+                                {reporter.name}
                             </div>
                         </TableCell>
                         <TableCell>{reporter.title}</TableCell>
-                        <TableCell>{reporter.joinedDate}</TableCell>
-                        <TableCell>{reporter.articlesPublished}</TableCell>
+                        <TableCell>2024-01-15</TableCell>
                         <TableCell>
                             <div className="flex items-center space-x-2">
                                 <Switch

@@ -7,7 +7,7 @@ export type Article = {
   };
   excerpt: {
     en: string;
-    gu: string;
+gu: string;
   };
   content: {
     en: string;
