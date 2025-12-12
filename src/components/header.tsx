@@ -113,9 +113,9 @@ export function Header({ lang }: { lang: string }) {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
-            <div className={cn("relative hidden sm:block", isSearchOpen && "w-full max-w-xs")}>
+            <div className={cn("relative sm:block", isSearchOpen ? "w-full max-w-xs" : "w-auto")}>
                 <div className={cn("relative transition-all duration-300", isSearchOpen ? "w-full" : "w-auto")}>
-                    <div className={cn("absolute inset-y-0 left-0 flex items-center pl-3", isSearchOpen ? "pointer-events-none" : "pointer-events-auto")}>
+                    <div className={cn("absolute inset-y-0 left-0 flex items-center", isSearchOpen ? "pl-3 pointer-events-none" : "pointer-events-auto")}>
                          <Button
                             variant="ghost"
                             size="icon"
