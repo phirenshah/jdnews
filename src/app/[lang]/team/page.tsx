@@ -5,10 +5,9 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useMemo } from 'react';
 import { useCollection } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useMemoFirebase } from '@/firebase';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
@@ -37,13 +36,13 @@ const QrCodeIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const { lang } = use(params);
+  const lang = use(params.lang);
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
   const subtitle = lang === 'en' ? 'Meet the team behind the news' : 'સમાચાર પાછળની ટીમને મળો';
   const firestore = useFirestore();
 
-  const authorsCollection = useMemo(
-    () => collection(firestore, 'authors'),
+  const authorsCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'authors') : null),
     [firestore]
   );
   const { data: authors, isLoading } = useCollection(authorsCollection);
