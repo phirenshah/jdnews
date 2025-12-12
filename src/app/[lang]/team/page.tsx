@@ -1,5 +1,5 @@
 'use client';
-
+import { React, use } from 'react';
 import { placeholderReporters } from '@/lib/placeholder-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -36,7 +36,8 @@ const QrCodeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export default function ReportersPage({ params: { lang } }: { params: { lang: 'en' | 'gu' } }) {
+export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
+  const { lang } = use(params);
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
   const subtitle = lang === 'en' ? 'Meet the team behind the news' : 'સમાચાર પાછળની ટીમને મળો';
   const firestore = useFirestore();
