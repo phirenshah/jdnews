@@ -2,7 +2,6 @@
 import { useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Mail, Newspaper, Link as LinkIcon, Download, X, CreditCard } from 'lucide-react';
@@ -16,6 +15,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
+import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 export default function ReporterProfilePage() {
@@ -34,38 +34,34 @@ export default function ReporterProfilePage() {
     
     const authorImage = PlaceHolderImages.find(img => img.id === author.imageId);
     const authorArticles = placeholderArticles.filter(a => a.author === author.name);
-    const reporterUrl = `/${lang}/reporters/${author.id}`;
+    const reporterUrl = typeof window !== 'undefined' ? `${window.location.origin}/${lang}/reporters/${author.id}`: '';
 
     const handleDownload = async () => {
         if (!frontCardRef.current || !backCardRef.current) {
-            console.error("Card elements not found for download.");
+            console.error("Card elements not found for PDF generation.");
             return;
         }
-        
+
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: [380, 580]
+        });
+
         try {
-            // Capture Front
+            // --- Capture FRONT ---
             const canvasFront = await html2canvas(frontCardRef.current, { scale: 2 });
-            const linkFront = document.createElement('a');
-            linkFront.download = `${author.name.replace(' ', '-')}-Front.png`;
-            linkFront.href = canvasFront.toDataURL('image/png');
-            linkFront.click();
+            pdf.addImage(canvasFront.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
 
-            // Capture Back (Mirrored)
-            const backCardElement = backCardRef.current;
-            const originalTransform = backCardElement.style.transform;
-            backCardElement.style.transform = 'rotateY(180deg)'; // Apply mirror effect
+            // --- Capture BACK ---
+            pdf.addPage();
+            const canvasBack = await html2canvas(backCardRef.current, { scale: 2 });
+            pdf.addImage(canvasBack.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
 
-            const canvasBack = await html2canvas(backCardElement, { scale: 2 });
-            const linkBack = document.createElement('a');
-            linkBack.download = `${author.name.replace(' ', '-')}-Back-Mirrored.png`;
-            linkBack.href = canvasBack.toDataURL('image/png');
-            linkBack.click();
-            
-            // Restore original style
-            backCardElement.style.transform = originalTransform;
+            pdf.save(`${author.name.replace(' ', '-')}-Press-Card.pdf`);
 
         } catch (error) {
-            console.error("Failed to generate PNG:", error);
+            console.error("Failed to generate PDF:", error);
         }
     };
 
@@ -93,7 +89,7 @@ export default function ReporterProfilePage() {
                                 <h3 className="font-bold text-lg mb-4 text-center font-headline">Digital Press Card</h3>
                                 <div className="w-48 h-48 mx-auto bg-white p-2 rounded-md flex items-center justify-center">
                                 <QRCode
-                                    value={typeof window !== 'undefined' ? `${window.location.origin}/${lang}/reporters/${author.id}`: ''}
+                                    value={reporterUrl}
                                     size={176}
                                     bgColor="#ffffff"
                                     fgColor="#000000"
@@ -162,7 +158,7 @@ export default function ReporterProfilePage() {
                     </VisuallyHidden>
                     <div className="flex flex-col items-center gap-4">
                         <div className="flex flex-wrap justify-center gap-4">
-                             <div ref={frontCardRef}>
+                            <div ref={frontCardRef}>
                                 <PressCardFront reporter={author} lang={lang} />
                             </div>
                             <div ref={backCardRef}>
@@ -175,7 +171,7 @@ export default function ReporterProfilePage() {
                                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
                             >
                                 <Download className="mr-2 h-4 w-4" />
-                                Download
+                                Download PDF
                             </Button>
                             <Button onClick={() => setIsCardOpen(false)} variant="outline">
                                 <X className="mr-2 h-4 w-4" />
