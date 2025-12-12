@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu, Newspaper, Search } from 'lucide-react';
+import { Menu, Newspaper, Search, User } from 'lucide-react';
 import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ const navLinks = [
   { name: 'Donate', href: '/donate' },
 ];
 
-function AuthButton({ lang }: { lang: string }) {
+function AuthButton({ lang, isMobile }: { lang: string, isMobile?: boolean }) {
   const { user, logout, loading } = useAuth();
 
   if (loading) {
@@ -71,6 +71,17 @@ function AuthButton({ lang }: { lang: string }) {
         </DropdownMenuContent>
       </DropdownMenu>
     );
+  }
+
+  if (isMobile) {
+    return (
+      <Button variant="ghost" size="icon" asChild>
+        <Link href={`/${lang}/login`}>
+          <User className="h-[1.2rem] w-[1.2rem]" />
+          <span className="sr-only">Login</span>
+        </Link>
+      </Button>
+    )
   }
 
   return (
@@ -117,10 +128,6 @@ export function Header({ lang }: { lang: string }) {
                           </Link>
                       ))}
                       </nav>
-                      <Separator />
-                      <div className='mt-4'>
-                          <AuthButton lang={lang} />
-                      </div>
                   </div>
               </SheetContent>
           </Sheet>
@@ -161,6 +168,9 @@ export function Header({ lang }: { lang: string }) {
           </div>
           <LanguageToggle />
           <ThemeToggle />
+           <div className="sm:hidden">
+             <AuthButton lang={lang} isMobile />
+           </div>
           <div className="hidden sm:block">
             <Separator orientation="vertical" className="h-6" />
           </div>
