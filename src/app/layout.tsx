@@ -5,8 +5,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth';
 
 export const metadata: Metadata = {
-  title: 'Bilingual News Hub',
-  description: 'Your trusted source for news in English and Gujarati.',
+  title: 'JD News',
+  description: 'Your trusted source for news.',
 };
 
 export default function RootLayout({

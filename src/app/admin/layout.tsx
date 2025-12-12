@@ -55,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-2 p-2">
             <Newspaper className="w-8 h-8 text-primary"/>
             <div className="flex flex-col">
-              <h2 className="text-lg font-semibold text-sidebar-foreground font-headline">News Hub</h2>
+              <h2 className="text-lg font-semibold text-sidebar-foreground font-headline">JD News</h2>
               <p className="text-xs text-sidebar-foreground/70">Admin Panel</p>
             </div>
           </div>

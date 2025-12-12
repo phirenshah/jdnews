@@ -32,7 +32,7 @@ export default function LoginPage() {
             <Newspaper className="h-10 w-10 text-primary" />
           </div>
           <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
-          <CardDescription>Login to your Bilingual News Hub account</CardDescription>
+          <CardDescription>Login to your JD News account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">

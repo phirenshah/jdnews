@@ -83,7 +83,7 @@ export function Header({ lang }: { lang: string }) {
         <Link href={`/${lang}`} className="mr-6 flex items-center space-x-2">
           <Newspaper className="h-6 w-6 text-primary" />
           <span className="hidden font-bold sm:inline-block font-headline">
-            Bilingual News Hub
+            JD News
           </span>
         </Link>
         <nav className="flex items-center space-x-6 text-sm font-medium">

@@ -76,7 +76,7 @@ export default function PressCardsAdminPage() {
                     <div className="p-6 bg-primary/10 flex items-center justify-between">
                         <div className="flex items-center gap-2 font-bold text-primary font-headline">
                             <Newspaper />
-                            Bilingual News Hub
+                            JD News
                         </div>
                         <div className="text-xs font-semibold uppercase text-primary">Press</div>
                     </div>

@@ -12,11 +12,11 @@ export function Footer({ lang }: { lang: string }) {
             <Link href={`/${lang}`} className="flex items-center space-x-2 text-foreground">
               <Newspaper className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold font-headline">
-                Bilingual News Hub
+                JD News
               </span>
             </Link>
             <p className="text-sm">
-              Your trusted source for news in English and Gujarati.
+              Your trusted source for news.
             </p>
             <div className="flex space-x-4">
               <Link href="#" className="hover:text-primary"><Twitter /></Link>
@@ -52,7 +52,7 @@ export function Footer({ lang }: { lang: string }) {
           </div>
         </div>
         <div className="mt-12 border-t pt-8 text-center text-sm">
-          <p>&copy; {currentYear} Bilingual News Hub. All Rights Reserved.</p>
+          <p>&copy; {currentYear} JD News. All Rights Reserved.</p>
         </div>
       </div>
     </footer>
