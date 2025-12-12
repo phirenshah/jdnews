@@ -96,27 +96,27 @@ export function Header({ lang }: { lang: string }) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 flex">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-6">
           <Link href={`/${lang}`} className="flex items-center space-x-2">
-            <Image src="/logo.png" alt="JD News Logo" width={80} height={32} className="h-8 w-auto" />
+            <Image src="/logo.png" alt="JD News Logo" width={100} height={40} className="h-10 w-auto" />
           </Link>
-        </div>
         
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          <Link href={`/${lang}`} className="transition-colors hover:text-foreground/80 text-foreground/60">Home</Link>
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={`/${lang}${link.href}`}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              {link.name}
-            </Link>
-          ))}
-        </nav>
+          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+            <Link href={`/${lang}`} className="transition-colors hover:text-foreground/80 text-foreground/60">Home</Link>
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={`/${lang}${link.href}`}
+                className="transition-colors hover:text-foreground/80 text-foreground/60"
+              >
+                {link.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex items-center justify-end space-x-2">
           <div className="hidden sm:block">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -129,9 +129,6 @@ export function Header({ lang }: { lang: string }) {
           </div>
           
           <div className="flex items-center md:hidden">
-            <AuthButton lang={lang} isMobile />
-            <LanguageToggle />
-            <ThemeToggle />
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -147,7 +144,7 @@ export function Header({ lang }: { lang: string }) {
                 </SheetHeader>
                 <div className="flex flex-col gap-4 p-4">
                   <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Image src="/logo.png" alt="JD News Logo" width={80} height={32} className="h-8 w-auto" />
+                    <Image src="/logo.png" alt="JD News Logo" width={100} height={40} className="h-10 w-auto" />
                   </Link>
                   <nav className="flex flex-col gap-4">
                     <Link href={`/${lang}`} className="text-lg font-medium text-foreground/80 hover:text-primary" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
@@ -167,10 +164,12 @@ export function Header({ lang }: { lang: string }) {
             </Sheet>
           </div>
 
-          <div className="hidden md:flex items-center gap-2">
-            <LanguageToggle />
-            <ThemeToggle />
-            <Separator orientation="vertical" className="h-6" />
+          <div className="flex items-center gap-2">
+            <div className="hidden md:flex">
+              <LanguageToggle />
+              <ThemeToggle />
+              <Separator orientation="vertical" className="h-6" />
+            </div>
             <AuthButton lang={lang} />
           </div>
         </div>
