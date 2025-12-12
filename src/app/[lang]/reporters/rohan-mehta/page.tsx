@@ -14,11 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCard } from '@/components/press-card';
-import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { createRoot } from 'react-dom/client';
-import { Reporter } from '@/lib/definitions';
-
 
 export default function ReporterProfilePage({ params }: { params: { lang: 'en' | 'gu', id: string } }) {
     const { lang, id } = params;
@@ -49,7 +46,6 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
     
         try {
           // --- Render and capture FRONT of the card ---
-          const pdfFront = new jsPDF({ orientation: 'p', unit: 'px', format: [380, 580] });
           const frontDiv = document.createElement('div');
           exportContainer.appendChild(frontDiv);
           const frontRoot = createRoot(frontDiv);
@@ -64,22 +60,23 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
           });
     
           const frontElement = frontDiv.querySelector('.flip-card-front');
-          if (!frontElement) throw new Error("Front card element not found for PDF generation");
+          if (!frontElement) throw new Error("Front card element not found for PNG generation");
           const canvasFront = await html2canvas(frontElement as HTMLElement, { scale: 2 });
-          pdfFront.addImage(canvasFront.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
-          pdfFront.save(`${author.name.replace(' ', '-')}-Front.pdf`);
+          const linkFront = document.createElement('a');
+          linkFront.download = `${author.name.replace(' ', '-')}-Front.png`;
+          linkFront.href = canvasFront.toDataURL('image/png');
+          linkFront.click();
           frontRoot.unmount();
           frontDiv.remove();
     
-          // --- Render and capture BACK of the card ---
-          const pdfBack = new jsPDF({ orientation: 'p', unit: 'px', format: [380, 580] });
+          // --- Render and capture BACK of the card (mirrored) ---
           const backDiv = document.createElement('div');
           exportContainer.appendChild(backDiv);
           const backRoot = createRoot(backDiv);
           
           await new Promise<void>(resolve => {
             backRoot.render(
-              <div className="w-[340px] h-[540px]" style={{transform: "none"}}>
+              <div className="w-[340px] h-[540px]" style={{transform: "rotateY(180deg)"}}>
                   <PressCard reporter={author} lang={lang} isForExport={true} forceState="back" />
               </div>
             );
@@ -87,15 +84,17 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
           });
           
           const backElement = backDiv.querySelector('.flip-card-back');
-          if (!backElement) throw new Error("Back card element not found for PDF generation");
+          if (!backElement) throw new Error("Back card element not found for PNG generation");
           const canvasBack = await html2canvas(backElement as HTMLElement, { scale: 2 });
-          pdfBack.addImage(canvasBack.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
-          pdfBack.save(`${author.name.replace(' ', '-')}-Back.pdf`);
+          const linkBack = document.createElement('a');
+          linkBack.download = `${author.name.replace(' ', '-')}-Back-Mirrored.png`;
+          linkBack.href = canvasBack.toDataURL('image/png');
+          linkBack.click();
           backRoot.unmount();
           backDiv.remove();
     
         } catch (error) {
-          console.error("Failed to generate PDF:", error);
+          console.error("Failed to generate PNG:", error);
         } finally {
           document.body.removeChild(exportContainer);
         }
