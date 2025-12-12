@@ -29,7 +29,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-lg">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
-            <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
+            <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
           </div>
           <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
           <CardDescription>Login to your JD News account</CardDescription>

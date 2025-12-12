@@ -11,7 +11,7 @@ export function Footer({ lang }: { lang: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           <div className="space-y-4 md:col-span-1">
             <Link href={`/${lang}`} className="flex items-center">
-              <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
+              <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
             </Link>
             <p className="text-sm">
               Your trusted source for news.

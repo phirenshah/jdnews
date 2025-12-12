@@ -56,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
-            <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
+            <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
           </div>
         </SidebarHeader>
         <SidebarContent>

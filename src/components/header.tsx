@@ -95,7 +95,7 @@ export function Header({ lang }: { lang: string }) {
         {/* Left Section (Logo) */}
         <div className="flex-1 flex justify-start">
           <Link href={`/${lang}`} className="flex items-center">
-            <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
+            <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
           </Link>
         </div>
         
@@ -151,7 +151,7 @@ export function Header({ lang }: { lang: string }) {
                     </SheetHeader>
                   <div className="flex flex-col gap-4 p-4">
                     <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
+                      <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
                     </Link>
                     <nav className="flex flex-col gap-4">
                       {navLinks.map((link) => (
