@@ -125,7 +125,7 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
                                 <h3 className="font-bold text-lg mb-4 text-center font-headline">Digital Press Card</h3>
                                 <div className="w-48 h-48 mx-auto bg-white p-2 rounded-md flex items-center justify-center">
                                 <QRCode
-                                    value={reporterUrl}
+                                    value={typeof window !== 'undefined' ? `${window.location.origin}/${lang}/reporters/${author.id}`: ''}
                                     size={176}
                                     bgColor="#ffffff"
                                     fgColor="#000000"
