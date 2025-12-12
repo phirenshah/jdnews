@@ -9,6 +9,7 @@ import { CheckCircle, Download, X, Building, Phone, Cake, Droplets } from 'lucid
 import { Button } from '@/components/ui/button';
 import { Reporter } from '@/lib/definitions';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const QrCodeSvg = () => (
   <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -51,72 +52,83 @@ const QrCodeSvg = () => (
 
 function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
   const reporterImage = PlaceHolderImages.find((img) => img.id === reporter.imageId);
+  const [isFlipped, setIsFlipped] = useState(false);
+  
   const t = {
-    designation: lang === 'en' ? 'Designation' : 'હોદ્દો',
     dob: lang === 'en' ? 'D.O.B' : 'જન્મતારીખ',
-    bloodGroup: lang === 'en' ? 'Blood Group' : 'બ્લડ ગ્રુપ',
     contact: lang === 'en' ? 'Contact' : 'સંપર્ક',
     headOffice: lang === 'en' ? 'Head Office' : 'મુખ્ય કાર્યાલય',
     officePhone: lang === 'en' ? 'Office Phone' : 'ઓફિસ ફોન',
     tagline: lang === 'en' ? 'With The Truth' : 'સત્યની સાથે',
   };
 
-  return (
-    <div className="flip-card-inner">
-      {/* Card Front */}
-      <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden p-6 border flex flex-col items-center justify-center text-center">
-        {reporterImage && (
-            <Image
-                src={reporterImage.imageUrl}
-                alt={reporter.name}
-                width={120}
-                height={120}
-                className="rounded-full border-4 border-primary/50 object-cover mb-4"
-            />
-        )}
-        <h3 className="font-headline text-2xl font-bold">{reporter.name}</h3>
-        <p className="text-primary font-medium">{reporter.title}</p>
-        <div className="border-t w-full my-4"></div>
-        <div className="space-y-2 text-left w-full text-sm">
-            <div className="flex items-center gap-3">
-                <Cake className="w-4 h-4 text-muted-foreground"/>
-                <span><span className="font-semibold">{t.dob}:</span> {reporter.dob}</span>
-            </div>
-            <div className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-muted-foreground"/>
-                <span><span className="font-semibold">{t.contact}:</span> {reporter.contact}</span>
-            </div>
-            <div className="flex items-center gap-3">
-                <Droplets className="w-4 h-4 text-muted-foreground"/>
-                <span><span className="font-semibold">{t.bloodGroup}:</span> {reporter.bloodGroup}</span>
-            </div>
-            <div className="flex items-center gap-3">
-                <Building className="w-4 h-4 text-muted-foreground"/>
-                <span className="truncate"><span className="font-semibold">Office:</span> 201, Akhbar Bhavan, Gandhinagar</span>
-            </div>
-        </div>
-      </div>
+  const handleCardClick = () => {
+    setIsFlipped(!isFlipped);
+  };
 
-      {/* Card Back */}
-      <div className="flip-card-back bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden p-6 border flex flex-col justify-between">
-         <div className="text-center">
-            <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="mx-auto mb-4 dark:invert" />
-            <h3 className="font-bold text-lg">{t.headOffice}</h3>
-            <p className="text-xs text-muted-foreground">201/202, Akhbar Bhavan, Sector 11,</p>
-            <p className="text-xs text-muted-foreground">Near Hotel Haveli, Gandhinagar, Gujarat</p>
-            <p className="text-xs mt-2 text-muted-foreground"><span className="font-semibold">{t.officePhone}:</span> +91 79 1234 5678</p>
-        </div>
-        <div className="flex items-center justify-center">
-            <div className="text-center">
-                <div className="w-32 h-32 mx-auto text-foreground">
-                    <QrCodeSvg />
+  return (
+    <div className={cn("flip-card w-[340px] h-[540px] [perspective:1000px]")} onClick={handleCardClick}>
+      <div className={cn("flip-card-inner", isFlipped ? 'is-flipped' : '')}>
+        {/* Card Front */}
+        <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
+            <div className="p-4 flex justify-center items-center">
+                 <Image src="/logo.png" alt="JD News Logo" width={120} height={30} className="dark:invert" />
+            </div>
+            <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
+                {reporterImage && (
+                    <Image
+                        src={reporterImage.imageUrl}
+                        alt={reporter.name}
+                        width={140}
+                        height={140}
+                        className="rounded-full border-4 border-primary/50 object-cover mb-4"
+                    />
+                )}
+                <h3 className="font-headline text-2xl font-bold">{reporter.name}</h3>
+                <p className="text-primary font-medium">{reporter.title}</p>
+                <div className="border-t w-full my-4"></div>
+                <div className="space-y-2 text-left w-full text-sm">
+                    <div className="flex items-center gap-3">
+                        <Cake className="w-4 h-4 text-muted-foreground"/>
+                        <span><span className="font-semibold">{t.dob}:</span> {reporter.dob}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Phone className="w-4 h-4 text-muted-foreground"/>
+                        <span><span className="font-semibold">{t.contact}:</span> {reporter.contact}</span>
+                    </div>
+                     <div className="flex items-center gap-3">
+                        <Building className="w-4 h-4 text-muted-foreground"/>
+                        <span className="truncate"><span className="font-semibold">Office:</span> 201, Akhbar Bhavan, Gandhinagar</span>
+                    </div>
                 </div>
-                 <p className="text-xs text-muted-foreground mt-1">Verify Authenticity</p>
+            </div>
+            <div className="bg-red-600 text-white text-center py-2 font-bold text-lg tracking-widest">
+                PRESS
             </div>
         </div>
-        <div className="text-center">
-            <p className="text-primary font-bold text-lg font-headline">{t.tagline}</p>
-            <p className="text-xs text-muted-foreground">www.jdnews.com</p>
+
+        {/* Card Back */}
+        <div className="flip-card-back bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col justify-between p-4 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-card via-card to-muted/50">
+            <div className="absolute inset-0 bg-repeat bg-center opacity-5" style={{backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill-rule='evenodd'%3e%3cg fill='%239C92AC' fill-opacity='0.15'%3e%3cpath d='M99 99V0h1v100H0v-1h99zM99 1V0H0v1h99z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`}}></div>
+             <div className="text-center relative">
+                <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="mx-auto mb-4 dark:invert" />
+                <h3 className="font-bold text-lg">{t.headOffice}</h3>
+                <p className="text-xs text-muted-foreground">201/202, Akhbar Bhavan, Sector 11,</p>
+                <p className="text-xs text-muted-foreground">Near Hotel Haveli, Gandhinagar, Gujarat</p>
+                <p className="text-xs mt-2 text-muted-foreground"><span className="font-semibold">{t.officePhone}:</span> +91 79 1234 5678</p>
+            </div>
+            <div className="flex items-center justify-center relative">
+                <div className="text-center">
+                    <div className="w-32 h-32 mx-auto text-foreground bg-white p-2 rounded-md">
+                        <QrCodeSvg />
+                    </div>
+                     <p className="text-xs text-muted-foreground mt-1">Verify Authenticity</p>
+                </div>
+            </div>
+            <div className="text-center relative">
+                <p className="text-primary font-bold text-lg font-headline">{t.tagline}</p>
+                <p className="text-xs text-muted-foreground">www.jdnews.com</p>
+            </div>
         </div>
       </div>
     </div>
@@ -196,9 +208,7 @@ export default function ReportersPage({ params: { lang } }: { params: { lang: 'e
         <DialogContent className="bg-transparent border-none shadow-none max-w-md p-0">
            {selectedReporter && (
             <div className="flex flex-col items-center gap-4">
-                 <div className="flip-card w-[340px] h-[520px] [perspective:1000px]">
-                    <PressCard reporter={selectedReporter} lang={lang}/>
-                </div>
+                <PressCard reporter={selectedReporter} lang={lang}/>
                 <div className='flex gap-4'>
                     <Button onClick={handleDownload} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                         <Download className="mr-2 h-4 w-4" />

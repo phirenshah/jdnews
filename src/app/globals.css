@@ -91,14 +91,19 @@
     /* Flip Card Styles */
     .flip-card {
         @apply bg-transparent;
+        @apply cursor-pointer;
     }
     .flip-card-inner {
         @apply relative w-full h-full text-center transition-transform duration-700;
         transform-style: preserve-3d;
     }
-    .flip-card:hover .flip-card-inner {
+    
+    /* This handles hover on desktop and the class-based flip on mobile/touch */
+    .flip-card:hover .flip-card-inner,
+    .flip-card-inner.is-flipped {
         transform: rotateY(180deg);
     }
+
     .flip-card-front,
     .flip-card-back {
         @apply absolute w-full h-full;
