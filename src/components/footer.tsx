@@ -6,9 +6,9 @@ export function Footer({ lang }: { lang: string }) {
 
   return (
     <footer className="bg-muted text-muted-foreground">
-      <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-4">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="space-y-4 md:col-span-1">
             <Link href={`/${lang}`} className="flex items-center space-x-2 text-foreground">
               <Newspaper className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold font-headline">
@@ -24,7 +24,7 @@ export function Footer({ lang }: { lang: string }) {
               <Link href="#" className="hover:text-primary"><Instagram /></Link>
             </div>
           </div>
-          <div>
+          <div className="sm:col-start-2 md:col-start-auto">
             <h3 className="font-semibold text-foreground mb-4">Sections</h3>
             <ul className="space-y-2">
               <li><Link href="#" className="hover:text-primary">Politics</Link></li>

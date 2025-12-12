@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Newspaper, Search } from 'lucide-react';
+import { Menu, Newspaper, Search } from 'lucide-react';
 import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import React from 'react';
 
 const navLinks = [
   { name: 'Home', href: '/' },
@@ -77,41 +79,77 @@ function AuthButton({ lang }: { lang: string }) {
 }
 
 export function Header({ lang }: { lang: string }) {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <Link href={`/${lang}`} className="mr-6 flex items-center space-x-2">
-          <Newspaper className="h-6 w-6 text-primary" />
-          <span className="hidden font-bold sm:inline-block font-headline">
-            JD News
-          </span>
-        </Link>
-        <nav className="flex items-center space-x-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={`/${lang}${link.href}`}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              {link.name}
+      <div className="container flex h-14 items-center justify-between">
+        <div className="flex items-center">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="md:hidden mr-2">
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Toggle Menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left">
+                    <div className="flex flex-col gap-4 p-4">
+                        <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Newspaper className="h-6 w-6 text-primary" />
+                            <span className="font-bold font-headline">JD News</span>
+                        </Link>
+                        <nav className="flex flex-col gap-4">
+                        {navLinks.map((link) => (
+                            <Link
+                            key={link.name}
+                            href={`/${lang}${link.href}`}
+                            className="text-lg font-medium text-foreground/80 hover:text-primary"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                            {link.name}
+                            </Link>
+                        ))}
+                        </nav>
+                    </div>
+                </SheetContent>
+            </Sheet>
+
+            <Link href={`/${lang}`} className="flex items-center space-x-2">
+                <Newspaper className="h-6 w-6 text-primary" />
+                <span className="hidden font-bold sm:inline-block font-headline">
+                    JD News
+                </span>
             </Link>
-          ))}
-        </nav>
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
+            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium ml-6">
+            {navLinks.map((link) => (
+                <Link
+                key={link.name}
+                href={`/${lang}${link.href}`}
+                className="transition-colors hover:text-foreground/80 text-foreground/60"
+                >
+                {link.name}
+                </Link>
+            ))}
+            </nav>
+        </div>
+
+        <div className="flex items-center justify-end space-x-2">
+          <div className="hidden md:block">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search..."
-                className="pl-9 w-full md:w-48 lg:w-64"
+                className="pl-9 w-48 lg:w-64"
               />
             </div>
           </div>
           <LanguageToggle />
           <ThemeToggle />
-          <Separator orientation="vertical" className="h-6" />
-          <AuthButton lang={lang} />
+          <Separator orientation="vertical" className="h-6 hidden sm:block" />
+          <div className='hidden sm:block'>
+            <AuthButton lang={lang} />
+          </div>
         </div>
       </div>
     </header>
