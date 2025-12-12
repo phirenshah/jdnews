@@ -23,7 +23,9 @@ import Image from 'next/image';
 
 
 const navLinks = [
+  { name: 'Home', href: '' },
   { name: 'Reporters', href: '/reporters' },
+  { name: 'Subscribe', href: '#' },
   { name: 'Donate', href: '/donate' },
   { name: 'Advertise', href: '/advertise' },
 ];
@@ -88,27 +90,30 @@ export function Header({ lang }: { lang: string }) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href={`/${lang}`} className="flex items-center space-x-2">
+      <div className="container flex h-16 items-center">
+        
+        {/* Left Section (Logo) */}
+        <div className="flex-1 flex justify-start">
+          <Link href={`/${lang}`} className="flex items-center">
             <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
           </Link>
-        
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <Link href={`/${lang}`} className="transition-colors hover:text-foreground/80 text-foreground/60">Home</Link>
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={`/${lang}${link.href}`}
-                className="transition-colors hover:text-foreground/80 text-foreground/60"
-              >
-                {link.name}
-              </Link>
-            ))}
-          </nav>
         </div>
+        
+        {/* Center Section (Nav) - Hidden on mobile */}
+        <nav className="hidden md:flex flex-1 justify-center items-center space-x-6 text-sm font-medium">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={`/${lang}${link.href}`}
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              {link.name}
+            </Link>
+          ))}
+        </nav>
 
-        <div className="flex items-center justify-end space-x-2">
+        {/* Right Section (Actions & Mobile Menu) */}
+        <div className="flex-1 flex justify-end items-center space-x-2">
           <div className="hidden sm:block">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -126,45 +131,43 @@ export function Header({ lang }: { lang: string }) {
             <AuthButton lang={lang} />
           </div>
 
+          {/* Mobile Menu Area */}
           <div className="flex items-center md:hidden">
-            <div className="flex items-center">
-                <LanguageToggle />
-                <ThemeToggle />
-                <AuthButton lang={lang} />
-                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Menu className="h-6 w-6" />
-                      <span className="sr-only">Toggle Menu</span>
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right">
+              <LanguageToggle />
+              <ThemeToggle />
+              <AuthButton lang={lang} />
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Toggle Menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
                     <SheetHeader>
                         <SheetTitle>
                             <VisuallyHidden>Mobile Navigation Menu</VisuallyHidden>
                         </SheetTitle>
                     </SheetHeader>
-                    <div className="flex flex-col gap-4 p-4">
-                      <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
-                      </Link>
-                      <nav className="flex flex-col gap-4">
-                        <Link href={`/${lang}`} className="text-lg font-medium text-foreground/80 hover:text-primary" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-                        {navLinks.map((link) => (
-                          <Link
-                            key={link.name}
-                            href={`/${lang}${link.href}`}
-                            className="text-lg font-medium text-foreground/80 hover:text-primary"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            {link.name}
-                          </Link>
-                        ))}
-                      </nav>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-            </div>
+                  <div className="flex flex-col gap-4 p-4">
+                    <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Image src="/logo.png" alt="JD News Logo" width={120} height={40} className="h-10 w-auto" />
+                    </Link>
+                    <nav className="flex flex-col gap-4">
+                      {navLinks.map((link) => (
+                        <Link
+                          key={link.name}
+                          href={`/${lang}${link.href}`}
+                          className="text-lg font-medium text-foreground/80 hover:text-primary"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          {link.name}
+                        </Link>
+                      ))}
+                    </nav>
+                  </div>
+                </SheetContent>
+              </Sheet>
           </div>
         </div>
       </div>
