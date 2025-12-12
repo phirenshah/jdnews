@@ -1,35 +1,28 @@
-'use client';
+
 import { useMemo } from 'react';
-import { notFound, useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Mail, Newspaper, Link as LinkIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { placeholderReporters } from '@/lib/placeholder-data';
+import { placeholderReporters, placeholderArticles } from '@/lib/placeholder-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import QRCode from 'qrcode.react';
 import Link from 'next/link';
 
-export default function ReporterProfilePage() {
-    const params = useParams();
-    const id = params.id as string;
-    const lang = params.lang as string;
+export default function ReporterProfilePage({ params }: { params: { lang: 'en' | 'gu', id: string } }) {
+    const { lang, id } = params;
     
-    const author = useMemo(() => {
-        return placeholderReporters.find((r) => r.id === id);
-    }, [id]);
-
+    const author = placeholderReporters.find((r) => r.id === 'isha-singh');
+    
     if (!author) {
         notFound();
     }
     
     const authorImage = PlaceHolderImages.find(img => img.id === author.imageId);
-    
-    // Construct a public, relative URL. This is the key change.
-    // It no longer relies on `window.location.origin` which caused the auth error.
-    const reporterUrl = `/${lang}/team/${author.id}`;
-
+    const authorArticles = placeholderArticles.filter(a => a.author === author.name);
+    const reporterUrl = `/${lang}/reporters/${author.id}`;
 
     return (
         <div className="bg-muted/20 min-h-screen py-12">
@@ -83,7 +76,7 @@ export default function ReporterProfilePage() {
                             </div>
                             <div className="flex items-center">
                                 <Newspaper className="w-5 h-5 mr-3 text-muted-foreground" />
-                                <span>125 Articles Published</span>
+                                <span>{authorArticles.length} Articles Published</span>
                             </div>
                              <div className="flex items-center">
                                <LinkIcon className="w-5 h-5 mr-3 text-muted-foreground" />
@@ -93,9 +86,18 @@ export default function ReporterProfilePage() {
 
                          <Separator className="my-8" />
                          <h2 className="text-2xl font-bold font-headline mb-4">Recent Articles</h2>
-                         {/* Placeholder for recent articles */}
-                         <p className="text-muted-foreground">No articles published yet.</p>
-
+                         <div className="space-y-4">
+                            {authorArticles.length > 0 ? (
+                                authorArticles.map(article => (
+                                    <Link key={article.id} href={`/${lang}/article/${article.slug}`} className="block hover:bg-muted/50 p-3 rounded-md">
+                                        <h3 className="font-bold">{article.title[lang]}</h3>
+                                        <p className="text-sm text-muted-foreground">{new Date(article.publishedAt).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                    </Link>
+                                ))
+                            ) : (
+                                <p className="text-muted-foreground">No articles published yet.</p>
+                            )}
+                         </div>
                     </div>
                 </div>
             </div>

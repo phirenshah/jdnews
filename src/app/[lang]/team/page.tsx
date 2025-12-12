@@ -15,6 +15,7 @@ import QRCode from 'qrcode.react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { createRoot } from 'react-dom/client';
+import Link from 'next/link';
 
 function PressCard({
   reporter,
@@ -30,7 +31,7 @@ function PressCard({
     (img) => img.id === reporter.imageId
   );
 
-  const reporterUrl = typeof window !== 'undefined' ? `${window.location.origin}/${lang}/team/${reporter.id}` : '';
+  const reporterUrl = `/${lang}/reporters/${reporter.id}`;
 
 
   const t = {
@@ -57,13 +58,12 @@ function PressCard({
       >
         {/* Card Front */}
         <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
-           <div className="py-2 flex justify-center items-center">
+          <div className="py-2 flex justify-center items-center">
             <Image
               src="/logo.png"
               alt="JD News Logo"
               width={100}
               height={0}
-              className="dark:invert-0"
               style={{
                 paddingTop: '4px',
                 paddingBottom: '4px',
@@ -109,7 +109,7 @@ function PressCard({
               </div>
             </div>
           </div>
-          <div className="bg-red-600 text-white text-center py-2 font-bold text-xl tracking-widest mt-auto font-code">
+          <div className="bg-red-600 text-white text-center py-2 font-bold text-xl tracking-widest font-code">
             PRESS
           </div>
         </div>
@@ -128,7 +128,7 @@ function PressCard({
               alt="JD News Logo"
               width={150}
               height={40}
-              className="mx-auto dark:invert-0"
+              className="mx-auto"
             />
             <h3 className="font-bold text-lg">{t.headOffice}</h3>
             <p className="text-xs text-muted-foreground">
@@ -202,8 +202,9 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
     exportContainer.style.position = 'fixed';
     exportContainer.style.left = '-9999px';
     exportContainer.style.top = '-9999px';
-    // Force light theme for canvas rendering
-    exportContainer.className = document.documentElement.className.replace('dark', 'light') + ' light';
+    // Force light theme for canvas rendering by cleaning the class from the html element
+    exportContainer.className = document.documentElement.className.replace('dark', '') + ' light';
+
     document.body.appendChild(exportContainer);
   
     // Create a PDF document
@@ -222,9 +223,10 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
       // We need to await the rendering before capturing
       await new Promise<void>(resolve => {
         frontRoot.render(
+          // We wrap the PressCard in a div with the exact dimensions to ensure correct capture
           <div className="w-[340px] h-[540px]">
             <div className="flip-card-inner">
-              <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
+                <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
             </div>
           </div>
         );
@@ -251,7 +253,7 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
         backRoot.render(
           <div className="w-[340px] h-[540px]">
             <div className="flip-card-inner is-flipped">
-              <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
+                 <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
             </div>
           </div>
         );
@@ -296,36 +298,39 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
               <Card
                 key={reporter.id}
                 className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
-                onClick={() => handleCardClick(reporter)}
+                
               >
-                <CardHeader className="relative p-4">
-                  <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-background ring-2 ring-primary">
-                    {reporterImage && (
-                      <Image
-                        src={reporterImage.imageUrl}
-                        alt={reporter.name}
-                        width={128}
-                        height={128}
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
+                <Link href={`/${lang}/reporters/${reporter.id}`} className="flex flex-col h-full">
+                    <CardHeader className="relative p-4">
+                    <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-background ring-2 ring-primary">
+                        {reporterImage && (
+                        <Image
+                            src={reporterImage.imageUrl}
+                            alt={reporter.name}
+                            width={128}
+                            height={128}
+                            className="object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        )}
+                    </div>
+                    {reporter.verified && (
+                        <Badge
+                        variant="default"
+                        className="absolute top-2 right-2 bg-green-500 hover:bg-green-600"
+                        >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Verified
+                        </Badge>
                     )}
-                  </div>
-                  {reporter.verified && (
-                    <Badge
-                      variant="default"
-                      className="absolute top-2 right-2 bg-green-500 hover:bg-green-600"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Verified
-                    </Badge>
-                  )}
-                </CardHeader>
-                <CardContent className="p-4">
-                  <h2 className="text-xl font-bold font-headline">
-                    {reporter.name}
-                  </h2>
-                  <p className="text-primary font-medium">{reporter.title}</p>
-                </CardContent>
+                    </CardHeader>
+                    <CardContent className="p-4 flex-grow flex flex-col justify-center">
+                    <h2 className="text-xl font-bold font-headline">
+                        {reporter.name}
+                    </h2>
+                    <p className="text-primary font-medium">{reporter.title}</p>
+                    </CardContent>
+                </Link>
+                <Button onClick={() => handleCardClick(reporter)} className="m-4">View Press Card</Button>
               </Card>
             );
           })}
