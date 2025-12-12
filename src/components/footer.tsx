@@ -8,8 +8,8 @@ export function Footer({ lang }: { lang: string }) {
   return (
     <footer className="bg-muted text-muted-foreground">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-          <div className="space-y-4 md:col-span-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center sm:text-left">
+          <div className="space-y-4 md:col-span-1 flex flex-col items-center sm:items-start">
             <Link href={`/${lang}`} className="flex items-center">
               <Image src="/logo.png" alt="JD News Logo" width={120} height="0" style={{height: 'auto'}} />
             </Link>
@@ -32,24 +32,24 @@ export function Footer({ lang }: { lang: string }) {
             </ul>
           </div>
           <div>
+            <h3 className="font-semibold text-foreground mb-4">Support</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href={`/${lang}/donate`} className="hover:text-primary flex items-center gap-1.5 justify-center sm:justify-start">
+                  Donate <Heart className="w-4 h-4 text-red-500" />
+                </Link>
+              </li>
+              <li><Link href={`/${lang}/advertise`} className="hover:text-primary">Advertise</Link></li>
+              <li><Link href="#" className="hover:text-primary">Careers</Link></li>
+            </ul>
+          </div>
+          <div>
             <h3 className="font-semibold text-foreground mb-4">About</h3>
             <ul className="space-y-2">
               <li><Link href={`/${lang}/about`} className="hover:text-primary">About Us</Link></li>
               <li><Link href={`/${lang}/team`} className="hover:text-primary">Our Team</Link></li>
               <li><Link href="#" className="hover:text-primary">Contact</Link></li>
               <li><Link href="#" className="hover:text-primary">Privacy Policy</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href={`/${lang}/donate`} className="hover:text-primary flex items-center gap-1.5">
-                  Donate <Heart className="w-4 h-4 text-red-500" />
-                </Link>
-              </li>
-              <li><Link href={`/${lang}/advertise`} className="hover:text-primary">Advertise</Link></li>
-              <li><Link href="#" className="hover:text-primary">Careers</Link></li>
             </ul>
           </div>
         </div>
