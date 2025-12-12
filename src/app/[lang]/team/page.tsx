@@ -2,15 +2,12 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { placeholderReporters } from '@/lib/placeholder-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Download, X } from 'lucide-react';
+import { CheckCircle, Download, X, Building, Phone, Cake, Droplets } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Reporter } from '@/lib/definitions';
-import { cn } from '@/lib/utils';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const QrCodeSvg = () => (
@@ -57,82 +54,69 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
   const t = {
     designation: lang === 'en' ? 'Designation' : 'હોદ્દો',
     dob: lang === 'en' ? 'D.O.B' : 'જન્મતારીખ',
-    bloodGroup: lang === 'en' ? 'B.Group' : 'બ્લડ ગ્રુપ',
-    contactNo: lang === 'en' ? 'Contact No' : 'સંપર્ક નંબર',
+    bloodGroup: lang === 'en' ? 'Blood Group' : 'બ્લડ ગ્રુપ',
+    contact: lang === 'en' ? 'Contact' : 'સંપર્ક',
     headOffice: lang === 'en' ? 'Head Office' : 'મુખ્ય કાર્યાલય',
-    emergency: lang === 'en' ? 'Emergency' : 'ઇમરજન્સી',
-    authSign: lang === 'en' ? 'Auth. Sign' : 'અધિકૃત સહી',
+    officePhone: lang === 'en' ? 'Office Phone' : 'ઓફિસ ફોન',
     tagline: lang === 'en' ? 'With The Truth' : 'સત્યની સાથે',
   };
 
   return (
     <div className="flip-card-inner">
       {/* Card Front */}
-      <div className="flip-card-front bg-white text-black rounded-lg shadow-xl overflow-hidden">
-        <div className="flex h-full">
-          <div className="w-1/6 bg-red-600 flex items-center justify-center">
-            <h2 className="text-white font-bold text-5xl tracking-widest" style={{ writingMode: 'vertical-rl' }}>
-              PRESS
-            </h2>
-          </div>
-          <div className="w-5/6 p-4 flex flex-col">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="dark:invert" />
-                 <div className="text-left mt-1">
-                  <p className="font-bold text-sm">JD MEDIA</p>
-                  <p className="text-xs">GJ-01-0017316</p>
-                </div>
-              </div>
-              <div className="bg-red-600 text-white px-2 py-1 text-xs rounded-md">{t.tagline}</div>
+      <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden p-6 border flex flex-col items-center justify-center text-center">
+        {reporterImage && (
+            <Image
+                src={reporterImage.imageUrl}
+                alt={reporter.name}
+                width={120}
+                height={120}
+                className="rounded-full border-4 border-primary/50 object-cover mb-4"
+            />
+        )}
+        <h3 className="font-headline text-2xl font-bold">{reporter.name}</h3>
+        <p className="text-primary font-medium">{reporter.title}</p>
+        <div className="border-t w-full my-4"></div>
+        <div className="space-y-2 text-left w-full text-sm">
+            <div className="flex items-center gap-3">
+                <Cake className="w-4 h-4 text-muted-foreground"/>
+                <span><span className="font-semibold">{t.dob}:</span> {reporter.dob}</span>
             </div>
-            <Separator className="my-4 bg-black" />
-            <div className="flex-grow flex items-center">
-              <div className="w-2/3 pr-4">
-                <p><span className="font-bold">{t.designation}:</span> {reporter.title}</p>
-                <p><span className="font-bold">{t.dob}:</span> 21/12/75</p>
-                <p><span className="font-bold">{t.bloodGroup}:</span> +AB</p>
-                <p><span className="font-bold">{t.contactNo}:</span> 8140009001</p>
-              </div>
-              <div className="w-1/3">
-                {reporterImage && (
-                  <div className="border-2 border-black p-0.5">
-                    <Image src={reporterImage.imageUrl} alt={reporter.name} width={100} height={120} className="w-full object-cover" />
-                  </div>
-                )}
-                <p className="text-xs text-center mt-1">GJ-01-0017316-01</p>
-              </div>
+            <div className="flex items-center gap-3">
+                <Phone className="w-4 h-4 text-muted-foreground"/>
+                <span><span className="font-semibold">{t.contact}:</span> {reporter.contact}</span>
             </div>
-          </div>
+            <div className="flex items-center gap-3">
+                <Droplets className="w-4 h-4 text-muted-foreground"/>
+                <span><span className="font-semibold">{t.bloodGroup}:</span> {reporter.bloodGroup}</span>
+            </div>
+            <div className="flex items-center gap-3">
+                <Building className="w-4 h-4 text-muted-foreground"/>
+                <span className="truncate"><span className="font-semibold">Office:</span> 201, Akhbar Bhavan, Gandhinagar</span>
+            </div>
         </div>
       </div>
 
       {/* Card Back */}
-      <div className="flip-card-back bg-white text-black rounded-lg shadow-xl overflow-hidden p-4 flex flex-col justify-between">
+      <div className="flip-card-back bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden p-6 border flex flex-col justify-between">
          <div className="text-center">
-            <h3 className="font-bold text-lg">JD MEDIA</h3>
-            <p className="font-semibold text-sm">{t.headOffice}</p>
-            <p className="text-xs">201/202, Akhbar Bhavan, Sector 11,</p>
-            <p className="text-xs">Near Hotel Haveli, Gandhinagar, Gujarat</p>
-            <p className="text-xs mt-2">Email: contact@jdnews.com</p>
-            <p className="text-xs">www.jdnews.com</p>
+            <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="mx-auto mb-4 dark:invert" />
+            <h3 className="font-bold text-lg">{t.headOffice}</h3>
+            <p className="text-xs text-muted-foreground">201/202, Akhbar Bhavan, Sector 11,</p>
+            <p className="text-xs text-muted-foreground">Near Hotel Haveli, Gandhinagar, Gujarat</p>
+            <p className="text-xs mt-2 text-muted-foreground"><span className="font-semibold">{t.officePhone}:</span> +91 79 1234 5678</p>
         </div>
-        <div className="flex items-end justify-between">
+        <div className="flex items-center justify-center">
             <div className="text-center">
-                <div className="w-20 h-20 mx-auto text-black">
+                <div className="w-32 h-32 mx-auto text-foreground">
                     <QrCodeSvg />
                 </div>
-                 <p className="text-xs">Verify Authenticity</p>
+                 <p className="text-xs text-muted-foreground mt-1">Verify Authenticity</p>
             </div>
-             <div className="text-center">
-                <p className="font-serif italic text-lg">Signature</p>
-                <p className="text-xs border-t border-black mt-1 pt-1">{t.authSign}</p>
-            </div>
-            <div className="text-center">
-                <p className="font-bold text-sm">{t.emergency}</p>
-                <p className="text-xs">9978413456</p>
-                <p className="text-xs">9978433144</p>
-            </div>
+        </div>
+        <div className="text-center">
+            <p className="text-primary font-bold text-lg font-headline">{t.tagline}</p>
+            <p className="text-xs text-muted-foreground">www.jdnews.com</p>
         </div>
       </div>
     </div>
@@ -209,10 +193,10 @@ export default function ReportersPage({ params: { lang } }: { params: { lang: 'e
       </div>
 
       <Dialog open={!!selectedReporter} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
-        <DialogContent className="bg-transparent border-none shadow-none max-w-2xl p-0">
+        <DialogContent className="bg-transparent border-none shadow-none max-w-md p-0">
            {selectedReporter && (
             <div className="flex flex-col items-center gap-4">
-                 <div className="flip-card w-[350px] h-[550px] md:w-[400px] md:h-[600px] [perspective:1000px]">
+                 <div className="flip-card w-[340px] h-[520px] [perspective:1000px]">
                     <PressCard reporter={selectedReporter} lang={lang}/>
                 </div>
                 <div className='flex gap-4'>

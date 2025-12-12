@@ -23,9 +23,10 @@ export type Reporter = {
   id: string;
   name: string;
   title: string;
-  joinedDate: string;
-  articlesPublished: number;
   imageId: string;
+  dob: string;
+  contact: string;
+  bloodGroup: string;
 };
 
 export type Donation = {
