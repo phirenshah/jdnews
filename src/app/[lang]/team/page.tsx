@@ -1,7 +1,5 @@
 'use client';
 import { React, use } from 'react';
-import { placeholderReporters } from '@/lib/placeholder-data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
