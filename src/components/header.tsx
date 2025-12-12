@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from 'next/link';
@@ -214,22 +215,18 @@ export function Header({ lang }: { lang: string }) {
                 />
             </div>
           
-          {isMounted && (
-            <>
-              <div className="hidden md:flex items-center gap-2">
-                <LanguageToggle />
-                <ThemeToggle />
-                <AuthButton lang={lang} />
-              </div>
+            <div className="hidden md:flex items-center gap-2">
+              <LanguageToggle />
+              <ThemeToggle />
+              <AuthButton lang={lang} />
+            </div>
 
-              <div className="flex items-center md:hidden">
-                <LanguageToggle />
-                <ThemeToggle />
-                <AuthButton lang={lang} />
-                <MobileNav lang={lang} />
-              </div>
-            </>
-          )}
+            <div className="flex items-center md:hidden">
+              <LanguageToggle />
+              <ThemeToggle />
+              <AuthButton lang={lang} />
+              <MobileNav lang={lang} />
+            </div>
         </div>
       </div>
     </header>
