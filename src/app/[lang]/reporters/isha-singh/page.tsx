@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
-import { notFound, useParams } from 'next/navigation';
+import { useState, useRef } from 'react';
+import { useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +17,15 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
 import html2canvas from 'html2canvas';
-import { createRoot } from 'react-dom/client';
 
 export default function ReporterProfilePage() {
     const params = useParams<{ lang: 'en' | 'gu', id: string }>();
     const { lang, id } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
     
+    const frontCardRef = useRef<HTMLDivElement>(null);
+    const backCardRef = useRef<HTMLDivElement>(null);
+
     const author = placeholderReporters.find((r) => r.id === 'isha-singh');
     
     if (!author) {
@@ -34,72 +37,37 @@ export default function ReporterProfilePage() {
     const reporterUrl = `/${lang}/reporters/${author.id}`;
 
     const handleDownload = async () => {
-        if (!author) return;
-    
-        const exportContainer = document.createElement('div');
-        exportContainer.style.position = 'fixed';
-        exportContainer.style.left = '-9999px';
-        exportContainer.style.top = '-9999px';
-    
-        // Force light theme for PNG rendering
-        const existingClasses = document.documentElement.className;
-        exportContainer.className = existingClasses.replace('dark', '') + ' light';
-        
-        document.body.appendChild(exportContainer);
-    
-        try {
-          // --- Render and capture FRONT of the card ---
-          const frontDiv = document.createElement('div');
-          exportContainer.appendChild(frontDiv);
-          const frontRoot = createRoot(frontDiv);
-    
-          await new Promise<void>(resolve => {
-            frontRoot.render(
-                <PressCardFront reporter={author} lang={lang} />
-            );
-            setTimeout(resolve, 500);
-          });
-    
-          const frontElement = frontDiv.querySelector('.w-\\[340px\\]');
-          if (!frontElement) throw new Error("Front card element not found for PNG generation");
-          const canvasFront = await html2canvas(frontElement as HTMLElement, { scale: 2 });
-          const linkFront = document.createElement('a');
-          linkFront.download = `${author.name.replace(' ', '-')}-Front.png`;
-          linkFront.href = canvasFront.toDataURL('image/png');
-          linkFront.click();
-          frontRoot.unmount();
-          frontDiv.remove();
-    
-          // --- Render and capture BACK of the card (mirrored) ---
-          const backDiv = document.createElement('div');
-          exportContainer.appendChild(backDiv);
-          const backRoot = createRoot(backDiv);
-          
-          await new Promise<void>(resolve => {
-            backRoot.render(
-                <div style={{transform: "rotateY(180deg)"}}>
-                    <PressCardBack reporter={author} lang={lang} />
-                </div>
-            );
-            setTimeout(resolve, 500);
-          });
-          
-          const backElement = backDiv.querySelector('.w-\\[340px\\]');
-          if (!backElement) throw new Error("Back card element not found for PNG generation");
-          const canvasBack = await html2canvas(backElement as HTMLElement, { scale: 2 });
-          const linkBack = document.createElement('a');
-          linkBack.download = `${author.name.replace(' ', '-')}-Back-Mirrored.png`;
-          linkBack.href = canvasBack.toDataURL('image/png');
-          linkBack.click();
-          backRoot.unmount();
-          backDiv.remove();
-    
-        } catch (error) {
-          console.error("Failed to generate PNG:", error);
-        } finally {
-          document.body.removeChild(exportContainer);
+        if (!frontCardRef.current || !backCardRef.current) {
+            console.error("Card elements not found for download.");
+            return;
         }
-      };
+        
+        try {
+            // Capture Front
+            const canvasFront = await html2canvas(frontCardRef.current, { scale: 2 });
+            const linkFront = document.createElement('a');
+            linkFront.download = `${author.name.replace(' ', '-')}-Front.png`;
+            linkFront.href = canvasFront.toDataURL('image/png');
+            linkFront.click();
+
+            // Capture Back (Mirrored)
+            const backCardElement = backCardRef.current;
+            const originalTransform = backCardElement.style.transform;
+            backCardElement.style.transform = 'rotateY(180deg)'; // Apply mirror effect
+
+            const canvasBack = await html2canvas(backCardElement, { scale: 2 });
+            const linkBack = document.createElement('a');
+            linkBack.download = `${author.name.replace(' ', '-')}-Back-Mirrored.png`;
+            linkBack.href = canvasBack.toDataURL('image/png');
+            linkBack.click();
+            
+            // Restore original style
+            backCardElement.style.transform = originalTransform;
+
+        } catch (error) {
+            console.error("Failed to generate PNG:", error);
+        }
+    };
 
     return (
         <>
@@ -193,9 +161,13 @@ export default function ReporterProfilePage() {
                         <DialogTitle>Reporter Press Card</DialogTitle>
                     </VisuallyHidden>
                     <div className="flex flex-col items-center gap-4">
-                         <div className="flex flex-wrap justify-center gap-4">
-                            <PressCardFront reporter={author} lang={lang} />
-                            <PressCardBack reporter={author} lang={lang} />
+                        <div className="flex flex-wrap justify-center gap-4">
+                             <div ref={frontCardRef}>
+                                <PressCardFront reporter={author} lang={lang} />
+                            </div>
+                            <div ref={backCardRef}>
+                                <PressCardBack reporter={author} lang={lang} />
+                            </div>
                         </div>
                         <div className="flex gap-4">
                             <Button
