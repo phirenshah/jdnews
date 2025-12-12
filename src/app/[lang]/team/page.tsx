@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Download, X, Building, Phone, Cake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Reporter } from '@/lib/definitions';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { placeholderReporters } from '@/lib/placeholder-data';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 
 const QrCodeSvg = () => (
@@ -204,6 +205,9 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
 
       <Dialog open={!!selectedReporter} onOpenChange={(isOpen) => !isOpen && handleCloseDialog()}>
         <DialogContent className="bg-transparent border-none shadow-none max-w-md p-0">
+           <VisuallyHidden>
+            <DialogTitle>Reporter Press Card</DialogTitle>
+           </VisuallyHidden>
            {selectedReporter && (
             <div className="flex flex-col items-center gap-4">
                 <PressCard reporter={selectedReporter} lang={lang}/>
