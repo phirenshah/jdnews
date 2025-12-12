@@ -100,7 +100,7 @@ function PressCard({
                   {reporter.contact}
                 </span>
               </div>
-              <div className="flex items-center gap-3 my-2">
+              <div className="flex items-center gap-3 my-4">
                 <Building className="w-4 h-4 text-muted-foreground" />
                 <span className="truncate">
                   <span className="font-semibold">{t.office}:</span>{' '}
@@ -203,26 +203,29 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
     exportContainer.style.position = 'fixed';
     exportContainer.style.left = '-9999px';
     exportContainer.style.top = '-9999px';
-    exportContainer.classList.add('light'); // Force light theme
     document.body.appendChild(exportContainer);
 
     // Create temporary containers for front and back
     const frontContainer = document.createElement('div');
     frontContainer.id = cardIdFront;
+    frontContainer.className = 'light';
     const backContainer = document.createElement('div');
     backContainer.id = cardIdBack;
+    backContainer.className = 'light';
     exportContainer.appendChild(frontContainer);
     exportContainer.appendChild(backContainer);
 
     // Render front and back for export
     const frontRoot = createRoot(frontContainer);
     frontRoot.render(
-      <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
+        <div className="light">
+            <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
+        </div>
     );
 
     const backRoot = createRoot(backContainer);
     const backCard = (
-      <div className="w-[340px] h-[540px]">
+      <div className="light w-[340px] h-[540px]">
         <div className="flip-card-inner is-flipped" style={{transform: "none"}}>
           <PressCard reporter={selectedReporter} lang={lang} isForExport={true} />
         </div>
