@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, use } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,6 @@ import { Reporter } from '@/lib/definitions';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { placeholderReporters } from '@/lib/placeholder-data';
-import { Skeleton } from '@/components/ui/skeleton';
 
 
 const QrCodeSvg = () => (
@@ -72,7 +71,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
         {/* Card Front */}
         <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
             <div className="py-2 flex justify-center items-center border-b">
-                 <Image src="/logo.png" alt="JD News Logo" width={100} height={25} className="dark:invert" />
+                 <Image src="/logo.png" alt="JD News Logo" width={100} height={25} style={{paddingTop: '4px', paddingBottom: '4px'}} className="dark:invert" />
             </div>
             <div className="flex-grow flex flex-col items-center justify-center text-center px-4">
                 {reporter.profilePictureUrl && (
@@ -137,7 +136,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
 
 
 export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const { lang } = params;
+  const { lang } = use(params);
   const [selectedReporter, setSelectedReporter] = useState<Reporter | null>(null);
 
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
