@@ -75,7 +75,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
         {/* Card Front */}
         <div className="flip-card-front bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
             <div className="py-2 flex justify-center items-center">
-                 <Image src="/logo.png" alt="JD News Logo" width={100} height={0} style={{paddingTop: '4px', paddingBottom: '4px', height: 'auto'}} />
+                 <Image src="/logo.png" alt="JD News Logo" width={100} height={0} style={{paddingTop: '4px', paddingBottom: '4px', height: 'auto'}} className="dark:invert-0" />
             </div>
             <div className="border-t w-full"></div>
             <div className="flex-grow flex flex-col items-center justify-center text-center px-4 py-2">
@@ -106,7 +106,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
                     </div>
                 </div>
             </div>
-            <div className="bg-red-600 text-white text-center py-2 font-bold text-lg tracking-widest mt-auto">
+            <div className="bg-red-600 text-white text-center py-2 font-bold text-xl tracking-widest mt-auto font-code">
                 PRESS
             </div>
         </div>
@@ -115,7 +115,7 @@ function PressCard({ reporter, lang }: { reporter: Reporter; lang: string }) {
         <div className="flip-card-back bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col justify-between p-4 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-card via-card to-muted/50">
             <div className="absolute inset-0 bg-repeat bg-center opacity-5" style={{backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cg fill-rule='evenodd'%3e%3cg fill='%239C92AC' fill-opacity='0.15'%3e%3cpath d='M99 99V0h1v100H0v-1h99zM99 1V0H0v1h99z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e")`}}></div>
              <div className="text-center relative">
-                <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="mx-auto mb-4" />
+                <Image src="/logo.png" alt="JD News Logo" width={150} height={40} className="mx-auto mb-4 dark:invert-0" />
                 <h3 className="font-bold text-lg">{t.headOffice}</h3>
                 <p className="text-xs text-muted-foreground">201/202, Akhbar Bhavan, Sector 11,</p>
                 <p className="text-xs text-muted-foreground">Near Hotel Haveli, Gandhinagar, Gujarat</p>
