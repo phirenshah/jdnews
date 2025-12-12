@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { Newspaper } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 
 export default function LoginPage() {
@@ -29,7 +29,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-lg">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
-            <Newspaper className="h-10 w-10 text-primary" />
+            <Image src="/logo.png" alt="JD News Logo" width={40} height={40} className="h-10 w-10" />
           </div>
           <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
           <CardDescription>Login to your JD News account</CardDescription>

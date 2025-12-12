@@ -12,12 +12,14 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Newspaper, Users, DollarSign, CreditCard, LayoutDashboard, ExternalLink, User } from "lucide-react";
+import { Users, DollarSign, CreditCard, LayoutDashboard, ExternalLink, User } from "lucide-react";
 import Link from 'next/link';
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { Newspaper } from "lucide-react";
 
 const navItems = [
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
@@ -53,7 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
-            <Newspaper className="w-8 h-8 text-primary"/>
+            <Image src="/logo.png" alt="JD News Logo" width={32} height={32} className="h-8 w-8" />
             <div className="flex flex-col">
               <h2 className="text-lg font-semibold text-sidebar-foreground font-headline">JD News</h2>
               <p className="text-xs text-sidebar-foreground/70">Admin Panel</p>

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Newspaper, Twitter, Facebook, Instagram, Heart } from 'lucide-react';
+import { Twitter, Facebook, Instagram, Heart } from 'lucide-react';
+import Image from 'next/image';
 
 export function Footer({ lang }: { lang: string }) {
   const currentYear = new Date().getFullYear();
@@ -10,7 +11,7 @@ export function Footer({ lang }: { lang: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           <div className="space-y-4 md:col-span-1">
             <Link href={`/${lang}`} className="flex items-center space-x-2 text-foreground">
-              <Newspaper className="h-8 w-8 text-primary" />
+              <Image src="/logo.png" alt="JD News Logo" width={32} height={32} className="h-8 w-8" />
               <span className="text-xl font-bold font-headline">
                 JD News
               </span>

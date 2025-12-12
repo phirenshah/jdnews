@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu, Newspaper, Search, User } from 'lucide-react';
+import { Menu, Search, User } from 'lucide-react';
 import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import React from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import Image from 'next/image';
 
 
 const navLinks = [
@@ -96,40 +97,29 @@ export function Header({ lang }: { lang: string }) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
+        <div className="mr-4 flex">
           <Link href={`/${lang}`} className="flex items-center space-x-2">
-            <Newspaper className="h-6 w-6 text-primary" />
+            <Image src="/logo.png" alt="JD News Logo" width={32} height={32} className="h-8 w-8" />
             <span className="font-bold sm:inline-block font-headline">
               JD News
             </span>
           </Link>
         </div>
         
-        <div className="flex-1 flex items-center justify-start gap-4">
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <Link href={`/${lang}`} className="transition-colors hover:text-foreground/80 text-foreground/60">Home</Link>
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={`/${lang}${link.href}`}
-                className="transition-colors hover:text-foreground/80 text-foreground/60"
-              >
-                {link.name}
-              </Link>
-            ))}
-          </nav>
-        </div>
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+          <Link href={`/${lang}`} className="transition-colors hover:text-foreground/80 text-foreground/60">Home</Link>
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={`/${lang}${link.href}`}
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              {link.name}
+            </Link>
+          ))}
+        </nav>
 
-        <div className="flex md:hidden flex-1">
-          <Link href={`/${lang}`} className="flex items-center space-x-2">
-              <Newspaper className="h-6 w-6 text-primary" />
-              <span className="font-bold sm:inline-block font-headline">
-                  JD News
-              </span>
-          </Link>
-        </div>
-
-        <div className="flex items-center justify-end space-x-2">
+        <div className="flex flex-1 items-center justify-end space-x-2">
           <div className="hidden sm:block">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -160,7 +150,7 @@ export function Header({ lang }: { lang: string }) {
                 </SheetHeader>
                 <div className="flex flex-col gap-4 p-4">
                   <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Newspaper className="h-6 w-6 text-primary" />
+                    <Image src="/logo.png" alt="JD News Logo" width={32} height={32} className="h-8 w-8" />
                     <span className="font-bold font-headline">JD News</span>
                   </Link>
                   <nav className="flex flex-col gap-4">
