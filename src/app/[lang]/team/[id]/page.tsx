@@ -25,7 +25,10 @@ export default function ReporterProfilePage() {
     }
     
     const authorImage = PlaceHolderImages.find(img => img.id === author.imageId);
-    const reporterUrl = `${window.location.origin}/${lang}/team/${author.id}`;
+    
+    // Construct a public, relative URL. This is the key change.
+    // It no longer relies on `window.location.origin` which caused the auth error.
+    const reporterUrl = `/${lang}/team/${author.id}`;
 
 
     return (
