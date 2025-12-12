@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -26,7 +27,6 @@ import { useFirebase } from '@/firebase';
 
 
 const navLinks = [
-    { name: 'Home', href: '' },
     { name: 'Team', href: '/team' },
     { name: 'About', href: '/about' },
     { name: 'Donate', href: '/donate' },
@@ -106,7 +106,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
               <span className="sr-only">Toggle Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="right">
+          <SheetContent side="left">
               <SheetHeader>
                   <SheetTitle>
                       <VisuallyHidden>Mobile Navigation Menu</VisuallyHidden>
@@ -117,6 +117,13 @@ const MobileNav = ({ lang }: { lang: string }) => {
                 <Image src="/logo.png" alt="JD News Logo" width={120} height="0" style={{height: 'auto'}} />
               </Link>
               <nav className="flex flex-col gap-4">
+                <Link
+                    href={`/${lang}`}
+                    className="text-lg font-medium text-foreground/80 hover:text-primary"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Home
+                  </Link>
                 {navLinks.map((link) => (
                   <Link
                     key={link.name}
@@ -164,7 +171,7 @@ export function Header({ lang }: { lang: string }) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         
-        <div className="mr-4 flex items-center">
+        <div className="mr-4 flex">
           <Link href={`/${lang}`} className="flex items-center">
             <Image src="/logo.png" alt="JD News Logo" width={120} height="0" style={{height: 'auto'}} />
           </Link>
@@ -210,7 +217,13 @@ export function Header({ lang }: { lang: string }) {
             <ThemeToggle />
             <AuthButton lang={lang} />
           </div>
-          <MobileNav lang={lang} />
+
+          <div className="flex items-center md:hidden">
+            <LanguageToggle />
+            <ThemeToggle />
+            <AuthButton lang={lang} />
+            <MobileNav lang={lang} />
+          </div>
         </div>
       </div>
     </header>
