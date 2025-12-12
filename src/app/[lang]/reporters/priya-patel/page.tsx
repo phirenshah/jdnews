@@ -32,7 +32,7 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
     
     const authorImage = PlaceHolderImages.find(img => img.id === author.imageId);
     const authorArticles = placeholderArticles.filter(a => a.author === author.name);
-    const reporterUrl = typeof window !== 'undefined' ? `${window.location.origin}/${lang}/reporters/${author.id}`: `/${lang}/reporters/${author.id}`;
+    const reporterUrl = `/${lang}/reporters/${author.id}`;
 
     const handleDownload = async () => {
         if (!author) return;
@@ -47,13 +47,9 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
         
         document.body.appendChild(exportContainer);
     
-        const pdf = new jsPDF({
-          orientation: 'p',
-          unit: 'px',
-          format: [380, 580]
-        });
-    
         try {
+          // --- Render and capture FRONT of the card ---
+          const pdfFront = new jsPDF({ orientation: 'p', unit: 'px', format: [380, 580] });
           const frontDiv = document.createElement('div');
           exportContainer.appendChild(frontDiv);
           const frontRoot = createRoot(frontDiv);
@@ -70,11 +66,13 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
           const frontElement = frontDiv.querySelector('.flip-card-front');
           if (!frontElement) throw new Error("Front card element not found for PDF generation");
           const canvasFront = await html2canvas(frontElement as HTMLElement, { scale: 2 });
-          pdf.addImage(canvasFront.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
+          pdfFront.addImage(canvasFront.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
+          pdfFront.save(`${author.name.replace(' ', '-')}-Front.pdf`);
           frontRoot.unmount();
           frontDiv.remove();
     
-          pdf.addPage();
+          // --- Render and capture BACK of the card ---
+          const pdfBack = new jsPDF({ orientation: 'p', unit: 'px', format: [380, 580] });
           const backDiv = document.createElement('div');
           exportContainer.appendChild(backDiv);
           const backRoot = createRoot(backDiv);
@@ -91,11 +89,10 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
           const backElement = backDiv.querySelector('.flip-card-back');
           if (!backElement) throw new Error("Back card element not found for PDF generation");
           const canvasBack = await html2canvas(backElement as HTMLElement, { scale: 2 });
-          pdf.addImage(canvasBack.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
+          pdfBack.addImage(canvasBack.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
+          pdfBack.save(`${author.name.replace(' ', '-')}-Back.pdf`);
           backRoot.unmount();
           backDiv.remove();
-    
-          pdf.save(`${author.name.replace(' ', '-')}-Press-Card.pdf`);
     
         } catch (error) {
           console.error("Failed to generate PDF:", error);
