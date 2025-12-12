@@ -99,7 +99,7 @@ export function Header({ lang }: { lang: string }) {
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
           <Link href={`/${lang}`} className="flex items-center space-x-2">
-            <Image src="/logo.png" alt="JD News Logo" width={32} height={32} className="h-8 w-8" />
+            <Image src="/logo.png" alt="JD News Logo" width={80} height={32} className="h-8 w-auto" />
           </Link>
         </div>
         
@@ -147,8 +147,7 @@ export function Header({ lang }: { lang: string }) {
                 </SheetHeader>
                 <div className="flex flex-col gap-4 p-4">
                   <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Image src="/logo.png" alt="JD News Logo" width={32} height={32} className="h-8 w-8" />
-                    <span className="font-bold font-headline">JD News</span>
+                    <Image src="/logo.png" alt="JD News Logo" width={80} height={32} className="h-8 w-auto" />
                   </Link>
                   <nav className="flex flex-col gap-4">
                     <Link href={`/${lang}`} className="text-lg font-medium text-foreground/80 hover:text-primary" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
