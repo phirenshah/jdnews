@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Mail, Newspaper, Link as LinkIcon, Download, X, CreditCard } from 'lucide-react';
+import { CheckCircle, Mail, Newspaper, Link as LinkIcon, Download, X, CreditCard, Columns2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { placeholderReporters, placeholderArticles } from '@/lib/placeholder-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -20,6 +20,7 @@ import { createRoot } from 'react-dom/client';
 export default function ReporterProfilePage({ params }: { params: { lang: 'en' | 'gu', id: string } }) {
     const { lang, id } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
+    const [showBoth, setShowBoth] = useState(false);
     
     const author = placeholderReporters.find((r) => r.id === 'rohan-mehta');
     
@@ -143,7 +144,7 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
                         <div className="md:col-span-2 bg-card p-8 rounded-lg shadow-md">
                             <div className="flex justify-between items-start mb-4">
                                 <h2 className="text-2xl font-bold font-headline">About {author.name}</h2>
-                                <Button onClick={() => setIsCardOpen(true)}>
+                                <Button onClick={() => { setIsCardOpen(true); setShowBoth(false); }}>
                                     <CreditCard className="mr-2 h-4 w-4" />
                                     View Press Card
                                 </Button>
@@ -187,23 +188,34 @@ export default function ReporterProfilePage({ params }: { params: { lang: 'en' |
                 </div>
             </div>
             <Dialog open={isCardOpen} onOpenChange={setIsCardOpen}>
-                <DialogContent className="bg-transparent border-none shadow-none max-w-md p-0">
+                <DialogContent className="bg-transparent border-none shadow-none max-w-md p-0 data-[state=open]:sm:max-w-4xl">
                     <VisuallyHidden>
                         <DialogTitle>Reporter Press Card</DialogTitle>
                     </VisuallyHidden>
                     <div className="flex flex-col items-center gap-4">
-                        <PressCard reporter={author} lang={lang} />
+                        {showBoth ? (
+                            <div className="flex gap-4">
+                                <PressCard reporter={author} lang={lang} isForExport={true} forceState="front" />
+                                <PressCard reporter={author} lang={lang} isForExport={true} forceState="back" />
+                            </div>
+                        ) : (
+                            <PressCard reporter={author} lang={lang} />
+                        )}
                         <div className="flex gap-4">
+                            <Button onClick={() => setShowBoth(!showBoth)} variant="secondary">
+                                <Columns2 className="mr-2 h-4 w-4" />
+                                {showBoth ? "Show Single" : "Show Both"}
+                            </Button>
                             <Button
-                            onClick={handleDownload}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                                onClick={handleDownload}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                             >
-                            <Download className="mr-2 h-4 w-4" />
-                            Download Card
+                                <Download className="mr-2 h-4 w-4" />
+                                Download
                             </Button>
                             <Button onClick={() => setIsCardOpen(false)} variant="outline">
-                            <X className="mr-2 h-4 w-4" />
-                            Close
+                                <X className="mr-2 h-4 w-4" />
+                                Close
                             </Button>
                         </div>
                     </div>
