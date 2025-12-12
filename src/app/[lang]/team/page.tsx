@@ -36,7 +36,7 @@ const QrCodeIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const lang = use(params.lang);
+  const { lang } = use(params);
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
   const subtitle = lang === 'en' ? 'Meet the team behind the news' : 'સમાચાર પાછળની ટીમને મળો';
   const firestore = useFirestore();
