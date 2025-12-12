@@ -41,6 +41,7 @@ export default function ReporterProfilePage() {
         exportContainer.style.left = '-9999px';
         exportContainer.style.top = '-9999px';
     
+        // Force light theme for PNG rendering
         const existingClasses = document.documentElement.className;
         exportContainer.className = existingClasses.replace('dark', '') + ' light';
         
