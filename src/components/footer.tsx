@@ -12,9 +12,6 @@ export function Footer({ lang }: { lang: string }) {
           <div className="space-y-4 md:col-span-1">
             <Link href={`/${lang}`} className="flex items-center space-x-2 text-foreground">
               <Image src="/logo.png" alt="JD News Logo" width={32} height={32} className="h-8 w-8" />
-              <span className="text-xl font-bold font-headline">
-                JD News
-              </span>
             </Link>
             <p className="text-sm">
               Your trusted source for news.

@@ -100,9 +100,6 @@ export function Header({ lang }: { lang: string }) {
         <div className="mr-4 flex">
           <Link href={`/${lang}`} className="flex items-center space-x-2">
             <Image src="/logo.png" alt="JD News Logo" width={32} height={32} className="h-8 w-8" />
-            <span className="font-bold sm:inline-block font-headline">
-              JD News
-            </span>
           </Link>
         </div>
         
