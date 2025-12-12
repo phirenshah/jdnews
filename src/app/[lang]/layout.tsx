@@ -1,20 +1,22 @@
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { SectionHeader } from '@/components/section-header';
+import { use } from 'react';
 
 export default function PublicLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { lang: string };
+  params: Promise<{ lang: string }>;
 }) {
+  const { lang } = use(params);
   return (
     <div className="flex min-h-screen flex-col">
-      <Header lang={params.lang} />
-      <SectionHeader lang={params.lang} />
+      <Header lang={lang} />
+      <SectionHeader lang={lang} />
       <main className="flex-1">{children}</main>
-      <Footer lang={params.lang} />
+      <Footer lang={lang} />
     </div>
   );
 }
