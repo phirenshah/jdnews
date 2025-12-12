@@ -26,11 +26,11 @@ import { useFirebase } from '@/firebase';
 
 
 const navLinks = [
-  { name: 'Home', href: '' },
-  { name: 'Team', href: '/team' },
-  { name: 'About', href: '/about' },
-  { name: 'Donate', href: '/donate' },
-  { name: 'Advertise', href: '/advertise' },
+    { name: 'Home', href: '' },
+    { name: 'Team', href: '/team' },
+    { name: 'About', href: '/about' },
+    { name: 'Donate', href: '/donate' },
+    { name: 'Advertise', href: '/advertise' },
 ];
 
 function AuthButton({ lang }: { lang: string }) {
@@ -114,7 +114,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
               </SheetHeader>
             <div className="flex flex-col gap-4 p-4">
               <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                <Image src="/logo.png" alt="JD News Logo" width={120} height="0" style={{height: 'auto'}} />
+                <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
               </Link>
               <nav className="flex flex-col gap-4">
                 {navLinks.map((link) => (
@@ -164,7 +164,7 @@ export function Header({ lang }: { lang: string }) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         
-        <div className="flex items-center mr-8">
+        <div className="mr-4 flex items-center">
           <Link href={`/${lang}`} className="flex items-center">
             <Image src="/logo.png" alt="JD News Logo" width={120} height="0" style={{height: 'auto'}} />
           </Link>
@@ -183,28 +183,26 @@ export function Header({ lang }: { lang: string }) {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
-            <div className="hidden sm:block">
-                <div className={cn("relative transition-all duration-300", isSearchOpen ? "w-48" : "w-8")}>
-                     <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn("absolute left-0 top-1/2 -translate-y-1/2 h-8 w-8 z-10", isSearchOpen && "pointer-events-none")}
-                        onClick={() => setIsSearchOpen(true)}
-                        aria-label="Open search"
-                    >
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <Input
-                        ref={searchInputRef}
-                        type="search"
-                        placeholder="Search..."
-                        className={cn(
-                            "h-8 pl-9 w-full transition-all duration-300 ease-in-out",
-                            isSearchOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-                        )}
-                        onBlur={() => setIsSearchOpen(false)}
-                    />
-                </div>
+            <div className={cn("relative transition-all duration-300 md:block hidden", isSearchOpen ? "w-48" : "w-8")}>
+                 <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn("absolute left-0 top-1/2 -translate-y-1/2 h-8 w-8 z-10", isSearchOpen && "pointer-events-none")}
+                    onClick={() => setIsSearchOpen(true)}
+                    aria-label="Open search"
+                >
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                </Button>
+                <Input
+                    ref={searchInputRef}
+                    type="search"
+                    placeholder="Search..."
+                    className={cn(
+                        "h-8 pl-9 w-full transition-all duration-300 ease-in-out",
+                        isSearchOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+                    )}
+                    onBlur={() => setIsSearchOpen(false)}
+                />
             </div>
           
           <div className="hidden md:flex items-center gap-2">

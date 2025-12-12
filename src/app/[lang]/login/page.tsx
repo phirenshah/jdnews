@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase/auth/use-user';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   createUserWithEmailAndPassword,
@@ -48,7 +48,8 @@ const GoogleIcon = () => (
 );
 
 
-export default function LoginPage({ params: { lang } }: { params: { lang: string } }) {
+export default function LoginPage({ params }: { params: { lang: string } }) {
+  const { lang } = params;
   const { auth } = useFirebase();
   const { user, isUserLoading } = useAuth();
   const router = useRouter();
