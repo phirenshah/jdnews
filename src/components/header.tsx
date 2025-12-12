@@ -89,6 +89,14 @@ function AuthButton({ lang }: { lang: string }) {
 export function Header({ lang }: { lang: string }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+    const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+    React.useEffect(() => {
+        if (isSearchOpen) {
+            searchInputRef.current?.focus();
+        }
+    }, [isSearchOpen]);
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -113,52 +121,39 @@ export function Header({ lang }: { lang: string }) {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
-            <div className={cn("relative sm:block", isSearchOpen ? "w-full max-w-xs" : "w-auto")}>
-                <div className={cn("relative transition-all duration-300", isSearchOpen ? "w-full" : "w-auto")}>
-                    <div className={cn("absolute inset-y-0 left-0 flex items-center", isSearchOpen ? "pl-3 pointer-events-none" : "pointer-events-auto")}>
-                         <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setIsSearchOpen(true)}
-                            aria-label="Open search"
-                        >
-                            <Search className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                    </div>
+            <div className="hidden sm:block">
+                <div className={cn("relative transition-all duration-300", isSearchOpen ? "w-48" : "w-8")}>
+                     <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn("absolute left-0 top-1/2 -translate-y-1/2 h-8 w-8 z-10", isSearchOpen && "pointer-events-none")}
+                        onClick={() => setIsSearchOpen(true)}
+                        aria-label="Open search"
+                    >
+                        <Search className="h-4 w-4 text-muted-foreground" />
+                    </Button>
                     <Input
+                        ref={searchInputRef}
                         type="search"
                         placeholder="Search..."
                         className={cn(
-                            "pl-9 w-full transition-all duration-300 ease-in-out",
-                            isSearchOpen ? "opacity-100" : "opacity-0 w-0"
+                            "h-8 pl-9 w-full transition-all duration-300 ease-in-out",
+                            isSearchOpen ? "opacity-100" : "opacity-0 pointer-events-none"
                         )}
                         onBlur={() => setIsSearchOpen(false)}
                     />
-                    {isSearchOpen && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                            onClick={() => setIsSearchOpen(false)}
-                            aria-label="Close search"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    )}
                 </div>
             </div>
           
-          <div className="hidden md:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <LanguageToggle />
             <ThemeToggle />
-            <AuthButton lang={lang} />
+            <div className="hidden md:flex">
+                <AuthButton lang={lang} />
+            </div>
           </div>
 
           <div className="flex items-center md:hidden">
-              <LanguageToggle />
-              <ThemeToggle />
-              <AuthButton lang={lang} />
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -188,6 +183,9 @@ export function Header({ lang }: { lang: string }) {
                         </Link>
                       ))}
                     </nav>
+                     <div className="mt-4 border-t pt-4">
+                        <AuthButton lang={lang} />
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
