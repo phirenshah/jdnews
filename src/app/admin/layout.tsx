@@ -40,10 +40,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-        router.push('/login');
+        router.push(`/login?redirect=${pathname}`);
     }
     // Add logic to check for admin role later
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, pathname]);
 
   const handleLogout = () => {
     signOut(auth);

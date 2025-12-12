@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useAuth } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
@@ -25,7 +25,7 @@ export default function ProfilePage({ params: { lang } }: { params: { lang: stri
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push(`/${lang}/login`);
+      router.push(`/${lang}/login?redirect=/${lang}/profile`);
     }
     if (user) {
         setDisplayName(user.displayName || '');
