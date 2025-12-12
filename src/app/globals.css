@@ -87,4 +87,25 @@
     .halo-effect {
         @apply shadow-[0_0_20px_theme(colors.primary/0.2),0_0_40px_theme(colors.primary/0.1)];
     }
+
+    /* Flip Card Styles */
+    .flip-card {
+        @apply bg-transparent;
+    }
+    .flip-card-inner {
+        @apply relative w-full h-full text-center transition-transform duration-700;
+        transform-style: preserve-3d;
+    }
+    .flip-card:hover .flip-card-inner {
+        transform: rotateY(180deg);
+    }
+    .flip-card-front,
+    .flip-card-back {
+        @apply absolute w-full h-full;
+        -webkit-backface-visibility: hidden; /* Safari */
+        backface-visibility: hidden;
+    }
+    .flip-card-back {
+        transform: rotateY(180deg);
+    }
 }
