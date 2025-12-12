@@ -114,7 +114,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
               </SheetHeader>
             <div className="flex flex-col gap-4 p-4">
               <Link href={`/${lang}`} className="flex items-center space-x-2 mb-4" onClick={() => setIsMobileMenuOpen(false)}>
-                <Image src="/logo.png" alt="JD News Logo" width={120} height={0} style={{height: 'auto'}} />
+                <Image src="/logo.png" alt="JD News Logo" width={120} height="0" style={{height: 'auto'}} />
               </Link>
               <nav className="flex flex-col gap-4">
                 {navLinks.map((link) => (
