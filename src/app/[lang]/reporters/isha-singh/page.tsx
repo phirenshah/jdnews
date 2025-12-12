@@ -13,7 +13,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { PressCard } from '@/components/press-card';
+import { PressCardFront } from '@/components/press-card-front';
+import { PressCardBack } from '@/components/press-card-back';
 import html2canvas from 'html2canvas';
 import { createRoot } from 'react-dom/client';
 
@@ -53,14 +54,12 @@ export default function ReporterProfilePage() {
     
           await new Promise<void>(resolve => {
             frontRoot.render(
-              <div className="w-[340px] h-[540px]" style={{transform: "none"}}>
-                  <PressCard reporter={author} lang={lang} isForExport={true} forceState="front" />
-              </div>
+                <PressCardFront reporter={author} lang={lang} />
             );
             setTimeout(resolve, 500);
           });
     
-          const frontElement = frontDiv.querySelector('.flip-card-front');
+          const frontElement = frontDiv.querySelector('.w-\\[340px\\]');
           if (!frontElement) throw new Error("Front card element not found for PNG generation");
           const canvasFront = await html2canvas(frontElement as HTMLElement, { scale: 2 });
           const linkFront = document.createElement('a');
@@ -77,14 +76,14 @@ export default function ReporterProfilePage() {
           
           await new Promise<void>(resolve => {
             backRoot.render(
-              <div className="w-[340px] h-[540px]" style={{transform: "rotateY(180deg)"}}>
-                  <PressCard reporter={author} lang={lang} isForExport={true} forceState="back" />
-              </div>
+                <div style={{transform: "rotateY(180deg)"}}>
+                    <PressCardBack reporter={author} lang={lang} />
+                </div>
             );
             setTimeout(resolve, 500);
           });
           
-          const backElement = backDiv.querySelector('.flip-card-back');
+          const backElement = backDiv.querySelector('.w-\\[340px\\]');
           if (!backElement) throw new Error("Back card element not found for PNG generation");
           const canvasBack = await html2canvas(backElement as HTMLElement, { scale: 2 });
           const linkBack = document.createElement('a');
@@ -193,9 +192,9 @@ export default function ReporterProfilePage() {
                         <DialogTitle>Reporter Press Card</DialogTitle>
                     </VisuallyHidden>
                     <div className="flex flex-col items-center gap-4">
-                        <div className="flex gap-4">
-                            <PressCard reporter={author} lang={lang} forceState="front" />
-                            <PressCard reporter={author} lang={lang} forceState="back" />
+                         <div className="flex flex-wrap justify-center gap-4">
+                            <PressCardFront reporter={author} lang={lang} />
+                            <PressCardBack reporter={author} lang={lang} />
                         </div>
                         <div className="flex gap-4">
                             <Button
