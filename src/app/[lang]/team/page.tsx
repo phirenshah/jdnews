@@ -1,15 +1,13 @@
 'use client';
-import { React, use } from 'react';
+import { use } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { useCollection } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import { useFirestore, useMemoFirebase } from '@/firebase';
+import { placeholderReporters } from '@/lib/placeholder-data';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 
 const QrCodeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -34,35 +32,13 @@ const QrCodeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const ReporterCardSkeleton = () => (
-    <Card className="text-center shadow-lg">
-        <CardHeader className="relative">
-            <Skeleton className="w-32 h-32 mx-auto rounded-full" />
-        </CardHeader>
-        <CardContent>
-            <Skeleton className="h-6 w-3/4 mx-auto mb-2" />
-            <Skeleton className="h-4 w-1/2 mx-auto" />
-            <Separator className="my-4" />
-            <div className="flex justify-around items-center text-sm text-muted-foreground">
-                <QrCodeIcon className="h-8 w-8 text-foreground/50" />
-                <Skeleton className="h-4 w-16" />
-            </div>
-        </CardContent>
-    </Card>
-);
-
 export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
   const { lang } = use(params);
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
-  const subtitle = lang === 'en' ? 'Meet the team behind the news' : 'સમાચાર પાછળની ટીમને મળો';
-  const firestore = useFirestore();
-
-  const authorsCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'authors') : null),
-    [firestore]
-  );
-  const { data: authors, isLoading } = useCollection(authorsCollection);
-
+  const subtitle =
+    lang === 'en'
+      ? 'Meet the team behind the news'
+      : 'સમાચાર પાછળની ટીમને મળો';
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -72,48 +48,51 @@ export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' 
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {isLoading && (
-            <>
-                <ReporterCardSkeleton />
-                <ReporterCardSkeleton />
-                <ReporterCardSkeleton />
-                <ReporterCardSkeleton />
-            </>
-        )}
-        {!isLoading && authors?.map((reporter: any) => {
+        {placeholderReporters.map((reporter) => {
+          const reporterImage = PlaceHolderImages.find(
+            (img) => img.id === reporter.imageId
+          );
           return (
-            <Card key={reporter.id} className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
-             <Link href={`/${lang}/team/${reporter.id}`}>
-              <CardHeader className="relative">
-                <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-background ring-2 ring-primary">
-                  {reporter.profilePictureUrl && (
-                    <Image
-                      src={reporter.profilePictureUrl}
-                      alt={`${reporter.firstName} ${reporter.lastName}`}
-                      width={128}
-                      height={128}
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-                 {reporter.verified && (
-                    <Badge variant="default" className="absolute top-2 right-2 bg-green-500 hover:bg-green-600">
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Verified
-                    </Badge>
-                  )}
-              </CardHeader>
-              <CardContent>
-                <h2 className="text-xl font-bold font-headline">{reporter.firstName} {reporter.lastName}</h2>
-                <p className="text-primary font-medium">{reporter.title}</p>
-                <Separator className="my-4" />
-                <div className="flex justify-around items-center text-sm text-muted-foreground">
+            <Card
+              key={reporter.id}
+              className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300"
+            >
+              <Link href={`/${lang}/team/${reporter.id}`}>
+                <CardHeader className="relative p-4">
+                  <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-4 border-background ring-2 ring-primary">
+                    {reporterImage && (
+                      <Image
+                        src={reporterImage.imageUrl}
+                        alt={reporter.name}
+                        width={128}
+                        height={128}
+                        className="object-cover"
+                        data-ai-hint={reporterImage.imageHint}
+                      />
+                    )}
+                  </div>
+                  {/* For now, let's assume all placeholders can be shown as "verified" for UI purposes */}
+                  <Badge
+                    variant="default"
+                    className="absolute top-2 right-2 bg-green-500 hover:bg-green-600"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Verified
+                  </Badge>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <h2 className="text-xl font-bold font-headline">
+                    {reporter.name}
+                  </h2>
+                  <p className="text-primary font-medium">{reporter.title}</p>
+                  <Separator className="my-4" />
+                  <div className="flex justify-around items-center text-sm text-muted-foreground">
                     <div className="flex items-center space-x-2">
-                        <QrCodeIcon className="h-8 w-8 text-foreground" />
-                        <span>View Card</span>
+                      <QrCodeIcon className="h-8 w-8 text-foreground" />
+                      <span>View Card</span>
                     </div>
-                </div>
-              </CardContent>
+                  </div>
+                </CardContent>
               </Link>
             </Card>
           );
