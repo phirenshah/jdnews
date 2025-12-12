@@ -34,7 +34,7 @@ export function Footer({ lang }: { lang: string }) {
           <div>
             <h3 className="font-semibold text-foreground mb-4">About</h3>
             <ul className="space-y-2">
-              <li><Link href="#" className="hover:text-primary">About Us</Link></li>
+              <li><Link href={`/${lang}/about`} className="hover:text-primary">About Us</Link></li>
               <li><Link href={`/${lang}/reporters`} className="hover:text-primary">Our Reporters</Link></li>
               <li><Link href="#" className="hover:text-primary">Contact</Link></li>
               <li><Link href="#" className="hover:text-primary">Privacy Policy</Link></li>
@@ -48,7 +48,6 @@ export function Footer({ lang }: { lang: string }) {
                   Donate <Heart className="w-4 h-4 text-red-500" />
                 </Link>
               </li>
-              <li><Link href="#" className="hover:text-primary">Subscribe</Link></li>
               <li><Link href={`/${lang}/advertise`} className="hover:text-primary">Advertise</Link></li>
               <li><Link href="#" className="hover:text-primary">Careers</Link></li>
             </ul>

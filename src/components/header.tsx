@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 const navLinks = [
   { name: 'Home', href: '' },
   { name: 'Reporters', href: '/reporters' },
-  { name: 'Subscribe', href: '#' },
+  { name: 'About', href: '/about' },
   { name: 'Donate', href: '/donate' },
   { name: 'Advertise', href: '/advertise' },
 ];
@@ -88,6 +88,16 @@ function AuthButton({ lang }: { lang: string }) {
 
 const MobileNav = ({ lang }: { lang: string }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  
+  // Defer rendering of mobile-only components until client-side hydration
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+      setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="flex items-center md:hidden">
@@ -140,12 +150,6 @@ export function Header({ lang }: { lang: string }) {
         }
     }, [isSearchOpen]);
     
-    // Defer rendering of mobile-only components until client-side hydration
-    const [isMounted, setIsMounted] = useState(false);
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -200,8 +204,8 @@ export function Header({ lang }: { lang: string }) {
             <div className="hidden md:flex">
                 <AuthButton lang={lang} />
             </div>
+            <MobileNav lang={lang} />
           </div>
-          {isMounted && <MobileNav lang={lang} />}
         </div>
       </div>
     </header>

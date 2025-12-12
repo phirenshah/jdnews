@@ -83,6 +83,18 @@
       "description": "Related story image 3",
       "imageUrl": "https://images.unsplash.com/photo-1611689698949-1e776464ff23?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxoZWFsdGglMjBzY2llbmNlfGVufDB8fHx8MTc2NTU1NzYzN3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "health science"
+    },
+    {
+      "id": "about-hero",
+      "description": "Hero image for the about us page",
+      "imageUrl": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxuZXdzcm9vbXxlbnwwfHx8fDE3NjU1NTc2MzZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "newsroom office"
+    },
+    {
+      "id": "about-content",
+      "description": "Content image for the about us page",
+      "imageUrl": "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxqb3VybmFsaXNtfGVufDB8fHx8fDE3NjU0OTgxNzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "journalism reporting"
     }
   ]
 }
