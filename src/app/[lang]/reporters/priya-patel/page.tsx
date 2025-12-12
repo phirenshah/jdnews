@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,8 @@ import { PressCard } from '@/components/press-card';
 import html2canvas from 'html2canvas';
 import { createRoot } from 'react-dom/client';
 
-export default function ReporterProfilePage({ params }: { params: { lang: 'en' | 'gu', id: string } }) {
+export default function ReporterProfilePage() {
+    const params = useParams<{ lang: 'en' | 'gu', id: string }>();
     const { lang, id } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
     const [showBoth, setShowBoth] = useState(false);
