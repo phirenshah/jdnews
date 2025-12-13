@@ -15,56 +15,70 @@ service cloud.firestore {
     }
 
     function getUserRole(uid) {
+      // Check for a 'role' field in the /roles/{uid} document.
+      // Use the 'get' function to read a document from a different path.
       return get(/databases/$(database)/documents/roles/$(uid)).data.role;
     }
 
     function isAdmin() {
-      // Hardcode one user as admin for bootstrapping, or rely on roles.
-      return isSignedIn() && (getUserRole(request.auth.uid) == 'director' || request.auth.token.email == 'jdnewsgujarati@gmail.com');
+      // An admin is a signed-in user with the role of 'director'
+      // or the specific hardcoded admin email.
+      return isSignedIn() && 
+             (getUserRole(request.auth.uid) == 'director' || request.auth.token.email == 'jdnewsgujarati@gmail.com');
     }
 
     /* ---------------- USERS ---------------- */
 
     match /users/{userId} {
-      // Admin has full control over all user documents.
-      allow read, write: if isAdmin();
+      // Admins have full control over all user documents.
+      allow read, write, list: if isAdmin();
       
-      // A user can read and update their own document, but not change their role.
-      allow get, create: if isOwner(userId);
+      // A user can read their own document.
+      allow get: if isOwner(userId);
+      
+      // A user can update their own document, but they cannot change their role.
       allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
+      
+      // A user can create their own document upon signup.
+      allow create: if isOwner(userId);
     }
 
     /* ---------------- ROLES ---------------- */
 
     match /roles/{uid} {
-      // Only admins can read or write roles.
+      // Only admins can create, read, and write roles. This is crucial for security.
       allow read, write: if isAdmin();
     }
 
     /* ---------------- AUTHORS ---------------- */
 
     match /authors/{authorId} {
+      // Anyone can view author profiles.
       allow get, list: if true;
+      // Only admins can create, update, or delete authors.
       allow create, update, delete: if isAdmin();
     }
 
     /* ---------------- ARTICLES ---------------- */
 
     match /articles/{articleId} {
+      // Anyone can read articles.
       allow get, list: if true;
+      // Only admins can manage articles.
       allow create, update, delete: if isAdmin();
     }
 
     /* ---------------- DONATIONS ---------------- */
 
     match /donations/{donationId} {
+      // An admin or the user who made the donation can view it.
       allow get: if isAdmin() || isOwner(resource.data.userId);
+      // Only admins can list all donations.
       allow list: if isAdmin();
-      allow create: if isSignedIn() &&
-        request.resource.data.userId == request.auth.uid;
+      // Any signed-in user can create a donation for themselves.
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Only the user who made the donation can update or delete it.
       allow update, delete: if isOwner(resource.data.userId);
     }
   }
 }
-
-    

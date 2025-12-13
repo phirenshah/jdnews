@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Trash, Camera, Upload, Loader2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, Camera, Upload, Loader2, Edit } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -58,6 +58,7 @@ export default function TeamAdminPage() {
     const { data: users, isLoading: areUsersLoading } = useCollection(usersCollection);
 
     const [isAddReporterDialogOpen, setIsAddReporterDialogOpen] = useState(false);
+    const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
     const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
 
     const [findUserEmail, setFindUserEmail] = useState('');
@@ -65,6 +66,7 @@ export default function TeamAdminPage() {
     const [foundUser, setFoundUser] = useState<any>(null);
     const [findUserError, setFindUserError] = useState<string | null>(null);
 
+    const [editingUser, setEditingUser] = useState<any>(null);
     const [newReporter, setNewReporter] = useState({
         title: '',
         dob: '',
@@ -87,6 +89,7 @@ export default function TeamAdminPage() {
         setFindUserError(null);
         setImageFile(null);
         setImagePreview(null);
+        setEditingUser(null);
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,9 +140,10 @@ export default function TeamAdminPage() {
                 setFoundUser({ id: userDoc.id, ...userDoc.data() });
             }
         } catch (error: any) {
-             const defaultMessage = "An error occurred while searching for the user.";
+             const defaultMessage = "An error occurred while searching for the user. Firestore may require an index. Please check the browser console for a link to create one.";
              const errorMessage = error.message ? `${defaultMessage} Firestore error: ${error.message}` : defaultMessage;
              setFindUserError(errorMessage);
+             console.error(error);
         } finally {
             setIsFindingUser(false);
         }
@@ -214,6 +218,36 @@ export default function TeamAdminPage() {
             });
         }
     };
+
+    const openEditDialog = (user: any) => {
+        setEditingUser(user);
+        setIsEditUserDialogOpen(true);
+    };
+
+    const handleUpdateUser = async () => {
+        if (!firestore || !editingUser) return;
+        const userDocRef = doc(firestore, 'users', editingUser.id);
+        
+        try {
+            setDocumentNonBlocking(userDocRef, {
+                firstName: editingUser.firstName,
+                lastName: editingUser.lastName,
+            }, { merge: true });
+
+            toast({
+                title: 'User Updated',
+                description: "The user's profile has been successfully updated.",
+            });
+            setIsEditUserDialogOpen(false);
+            setEditingUser(null);
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: "Error Updating User",
+                description: error.message,
+            });
+        }
+    };
     
     const handleRoleChange = async (userId: string, newRole: string) => {
         if (!firestore || !userId) return;
@@ -222,10 +256,6 @@ export default function TeamAdminPage() {
         
         setDocumentNonBlocking(userDocRef, { role: newRole }, { merge: true });
         setDocumentNonBlocking(roleDocRef, { role: newRole }, { merge: true });
-      
-        if (newRole === 'director') {
-          setDocumentNonBlocking(roleDocRef, { role: 'director' }, { merge: true });
-        }
         
         toast({
           title: "Role Updated",
@@ -456,6 +486,10 @@ export default function TeamAdminPage() {
                                 </DropdownMenuTrigger>
                                 {canChangeRole && <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem onSelect={() => openEditDialog(user)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Edit User
+                                    </DropdownMenuItem>
                                     <DropdownMenuSub>
                                         <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
                                         <DropdownMenuPortal>
@@ -484,6 +518,47 @@ export default function TeamAdminPage() {
             </Table>
       </CardContent>
     </Card>
+
+    <Dialog open={isEditUserDialogOpen} onOpenChange={(isOpen) => { setIsEditUserDialogOpen(isOpen); if (!isOpen) setEditingUser(null); }}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit User Profile</DialogTitle>
+                <DialogDescription>
+                    Update the user's name and other details.
+                </DialogDescription>
+            </DialogHeader>
+            {editingUser && (
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="firstName">First Name</Label>
+                            <Input
+                                id="firstName"
+                                value={editingUser.firstName}
+                                onChange={(e) => setEditingUser({ ...editingUser, firstName: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="lastName">Last Name</Label>
+                            <Input
+                                id="lastName"
+                                value={editingUser.lastName}
+                                onChange={(e) => setEditingUser({ ...editingUser, lastName: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input value={editingUser.email} disabled />
+                    </div>
+                </div>
+            )}
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditUserDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleUpdateUser}>Save Changes</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
     </>
   );
 }

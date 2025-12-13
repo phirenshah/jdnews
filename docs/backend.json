@@ -213,7 +213,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Role",
       "type": "object",
-      "description": "A document that stores the role of a user.",
+      "description": "A document that stores the role of a user, used for role-based access control.",
       "properties": {
         "role": {
           "type": "string",
@@ -246,7 +246,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores user profile information. Accessible only by the authenticated user. Includes 'userId' as the document ID.",
+          "description": "Stores user profile information. Accessible by the authenticated user and fully by admins.",
           "params": [
             {
               "name": "userId",
@@ -262,7 +262,7 @@
           "schema": {
             "$ref": "#/backend/entities/Role"
           },
-          "description": "A collection where a document with a user's UID stores their role. This collection is checked in security rules to determine permissions.",
+          "description": "A collection where a document with a user's UID stores their role. This is checked in security rules to determine admin permissions. Only admins can modify this collection.",
           "params": [
             {
               "name": "uid",
@@ -278,7 +278,7 @@
           "schema": {
             "$ref": "#/backend/entities/Author"
           },
-          "description": "Stores author profiles. The owner can create and manage authors. Includes 'authorId' as the document ID.",
+          "description": "Stores public author profiles. Admins can create and manage authors.",
           "params": [
             {
               "name": "authorId",
@@ -294,7 +294,7 @@
           "schema": {
             "$ref": "#/backend/entities/Article"
           },
-          "description": "Stores articles. Includes denormalized 'authorId' for authorization independence. The owner can create, read, update, and delete articles. Users can read articles.",
+          "description": "Stores articles. Publicly readable, but only manageable by admins.",
           "params": [
             {
               "name": "articleId",
@@ -310,7 +310,7 @@
           "schema": {
             "$ref": "#/backend/entities/Donation"
           },
-          "description": "Stores donation information. Includes 'userId' to track the donating user. Only the user and the owner can access.",
+          "description": "Stores donation information. Accessible by the donating user and fully by admins.",
           "params": [
             {
               "name": "donationId",
@@ -320,8 +320,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability. User profiles are separate from role data to allow for secure role-based access control without circular dependencies in security rules. The 'roles' collection is used specifically for authorization checks in security rules, while the 'users' collection stores public and private user data."
+    "reasoning": "The Firestore structure is designed for secure, role-based access. The `/roles` collection is critical for securely identifying admin users ('directors'), which is checked in security rules to grant elevated permissions across other collections like `/users`. This separation of user data and roles is a key security pattern."
   }
 }
-
-    
