@@ -38,6 +38,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
   const emailFromParams = searchParams.get('email');
@@ -60,38 +61,36 @@ export default function SignupPage() {
         toast({ variant: 'destructive', title: 'Missing fields', description: 'Please fill out all required fields.' });
         return;
     };
+    setIsSigningUp(true);
 
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const newUser = userCredential.user;
 
-        // Update profile display name
         await updateProfile(newUser, { displayName: `${firstName} ${lastName}`.trim() });
 
-        // Create user document in Firestore
         const userDocRef = doc(firestore, 'users', newUser.uid);
-        // The role is now managed in the /roles collection by an admin
-        // and defaults to 'member' in security rules if not present.
-        // We set the default role on the user object for client-side convenience.
-        const role = 'member'; 
+        
         setDocumentNonBlocking(userDocRef, {
             id: newUser.uid,
             email: newUser.email,
             firstName: firstName,
             lastName: lastName,
-            role: role,
+            role: 'member',
         }, { merge: true });
 
         toast({ title: 'Account Created!', description: 'Welcome to JD News.' });
-        router.push(redirectUrl);
+        // The `onAuthStateChanged` listener will pick up the new user,
+        // and the `useEffect` hook will redirect to the profile page.
     } catch (error: any) {
+        setIsSigningUp(false);
         if (error.code === 'auth/email-already-in-use') {
              toast({
                 variant: 'destructive',
                 title: 'Email already in use',
                 description: 'This email is already associated with an account. Please log in.',
             });
-            router.push(`/${lang}/login?email=${encodeURIComponent(email)}`);
+            router.push(`/${lang}/login?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectUrl)}`);
         } else {
             toast({
                 variant: 'destructive',
@@ -103,7 +102,7 @@ export default function SignupPage() {
   };
 
 
-  if (isUserLoading) {
+  if (isUserLoading || isSigningUp) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
@@ -155,7 +154,7 @@ export default function SignupPage() {
         </form>
          <div className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link href={`/${lang}/login`} className="underline hover:text-primary">
+            <Link href={`/${lang}/login?redirect=${encodeURIComponent(redirectUrl)}`} className="underline hover:text-primary">
                 Log in
             </Link>
         </div>

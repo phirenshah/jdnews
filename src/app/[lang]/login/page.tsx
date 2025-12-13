@@ -59,42 +59,51 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Start loading immediately
 
   const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
 
   useEffect(() => {
-    // Combine auth loading with component-level loading
-    setIsLoading(isUserLoading);
-
+    // This effect only handles redirecting an already logged-in user.
+    // It depends on the result of the `useAuth` hook.
     if (!isUserLoading && user) {
       router.push(redirectUrl);
     }
   }, [user, isUserLoading, router, redirectUrl]);
 
+
   useEffect(() => {
-    if (!auth || !firestore) return;
+    // This effect handles the result of a Google Sign-In redirect.
+    // It runs once on component mount.
+    if (!auth || !firestore) {
+        // If firebase services aren't ready, don't stop loading.
+        return;
+    };
     
     getRedirectResult(auth)
       .then((result) => {
-        if (result) {
+        if (result && result.user) {
+          // User has successfully signed in via redirect.
           const userDocRef = doc(firestore, 'users', result.user.uid);
-          const role = 'member';
-
+          
           setDocumentNonBlocking(userDocRef, {
             id: result.user.uid,
             email: result.user.email,
             firstName: result.user.displayName?.split(' ')[0] || '',
             lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
-            phoneNumber: result.user.phoneNumber,
-            role: role,
+            phoneNumber: result.user.phoneNumber || '',
+            role: 'member', // Default role on creation
           }, { merge: true });
 
           toast({ title: 'Signed in with Google' });
-          router.push(redirectUrl);
+          // The user state will update via `onAuthStateChanged`, triggering the other useEffect.
+          // No need to redirect here, let the other effect handle it.
         } else {
-           // No redirect result, so we are done loading
-           setIsLoading(false);
+           // No redirect result means the user is visiting the page normally.
+           // If there is no user from useAuth either, we can stop loading.
+           if(!user) {
+               setIsLoading(false);
+           }
         }
       })
       .catch((error) => {
@@ -104,46 +113,38 @@ export default function LoginPage() {
           title: 'Google Sign-In Failed',
           description: error.message,
         });
-        setIsLoading(false);
+        setIsLoading(false); // Stop loading on error
       });
-  }, [auth, firestore, toast, router, redirectUrl]);
+  }, [auth, firestore, toast, redirectUrl, user]);
+
 
   const handleGoogleSignIn = async () => {
     if (!auth) return;
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
-    // We don't await this. The useEffect hook will handle the result.
+    // Start the redirect flow. The result is handled by the useEffect hook.
     signInWithRedirect(auth, provider);
   };
 
   const handleEmailSignIn = async (e: FormEvent) => {
     e.preventDefault();
     if (!auth || !email || !password) return;
+    setIsLoading(true);
 
     try {
         await signInWithEmailAndPassword(auth, email, password);
         toast({ title: 'Login Successful' });
-        router.push(redirectUrl);
+        // The onAuthStateChanged listener will update the user state,
+        // and the first useEffect will handle the redirect.
     } catch (error: any) {
-        // This error code means the user doesn't exist.
-        if (error.code === 'auth/user-not-found') {
+        setIsLoading(false); // Stop loading on failure
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
             toast({
-                variant: 'default',
-                title: 'No Account Found',
-                description: 'Redirecting you to the sign up page.',
-            });
-            router.push(`/${lang}/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectUrl)}`);
-        } 
-        // This error code means the password was wrong or user doesn't exist
-        else if (error.code === 'auth/invalid-credential') {
-             toast({
                 variant: 'destructive',
                 title: 'Login Failed',
-                description: 'Incorrect email or password. Please try again.',
+                description: 'Incorrect email or password. Please try again or sign up.',
             });
-        } 
-        // Handle other potential errors.
-        else {
+        } else {
              toast({
                 variant: 'destructive',
                 title: 'Login Failed',
@@ -212,7 +213,7 @@ export default function LoginPage() {
             </form>
             <div className="text-center text-sm text-muted-foreground">
                 Don't have an account?{' '}
-                <Link href={`/${lang}/signup`} className="underline hover:text-primary">
+                <Link href={`/${lang}/signup?redirect=${encodeURIComponent(redirectUrl)}`} className="underline hover:text-primary">
                     Sign up
                 </Link>
             </div>
