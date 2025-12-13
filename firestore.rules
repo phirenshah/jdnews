@@ -45,19 +45,19 @@ service cloud.firestore {
     }
 
     /**
-     * Checks if the request UID matches the provided userId.
+     * Checks if the request UID matches the provided userId, ensuring the user is authenticated.
      * Used for path-based ownership rules.
      */
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
 
     /**
      * Checks if a user has admin privileges by looking for their UID
-     * in the /roles_admin collection.
+     * in the /roles_admin collection. Ensures the user is authenticated first.
      */
     function isAdmin() {
-      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     /**
