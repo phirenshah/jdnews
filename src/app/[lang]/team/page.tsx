@@ -1,4 +1,4 @@
-'use client';
+
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,8 +7,8 @@ import { placeholderReporters } from '@/lib/placeholder-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
 
-export default function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const { lang } = params;
+export default async function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
+  const { lang } = await params;
 
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
   const subtitle =

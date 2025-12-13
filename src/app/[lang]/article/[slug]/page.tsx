@@ -1,3 +1,4 @@
+
 import { placeholderArticles, placeholderReporters } from '@/lib/placeholder-data';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -17,8 +18,9 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function ArticlePage({ params }: { params: { lang: 'en' | 'gu'; slug: string } }) {
-  const article = placeholderArticles.find((a) => a.slug === params.slug);
+export default async function ArticlePage({ params }: { params: { lang: 'en' | 'gu'; slug: string } }) {
+  const { lang, slug } = await params;
+  const article = placeholderArticles.find((a) => a.slug === slug);
 
   if (!article) {
     notFound();
@@ -36,10 +38,10 @@ export default function ArticlePage({ params }: { params: { lang: 'en' | 'gu'; s
         <header className="container mx-auto px-4 py-8 md:py-16 text-center">
           <p className="text-primary font-semibold mb-2">{article.category}</p>
           <h1 className="font-headline text-4xl md:text-6xl font-bold leading-tight mb-4">
-            {article.title[params.lang]}
+            {article.title[lang]}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-6">
-            {article.excerpt[params.lang]}
+            {article.excerpt[lang]}
           </p>
           <div className="flex items-center justify-center space-x-4">
             {author && authorImage && (
@@ -51,7 +53,7 @@ export default function ArticlePage({ params }: { params: { lang: 'en' | 'gu'; s
             <div>
               <p className="font-semibold">{article.author}</p>
               <p className="text-sm text-muted-foreground">
-                Published on {new Date(article.publishedAt).toLocaleDateString(params.lang, { year: 'numeric', month: 'long', day: 'numeric' })}
+                Published on {new Date(article.publishedAt).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
             </div>
           </div>
@@ -61,7 +63,7 @@ export default function ArticlePage({ params }: { params: { lang: 'en' | 'gu'; s
           <div className="relative h-[300px] md:h-[500px] bg-muted">
             <Image
               src={articleImage.imageUrl}
-              alt={article.title[params.lang]}
+              alt={article.title[lang]}
               fill
               className="object-cover"
               data-ai-hint={articleImage.imageHint}
@@ -81,9 +83,9 @@ export default function ArticlePage({ params }: { params: { lang: 'en' | 'gu'; s
                 </div>
 
                 <div className="col-span-12 md:col-span-8 lg:col-span-7 prose prose-lg dark:prose-invert max-w-full font-body">
-                    <p className="lead">{article.content[params.lang].substring(0, 200)}...</p>
-                    <p>{article.content[params.lang]}</p>
-                    <p>{article.content[params.lang]}</p>
+                    <p className="lead">{article.content[lang].substring(0, 200)}...</p>
+                    <p>{article.content[lang]}</p>
+                    <p>{article.content[lang]}</p>
                 </div>
 
                 <div className="col-span-12 md:col-span-3 lg:col-span-3 space-y-8">
@@ -102,10 +104,10 @@ export default function ArticlePage({ params }: { params: { lang: 'en' | 'gu'; s
                     const storyImage = PlaceHolderImages.find(img => img.id === `related-${index + 1}`);
                     return (
                         <Card key={story.id} className="shadow-md">
-                            <Link href={`/${params.lang}/article/${story.slug}`}>
-                                {storyImage && <Image src={storyImage.imageUrl} alt={story.title[params.lang]} width={300} height={200} className="w-full h-40 object-cover rounded-t-lg" data-ai-hint={storyImage.imageHint} />}
+                            <Link href={`/${lang}/article/${story.slug}`}>
+                                {storyImage && <Image src={storyImage.imageUrl} alt={story.title[lang]} width={300} height={200} className="w-full h-40 object-cover rounded-t-lg" data-ai-hint={storyImage.imageHint} />}
                                 <CardContent className="p-4">
-                                    <h3 className="font-headline font-bold text-lg leading-snug">{story.title[params.lang]}</h3>
+                                    <h3 className="font-headline font-bold text-lg leading-snug">{story.title[lang]}</h3>
                                 </CardContent>
                             </Link>
                         </Card>

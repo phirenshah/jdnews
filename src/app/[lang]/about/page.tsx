@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { placeholderReporters } from '@/lib/placeholder-data';
@@ -6,7 +7,8 @@ import { Separator } from '@/components/ui/separator';
 import { Award, Target, Users, Newspaper } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-export default function AboutPage({ params: { lang } }: { params: { lang: 'en' | 'gu' } }) {
+export default async function AboutPage({ params }: { params: { lang: 'en' | 'gu' } }) {
+  const { lang } = await params;
   const translations = {
     en: {
       title: 'About JD News',
