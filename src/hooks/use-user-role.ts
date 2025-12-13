@@ -13,6 +13,7 @@ interface UseUserRoleResult {
   userProfile: DocumentData | null;
   isLoading: boolean;
   role: UserRole;
+  isAdmin: boolean;
 }
 
 export function useUserRole(): UseUserRoleResult {
@@ -26,15 +27,24 @@ export function useUserRole(): UseUserRoleResult {
     return null;
   }, [user?.uid, firestore]);
 
+  const adminDocRef = useMemo(() => {
+    if (user?.uid) {
+        return doc(firestore, 'roles_admin', user.uid);
+    }
+    return null;
+  }, [user?.uid, firestore]);
+
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
+  const { data: adminRoleDoc, isLoading: isAdminRoleLoading } = useDoc(adminDocRef);
 
   const role = userProfile?.role as UserRole;
+  const isAdmin = !!adminRoleDoc;
 
   return {
     user,
     userProfile,
-    isLoading: isAuthLoading || isProfileLoading,
+    isLoading: isAuthLoading || isProfileLoading || isAdminRoleLoading,
     role,
+    isAdmin,
   };
 }
-

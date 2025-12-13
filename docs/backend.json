@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Article": {
@@ -241,22 +242,6 @@
         }
       },
       {
-        "path": "/roles/{userId}",
-        "definition": {
-          "entityName": "Role",
-          "schema": {
-            "$ref": "#/backend/entities/Role"
-          },
-          "description": "Stores user roles for authorization. Accessible only by admins.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user, matching the Firebase Auth UID."
-            }
-          ]
-        }
-      },
-      {
         "path": "/roles_admin/{uid}",
         "definition": {
           "entityName": "AdminRole",
@@ -321,6 +306,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability. User profiles are separate from role data to allow for secure role-based access control without circular dependencies in security rules. The 'roles' collection is used specifically for authorization checks in security rules, while the 'users' collection stores public and private user data."
+    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability. User profiles are separate from role data to allow for secure role-based access control without circular dependencies in security rules. The 'roles_admin' collection is used specifically for authorization checks in security rules, while the 'users' collection stores public and private user data."
   }
 }

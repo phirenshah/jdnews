@@ -22,17 +22,16 @@ service cloud.firestore {
     /* ---------------- USERS ---------------- */
 
     match /users/{userId} {
-
-      // Admin: full control
-      allow get, list, create, update, delete: if isAdmin();
-
-      // Normal user: manage own profile (no delete)
+      // Admins have full control, including querying.
+      allow read, write: if isAdmin();
+      
+      // Normal users can get and update their own document, but not delete or list others.
       allow get, create, update: if isOwner(userId);
     }
     
     match /roles/{userId} {
       // Only admins can interact with role documents.
-      allow get, create, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
       // Listing roles is denied for security.
       allow list: if false; 
     }
@@ -42,7 +41,8 @@ service cloud.firestore {
     match /roles_admin/{uid} {
         // Only admins should be able to check for this document's existence.
         // Nobody can write to it from the client.
-        allow get, list, create, update, delete: if false;
+        allow get: if isAdmin();
+        allow list, create, update, delete: if false;
     }
 
     /* ---------------- AUTHORS ---------------- */

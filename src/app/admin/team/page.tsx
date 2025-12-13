@@ -44,10 +44,9 @@ import axios from "axios";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function TeamAdminPage() {
-    const { user: adminUser, role: adminRole, isLoading: isRoleLoading } = useUserRole();
+    const { user: adminUser, isAdmin, isLoading: isRoleLoading } = useUserRole();
     const { firestore } = useFirebase();
     const { toast } = useToast();
-    const isAdmin = adminRole === 'director';
 
     const usersCollection = useMemoFirebase(() => {
         if (firestore && isAdmin) {
@@ -137,8 +136,11 @@ export default function TeamAdminPage() {
                 const userDoc = querySnapshot.docs[0];
                 setFoundUser({ id: userDoc.id, ...userDoc.data() });
             }
-        } catch (error) {
-            setFindUserError("An error occurred while searching for the user.");
+        } catch (error: any) {
+             const defaultMessage = "An error occurred while searching for the user.";
+             // Firebase often provides a helpful message with a link to create a missing index.
+             const errorMessage = error.message ? `${defaultMessage} Firestore error: ${error.message}` : defaultMessage;
+             setFindUserError(errorMessage);
         } finally {
             setIsFindingUser(false);
         }
@@ -151,7 +153,7 @@ export default function TeamAdminPage() {
         if (imageFile) {
             try {
                 const formData = new FormData();
-                formData.append('key', process.env.NEXT_PUBLIC_IMGBB_API_KEY!);
+                formData.append('key', "3f5f08b61f4298484f11df25a094c176");
                 formData.append('image', imageFile);
 
                 const response = await axios.post('https://api.imgbb.com/1/upload', formData);
@@ -317,7 +319,7 @@ export default function TeamAdminPage() {
          <div className="ml-auto flex items-center gap-2">
             <Dialog open={isAddReporterDialogOpen} onOpenChange={(isOpen) => { setIsAddReporterDialogOpen(isOpen); if (!isOpen) resetForm(); }}>
                 <DialogTrigger asChild>
-                    <Button>
+                    <Button disabled={!isAdmin}>
                         <PlusCircle className="h-4 w-4 mr-2" />
                         Add Reporter
                     </Button>
@@ -441,7 +443,8 @@ export default function TeamAdminPage() {
             </TableHeader>
             <TableBody>
                 {isLoading && <TableRow><TableCell colSpan={4} className="text-center">Loading users...</TableCell></TableRow>}
-                {!isLoading && users?.map((user: any) => {
+                {!isLoading && !isAdmin && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">You must be an admin to manage users.</TableCell></TableRow>}
+                {!isLoading && isAdmin && users?.map((user: any) => {
                     const canChangeRole = adminUser?.uid !== user.id;
                     return (
                         <TableRow key={user.id}>
