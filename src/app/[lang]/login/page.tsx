@@ -22,7 +22,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const formatErrorMessage = (code: string) => {
     switch (code) {
-      case 'auth/invalid-email': return 'Invalid email address format.';
+      case 'auth/invalid-email': return 'Invalid email address. Redirecting to sign up...';
       case 'auth/user-disabled': return 'This account has been disabled.';
       case 'auth/user-not-found': return 'No account found with this email. Redirecting to sign up...';
       case 'auth/invalid-credential': return 'Incorrect email or password.';
@@ -62,15 +62,18 @@ export default function LoginPage() {
       // The useEffect will handle the redirect
     } catch (error: any) {
        const errorMessage = formatErrorMessage(error.code);
+       const shouldRedirect = error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email';
+
        toast({
           variant: 'destructive',
           title: 'Login Failed',
           description: errorMessage,
       });
-      if (error.code === 'auth/user-not-found') {
+
+      if (shouldRedirect) {
         setTimeout(() => {
             router.push(`/${lang}/signup?email=${encodeURIComponent(email)}`);
-        }, 2000);
+        }, 1500);
       }
     } finally {
         setIsLoading(false);
