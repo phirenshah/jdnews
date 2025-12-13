@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useAuth } from '@/firebase/auth/use-user';
+import { useUser } from '@/firebase/auth/use-user';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc, DocumentData } from 'firebase/firestore';
 
@@ -16,7 +16,7 @@ interface UseUserRoleResult {
 }
 
 export function useUserRole(): UseUserRoleResult {
-  const { user, isUserLoading: isAuthLoading } = useAuth();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const { firestore } = useFirebase();
 
   // Guard: Only create doc refs if user is authenticated

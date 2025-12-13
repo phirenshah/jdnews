@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/firebase/auth/use-user';
+import { useUser } from '@/firebase/auth/use-user';
 import Image from 'next/image';
 import { useState, useEffect, FormEvent } from 'react';
 import {
@@ -24,12 +23,13 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import type { UserProfile } from '@/lib/definitions';
 
 export default function SignupPage() {
   const params = useParams();
   const lang = params.lang as string;
   const { auth, firestore } = useFirebase();
-  const { user, isUserLoading } = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -51,7 +51,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push(redirectUrl);
+      router.replace(redirectUrl);
     }
   }, [user, isUserLoading, router, redirectUrl]);
 
@@ -71,17 +71,20 @@ export default function SignupPage() {
 
         const userDocRef = doc(firestore, 'users', newUser.uid);
         
-        setDocumentNonBlocking(userDocRef, {
+        const userProfile: Partial<UserProfile> = {
             id: newUser.uid,
             email: newUser.email,
             firstName: firstName,
             lastName: lastName,
-            role: 'member',
-        }, { merge: true });
+            role: 'member', // Default role
+        };
+
+        // This call is now non-blocking and will be handled by the provider's logic
+        setDocumentNonBlocking(userDocRef, userProfile, { merge: true });
 
         toast({ title: 'Account Created!', description: 'Welcome to JD News.' });
-        // The `onAuthStateChanged` listener will pick up the new user,
-        // and the `useEffect` hook will redirect to the profile page.
+        // The `onAuthStateChanged` listener in the provider will pick up the new user,
+        // and the `useEffect` hook will redirect.
     } catch (error: any) {
         setIsSigningUp(false);
         if (error.code === 'auth/email-already-in-use') {
@@ -148,8 +151,8 @@ export default function SignupPage() {
                 <Label htmlFor="password">Password</Label>
                 <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
-            <Button type="submit" className="w-full">
-              Sign Up
+            <Button type="submit" className="w-full" disabled={isSigningUp}>
+              {isSigningUp ? 'Signing Up...' : 'Sign Up'}
             </Button>
         </form>
          <div className="mt-4 text-center text-sm text-muted-foreground">

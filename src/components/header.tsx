@@ -8,7 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/firebase/auth/use-user';
+import { useUser } from '@/firebase/auth/use-user';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +40,7 @@ const navLinks = [
 ];
 
 function AuthButton({ lang }: { lang: string }) {
-  const { user, isUserLoading } = useAuth();
+  const { user, isUserLoading } = useUser();
   const { auth } = useFirebase();
   const { isAdmin } = useUserRole();
 

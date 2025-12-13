@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -16,15 +15,12 @@ import { useState, useEffect, FormEvent } from 'react';
 import {
   GoogleAuthProvider,
   signInWithRedirect,
-  getRedirectResult,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { useFirebase, useUser } from '@/firebase';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { doc } from 'firebase/firestore';
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
@@ -50,8 +46,8 @@ const GoogleIcon = () => (
 export default function LoginPage() {
   const params = useParams();
   const lang = params.lang as string;
-  const { auth, firestore } = useFirebase();
-  const { user, isUserLoading } = useUser();
+  const { auth } = useFirebase();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -61,62 +57,22 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
-
+  
   useEffect(() => {
-    // This effect is for redirecting the user *after* a successful login.
-    // It also handles the case where a logged-in user visits the login page.
-    if (!isUserLoading && user) {
-      router.replace(redirectUrl);
+    // This is the single source of truth for auth state.
+    // If auth is still loading, we wait.
+    if (isAuthLoading) {
+        setIsLoading(true);
+        return;
     }
-  }, [user, isUserLoading, router, redirectUrl]);
-
-
-  useEffect(() => {
-    // This effect is specifically for handling the result of a Google Sign-In redirect.
-    // It runs once on page load.
-    if (!auth || !firestore) {
-        return; // Wait for Firebase services to be available.
-    };
-    
-    getRedirectResult(auth)
-      .then((result) => {
-        // If 'result' is not null, it means the user just came back from Google's sign-in page.
-        if (result && result.user) {
-          // This is a new sign-in via redirect. Create their user document.
-          const userDocRef = doc(firestore, 'users', result.user.uid);
-          
-          setDocumentNonBlocking(userDocRef, {
-            id: result.user.uid,
-            email: result.user.email,
-            firstName: result.user.displayName?.split(' ')[0] || '',
-            lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
-            phoneNumber: result.user.phoneNumber || '',
-            role: 'member',
-          }, { merge: true });
-
-          toast({ title: 'Signed in with Google' });
-          // The `user` state will update via the onAuthStateChanged listener,
-          // which will then trigger the redirection effect above.
-        } else {
-           // No redirect result means the user is visiting the page normally or has already been processed.
-           // If there is no user session found by the main `useUser` hook, we can safely stop loading.
-           if(!user) {
-               setIsLoading(false);
-           }
-        }
-      })
-      .catch((error) => {
-        console.error("Google Sign-In Redirect Error:", error);
-        toast({
-          variant: 'destructive',
-          title: 'Google Sign-In Failed',
-          description: error.message,
-        });
-        setIsLoading(false); // Stop loading on error.
-      });
-  // We only want this to run once on component mount to check for a redirect result.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth, firestore]);
+    // If user is logged in, redirect them.
+    if (user) {
+        router.replace(redirectUrl);
+    } else {
+    // If no user and auth is done loading, show the login form.
+        setIsLoading(false);
+    }
+  }, [user, isAuthLoading, router, redirectUrl]);
 
 
   const handleGoogleSignIn = async () => {
@@ -126,8 +82,9 @@ export default function LoginPage() {
     provider.setCustomParameters({
         prompt: 'select_account'
     });
-    // This initiates the redirect to Google. The result is handled by the useEffect hook above.
-    signInWithRedirect(auth, provider);
+    // This simply initiates the redirect. The onAuthStateChanged listener in the provider
+    // will handle the result and create the user document if needed.
+    await signInWithRedirect(auth, provider);
   };
 
   const handleEmailSignIn = async (e: FormEvent) => {
@@ -139,7 +96,7 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, email, password);
         toast({ title: 'Login Successful' });
         // The onAuthStateChanged listener will update the user state,
-        // and the first useEffect will handle the redirect.
+        // and the main useEffect will handle the redirect.
     } catch (error: any) {
         setIsLoading(false); // Stop loading on failure
         if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
@@ -158,8 +115,7 @@ export default function LoginPage() {
     }
   };
 
-  // Keep showing the loading spinner if the main user state is loading OR if the page-level loading state is active.
-  if (isLoading || isUserLoading) {
+  if (isLoading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
