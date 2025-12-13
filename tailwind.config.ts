@@ -15,7 +15,7 @@ export default {
         code: ['monospace'],
       },
       boxShadow: {
-        halo: '0 0 20px theme(colors.primary/0.2), 0 0 40px theme(colors.primary/0.1)',
+        halo: '0 0 20px hsl(var(--primary) / 0.2), 0 0 40px hsl(var(--primary) / 0.1)',
       },
       colors: {
         background: 'hsl(var(--background))',

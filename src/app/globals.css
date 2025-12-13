@@ -81,50 +81,16 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-
-  /* CSS for forcing light theme during export */
-  #press-card-export-container {
-    background: #ffffff !important;
-    color: #000000 !important;
-    color-scheme: light !important;
-  }
 }
 
 @layer components {
-    .halo-effect {
-        @apply shadow-halo;
+    .shadow-halo {
+        @apply shadow-[0_0_20px_theme(colors.primary/0.2),0_0_40px_theme(colors.primary/0.1)];
     }
 
-    /* Flip Card Styles */
-    .flip-card {
-        @apply bg-transparent;
-        @apply cursor-pointer;
-    }
-    .flip-card-inner {
-        @apply relative w-full h-full text-center transition-transform duration-700;
-        transform-style: preserve-3d;
-    }
-    
-    /* This handles hover on desktop and the class-based flip on mobile/touch */
-    .flip-card:hover .flip-card-inner,
-    .flip-card-inner.is-flipped {
-        transform: rotateY(180deg);
-    }
-
-    .flip-card-front,
-    .flip-card-back {
-        @apply absolute w-full h-full;
-        -webkit-backface-visibility: hidden; /* Safari */
-        backface-visibility: hidden;
-    }
-    .flip-card-back {
-        transform: rotateY(180deg);
-    }
-    
-    .export-mode * {
-      transform: none !important;
-      backface-visibility: visible !important;
-      animation: none !important;
-      transition: none !important;
+    .download-png-btn {
+        position: relative;
+        z-index: 999999 !important;
+        pointer-events: auto !important;
     }
 }

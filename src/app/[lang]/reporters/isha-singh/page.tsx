@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogTitle, DialogFooter } from '@/components/u
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
-import { toPng } from 'html-to-image';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 
 export default function ReporterProfilePage() {
@@ -23,6 +24,9 @@ export default function ReporterProfilePage() {
     const { lang } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
     const [clientReporterUrl, setClientReporterUrl] = useState('');
+
+    const frontCardRef = useRef<HTMLDivElement>(null);
+    const backCardRef = useRef<HTMLDivElement>(null);
     
     const author = placeholderReporters.find((r) => r.id === 'isha-singh');
     
@@ -40,37 +44,27 @@ export default function ReporterProfilePage() {
     const authorArticles = placeholderArticles.filter(a => a.author === author.name);
 
     const handleDownload = async () => {
-        const frontNode = document.createElement('div');
-        const backNode = document.createElement('div');
-        
-        document.body.appendChild(frontNode);
-        document.body.appendChild(backNode);
-
-        const frontDataUrl = await toPng(frontNode, {
-            cacheBust: true,
-            pixelRatio: 3,
-            backgroundColor: '#ffffff'
-        });
-
-        const backDataUrl = await toPng(backNode, {
-            cacheBust: true,
-            pixelRatio: 3,
-            backgroundColor: '#ffffff'
-        });
-
-        const downloadLinkFront = document.createElement('a');
-        downloadLinkFront.download = `${author.name}-Press-Card-Front.png`;
-        downloadLinkFront.href = frontDataUrl;
-        downloadLinkFront.click();
-
-        const downloadLinkBack = document.createElement('a');
-        downloadLinkBack.download = `${author.name}-Press-Card-Back.png`;
-        downloadLinkBack.href = backDataUrl;
-        downloadLinkBack.click();
-
-        document.body.removeChild(frontNode);
-        document.body.removeChild(backNode);
-    }
+        const frontNode = frontCardRef.current;
+        const backNode = backCardRef.current;
+        if (!frontNode || !backNode) return;
+    
+        const pdf = new jsPDF('p', 'px', [340, 540]);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+    
+        // Capture front
+        const frontCanvas = await html2canvas(frontNode, { scale: 2 });
+        const frontImgData = frontCanvas.toDataURL('image/png');
+        pdf.addImage(frontImgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    
+        // Capture back
+        pdf.addPage();
+        const backCanvas = await html2canvas(backNode, { scale: 2 });
+        const backImgData = backCanvas.toDataURL('image/png');
+        pdf.addImage(backImgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    
+        pdf.save(`${author.name}-Press-Card.pdf`);
+    };
 
     return (
         <>
@@ -159,22 +153,22 @@ export default function ReporterProfilePage() {
                 </div>
             </div>
             <Dialog open={isCardOpen} onOpenChange={setIsCardOpen}>
-                 <DialogContent className="bg-transparent border-none shadow-none p-4 sm:max-w-4xl flex flex-col">
+                <DialogContent className="bg-transparent border-none shadow-none p-4 sm:max-w-4xl flex flex-col max-h-[90vh]">
                     <VisuallyHidden>
                         <DialogTitle>Reporter Press Card</DialogTitle>
                     </VisuallyHidden>
                     <div className="flex-grow overflow-y-auto">
                         <div className="flex flex-wrap justify-center items-center gap-8 p-4">
-                            <div id="press-card-front">
+                            <div ref={frontCardRef}>
                                 <PressCardFront reporter={author} lang={lang} />
                             </div>
-                            <div id="press-card-back">
+                            <div ref={backCardRef}>
                                 <PressCardBack reporter={author} lang={lang} />
                             </div>
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-center flex-shrink-0">
-                         <Button id="download-png" onClick={handleDownload}>
+                         <Button id="download-png" className="download-png-btn" onClick={handleDownload}>
                             <Download className="mr-2 h-4 w-4" />
                             Download as PNG
                         </Button>
