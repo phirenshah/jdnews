@@ -1,6 +1,6 @@
 
 import { notFound } from 'next/navigation';
-import { collection, query, where, getDocs, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, DocumentData } from 'firebase/firestore';
 import { firestore } from '@/firebase/server';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,7 +10,6 @@ import { Twitter, Facebook, Linkedin, Link as LinkIcon, MessageCircle, User } fr
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { AdContainer } from '@/components/ad-container';
-import { getDoc } from 'firebase/firestore';
 import type { Reporter } from '@/lib/definitions';
 
 type Article = {
@@ -26,27 +25,37 @@ type Article = {
     publicationDate: { seconds: number; nanoseconds: number; };
     category: string;
     slug: string;
+    lang: 'en' | 'gu';
 };
 
-async function getArticleBySlug(slug: string): Promise<Article | null> {
-    try {
-        const articlesCollection = collection(firestore, 'articles');
-        const q = query(articlesCollection, where('slug', '==', slug));
-        const querySnapshot = await getDocs(q);
+async function getArticleBySlug(slug: string, lang: 'en' | 'gu'): Promise<Article | null> {
+  try {
+    const articlesCollection = collection(firestore, 'articles');
+    const q = query(
+        articlesCollection, 
+        where('slug', '==', slug),
+        where('lang', '==', lang)
+    );
+    const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-            return null;
-        }
-
-        const articleDoc = querySnapshot.docs[0];
-        return {
-            id: articleDoc.id,
-            ...articleDoc.data(),
-        } as Article;
-    } catch (error) {
-        console.error("Error fetching article by slug:", error);
+    if (querySnapshot.empty) {
+      // Try searching without language if no doc is found
+      const fallbackQuery = query(articlesCollection, where('slug', '==', slug));
+      const fallbackSnapshot = await getDocs(fallbackQuery);
+      if (fallbackSnapshot.empty) {
         return null;
+      }
+      const articleDoc = fallbackSnapshot.docs[0];
+      return { id: articleDoc.id, ...articleDoc.data() } as Article;
     }
+
+    const articleDoc = querySnapshot.docs[0];
+    return { id: articleDoc.id, ...articleDoc.data() } as Article;
+  } catch (error) {
+    console.error("Error fetching article by slug:", error);
+    // Re-throw the error to be caught by the page component
+    throw new Error('Failed to fetch article from database.');
+  }
 }
 
 async function getAuthorById(authorId: string): Promise<Reporter | null> {
@@ -60,21 +69,35 @@ async function getAuthorById(authorId: string): Promise<Reporter | null> {
         return null;
     } catch (error) {
         console.error("Error fetching author:", error);
+        // Don't throw here, an article can exist without an author
         return null;
     }
 }
 
 function AuthorDisplay({ author }: { author: Reporter | null }) {
-    if (!author) return <p>Unknown Author</p>;
+    if (!author) {
+        return (
+            <div className="flex items-center space-x-4">
+                <Avatar>
+                    <AvatarFallback><User /></AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="font-semibold">Unknown Author</p>
+                </div>
+            </div>
+        );
+    }
+    
+    const authorName = author.name || "Unnamed Author";
 
     return (
         <div className="flex items-center space-x-4">
             <Avatar>
-                <AvatarImage src={author.profilePictureUrl} alt={author.name} />
-                <AvatarFallback>{author.name?.charAt(0)}</AvatarFallback>
+                <AvatarImage src={author.profilePictureUrl} alt={authorName} />
+                <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-                <p className="font-semibold">{author.name}</p>
+                <p className="font-semibold">{authorName}</p>
             </div>
         </div>
     );
@@ -83,17 +106,37 @@ function AuthorDisplay({ author }: { author: Reporter | null }) {
 export default async function ArticlePage({ params }: { params: { lang: 'en' | 'gu', slug: string } }) {
     const { lang, slug } = params;
 
-    const article = await getArticleBySlug(slug);
+    let article: Article | null = null;
+    let author: Reporter | null = null;
+    let fetchError: string | null = null;
+
+    try {
+        article = await getArticleBySlug(slug, lang);
+
+        if (article) {
+            author = await getAuthorById(article.authorId);
+        }
+    } catch (error: any) {
+        fetchError = error.message || "An unexpected error occurred while loading the article.";
+    }
+
+    if (fetchError) {
+        return (
+            <div className="container mx-auto px-4 py-16 text-center text-destructive">
+                <h1 className="text-2xl font-bold mb-4">Error Loading Article</h1>
+                <p>{fetchError}</p>
+                <p className="mt-2 text-sm text-muted-foreground">Please check your Firestore security rules and collection indexes.</p>
+            </div>
+        );
+    }
 
     if (!article) {
         return notFound();
     }
-    
-    const author = await getAuthorById(article.authorId);
 
     const articleTitle = lang === 'en' ? article.titleEnglish : article.titleGujarati;
     const articleExcerpt = lang === 'en' ? article.excerptEnglish : article.excerptGujarati;
-    const articleContent = lang === 'en' ? article.contentEnglish : article.contentGujarati;
+    const articleContent = (lang === 'en' ? article.contentEnglish : article.contentGujarati) || '';
 
 
     return (
@@ -137,11 +180,9 @@ export default async function ArticlePage({ params }: { params: { lang: 'en' | '
                             <Button variant="ghost" size="icon"><LinkIcon className="h-5 w-5" /></Button>
                         </div>
 
-                        <div className="col-span-12 md:col-span-8 lg:col-span-7 prose prose-lg dark:prose-invert max-w-full font-body">
-                           {(articleContent || '').split('\\n').map((paragraph, index) => (
-                                <p key={index}>{paragraph}</p>
-                           ))}
-                        </div>
+                        <div className="col-span-12 md:col-span-8 lg:col-span-7 prose prose-lg dark:prose-invert max-w-full font-body"
+                            dangerouslySetInnerHTML={{ __html: articleContent.replace(/\\n/g, '<br />') }}
+                        />
 
                         <aside className="col-span-12 md:col-span-3 lg:col-span-3 space-y-8">
                             <AdContainer type="vertical" className="hidden md:flex"/>
@@ -200,3 +241,14 @@ export default async function ArticlePage({ params }: { params: { lang: 'en' | '
         </div>
     );
 }
+
+// Adding a loading file for better UX
+export function Loading() {
+    return (
+        <div className="flex h-[60vh] items-center justify-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+        </div>
+    );
+}
+
+    
