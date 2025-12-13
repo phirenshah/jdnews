@@ -12,8 +12,10 @@ import { PressCardFront } from '@/components/press-card-front';
 import { Reporter } from '@/lib/definitions';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { useMemo } from 'react';
+
+const contentCreatorRoles = ['reporter', 'editor', 'director'];
 
 export default function ReportersPage() {
   const params = useParams();
@@ -21,8 +23,14 @@ export default function ReportersPage() {
   const { userProfile, user, role } = useUserRole();
   const { firestore } = useFirebase();
 
+  // Query to get only authors that have a content creator role.
   const authorsCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'authors') : null),
+    () => (firestore ? 
+        query(
+            collection(firestore, 'authors'),
+            where('title', 'in', ['Reporter', 'Editor', 'Director', 'Senior Political Correspondent', 'Technology Editor', 'Sports Journalist', 'Investigative Reporter']) // Match against titles
+        ) 
+        : null),
     [firestore]
   );
   const { data: authors, isLoading: areAuthorsLoading } = useCollection<Reporter>(authorsCollection);
@@ -40,8 +48,7 @@ export default function ReportersPage() {
       ? 'Meet the team behind the news'
       : 'સમાચાર પાછળની ટીમને મળો';
 
-  const privilegedRoles = ['reporter', 'director', 'editor'];
-  const canViewOwnCard = role && privilegedRoles.includes(role);
+  const canViewOwnCard = role && contentCreatorRoles.includes(role);
 
   return (
     <>
@@ -67,7 +74,7 @@ export default function ReportersPage() {
             <div className="text-center">Loading team...</div>
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {authors?.filter(author => author.title !== 'member').map((reporter) => {
+            {authors?.map((reporter) => {
                 return (
                 <Link key={reporter.id} href={`/${lang}/reporters/${reporter.id}`} className="group">
                     <Card

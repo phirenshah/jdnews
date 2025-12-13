@@ -34,7 +34,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useFirebase, useCollection, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import { collection, doc, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, query, where, getDocs, writeBatch, documentId } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -42,6 +42,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+const contentCreatorRoles = ['reporter', 'editor', 'director'];
 
 export default function TeamAdminPage() {
     const { user: adminUser, isAdmin, isLoading: isRoleLoading } = useUserRole();
@@ -55,7 +57,7 @@ export default function TeamAdminPage() {
         return null;
     }, [firestore, isAdmin]);
     
-    const { data: users, isLoading: areUsersLoading } = useCollection(usersCollection);
+    const { data: users, isLoading: areUsersLoading, forceRefetch } = useCollection(usersCollection);
 
     const [isAddReporterDialogOpen, setIsAddReporterDialogOpen] = useState(false);
     const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
@@ -173,36 +175,35 @@ export default function TeamAdminPage() {
         }
 
         try {
+            const batch = writeBatch(firestore);
+
+            const userDocRef = doc(firestore, 'users', foundUser.id);
+            const roleDocRef = doc(firestore, 'roles', foundUser.id);
+            const newAuthorRef = doc(authorsCollection);
+            
+            const newRole = newReporter.title.toLowerCase() === 'director' ? 'director' : 'reporter';
+
+            batch.set(userDocRef, {
+                role: newRole,
+                profilePictureUrl: uploadedImageUrl,
+            }, { merge: true });
+
+            batch.set(roleDocRef, { role: newRole }, { merge: true });
+            
             const authorData = {
-              id: '', 
+              id: newAuthorRef.id,
               name: `${foundUser.firstName} ${foundUser.lastName}`,
               title: newReporter.title,
               dob: newReporter.dob,
               contact: foundUser.email,
               officeLocation: newReporter.officeLocation,
               verified: true,
-              profilePictureUrl: uploadedImageUrl,
+              profilePictureUrl: uploadedImageUrl || foundUser.profilePictureUrl || '',
               imageId: `reporter-${foundUser.id}`
             };
-
-            const userDocRef = doc(firestore, 'users', foundUser.id);
-            const roleDocRef = doc(firestore, 'roles', foundUser.id);
-
-            setDocumentNonBlocking(userDocRef, {
-                role: 'reporter',
-                profilePictureUrl: uploadedImageUrl,
-            }, { merge: true });
-
-            setDocumentNonBlocking(roleDocRef, { role: 'reporter' }, { merge: true });
+            batch.set(newAuthorRef, authorData);
             
-            if (newReporter.title === 'Director') {
-                setDocumentNonBlocking(roleDocRef, { role: 'director' }, { merge: true });
-            }
-
-            const docRef = await addDocumentNonBlocking(authorsCollection, authorData);
-            if (docRef) {
-                setDocumentNonBlocking(docRef, { id: docRef.id }, { merge: true });
-            }
+            await batch.commit();
             
             toast({
                 title: "Reporter Created",
@@ -210,6 +211,7 @@ export default function TeamAdminPage() {
             });
             resetForm();
             setIsAddReporterDialogOpen(false);
+            forceRefetch(); // Refresh user list
         } catch(error: any) {
              toast({
                 variant: 'destructive',
@@ -240,6 +242,7 @@ export default function TeamAdminPage() {
             });
             setIsEditUserDialogOpen(false);
             setEditingUser(null);
+            forceRefetch();
         } catch (error: any) {
              toast({
                 variant: 'destructive',
@@ -249,19 +252,71 @@ export default function TeamAdminPage() {
         }
     };
     
-    const handleRoleChange = async (userId: string, newRole: string) => {
-        if (!firestore || !userId) return;
-        const userDocRef = doc(firestore, 'users', userId);
-        const roleDocRef = doc(firestore, 'roles', userId);
-        
-        setDocumentNonBlocking(userDocRef, { role: newRole }, { merge: true });
-        setDocumentNonBlocking(roleDocRef, { role: newRole }, { merge: true });
-        
-        toast({
-          title: "Role Updated",
-          description: `User role has been changed to ${newRole}.`,
-        });
-      };
+    const handleRoleChange = async (user: any, newRole: string) => {
+        if (!firestore || !user.id || !user.email) return;
+    
+        const oldRole = user.role;
+    
+        try {
+            const batch = writeBatch(firestore);
+    
+            const userDocRef = doc(firestore, 'users', user.id);
+            const roleDocRef = doc(firestore, 'roles', user.id);
+    
+            batch.set(userDocRef, { role: newRole }, { merge: true });
+            batch.set(roleDocRef, { role: newRole }, { merge: true });
+    
+            const wasContentCreator = contentCreatorRoles.includes(oldRole);
+            const isContentCreator = contentCreatorRoles.includes(newRole);
+    
+            if (!wasContentCreator && isContentCreator) {
+                // Promoted to content creator: Add to authors
+                const authorsQuery = query(collection(firestore, 'authors'), where('contact', '==', user.email));
+                const existingAuthor = await getDocs(authorsQuery);
+                if (existingAuthor.empty) {
+                    const newAuthorRef = doc(collection(firestore, 'authors'));
+                    batch.set(newAuthorRef, {
+                        id: newAuthorRef.id,
+                        name: `${user.firstName || ''} ${user.lastName || ''}`,
+                        title: newRole.charAt(0).toUpperCase() + newRole.slice(1), // Capitalize role
+                        contact: user.email,
+                        verified: true,
+                        profilePictureUrl: user.profilePictureUrl || '',
+                        dob: '', // You might want to add a form to get this data
+                        officeLocation: '', // and this
+                    });
+                }
+            } else if (wasContentCreator && !isContentCreator) {
+                // Demoted from content creator: Remove from authors
+                const authorsQuery = query(collection(firestore, 'authors'), where('contact', '==', user.email));
+                const authorsSnapshot = await getDocs(authorsQuery);
+                authorsSnapshot.forEach(authorDoc => {
+                    batch.delete(authorDoc.ref);
+                });
+            } else if (wasContentCreator && isContentCreator) {
+                // Role changed between creator types, update title
+                const authorsQuery = query(collection(firestore, 'authors'), where('contact', '==', user.email));
+                const authorsSnapshot = await getDocs(authorsQuery);
+                authorsSnapshot.forEach(authorDoc => {
+                    batch.update(authorDoc.ref, { title: newRole.charAt(0).toUpperCase() + newRole.slice(1) });
+                });
+            }
+    
+            await batch.commit();
+    
+            toast({
+                title: "Role Updated",
+                description: `${user.firstName}'s role has been changed to ${newRole}.`,
+            });
+            forceRefetch(); // Refresh user list to show new role
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: "Error Updating Role",
+                description: error.message,
+            });
+        }
+    };
   
       const handleDeleteUser = async (userId: string, email?: string) => {
           if (!firestore || !userId) return;
@@ -290,6 +345,7 @@ export default function TeamAdminPage() {
               title: "User Data Deleted",
               description: `User ${email} has been removed from Firestore. Note: Auth account still exists.`,
           });
+          forceRefetch();
       };
 
     useEffect(() => {
@@ -494,10 +550,10 @@ export default function TeamAdminPage() {
                                         <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
                                         <DropdownMenuPortal>
                                             <DropdownMenuSubContent>
-                                                <DropdownMenuItem onSelect={() => handleRoleChange(user.id, 'member')}>Member</DropdownMenuItem>
-                                                <DropdownMenuItem onSelect={() => handleRoleChange(user.id, 'reporter')}>Reporter</DropdownMenuItem>
-                                                <DropdownMenuItem onSelect={() => handleRoleChange(user.id, 'editor')}>Editor</DropdownMenuItem>
-                                                <DropdownMenuItem onSelect={() => handleRoleChange(user.id, 'director')}>Director</DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => handleRoleChange(user, 'member')}>Member</DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => handleRoleChange(user, 'reporter')}>Reporter</DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => handleRoleChange(user, 'editor')}>Editor</DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => handleRoleChange(user, 'director')}>Director</DropdownMenuItem>
                                             </DropdownMenuSubContent>
                                         </DropdownMenuPortal>
                                     </DropdownMenuSub>
@@ -562,5 +618,3 @@ export default function TeamAdminPage() {
     </>
   );
 }
-
-    
