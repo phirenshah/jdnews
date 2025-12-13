@@ -23,14 +23,12 @@ export default function ReporterProfilePage() {
     const { lang, id } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
     
-    const frontCardRef = useRef<HTMLDivElement>(null);
-    const backCardRef = useRef<HTMLDivElement>(null);
     const [clientReporterUrl, setClientReporterUrl] = useState('');
 
     const author = placeholderReporters.find((r) => r.id === 'rohan-mehta');
     
     useEffect(() => {
-        if (author) {
+        if (typeof window !== 'undefined' && author) {
             setClientReporterUrl(`${window.location.origin}/${lang}/reporters/${author.id}`);
         }
     }, [lang, author]);
@@ -41,35 +39,6 @@ export default function ReporterProfilePage() {
     
     const authorImage = PlaceHolderImages.find(img => img.id === author.imageId);
     const authorArticles = placeholderArticles.filter(a => a.author === author.name);
-
-    const handleDownload = async () => {
-        if (!frontCardRef.current || !backCardRef.current) {
-            console.error("Card elements not found for PDF generation.");
-            return;
-        }
-
-        const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'px',
-            format: [380, 580]
-        });
-
-        try {
-            // --- Capture FRONT ---
-            const canvasFront = await html2canvas(frontCardRef.current, { scale: 2 });
-            pdf.addImage(canvasFront.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
-
-            // --- Capture BACK ---
-            pdf.addPage();
-            const canvasBack = await html2canvas(backCardRef.current, { scale: 2 });
-            pdf.addImage(canvasBack.toDataURL('image/png'), 'PNG', 20, 20, 340, 540);
-
-            pdf.save(`${author.name.replace(' ', '-')}-Press-Card.pdf`);
-
-        } catch (error) {
-            console.error("Failed to generate PDF:", error);
-        }
-    };
 
     return (
         <>
@@ -164,25 +133,12 @@ export default function ReporterProfilePage() {
                     </VisuallyHidden>
                     <div className="flex flex-col items-center gap-4">
                         <div className="flex flex-wrap justify-center gap-4">
-                            <div ref={frontCardRef}>
+                            <div>
                                 <PressCardFront reporter={author} lang={lang} />
                             </div>
-                            <div ref={backCardRef}>
+                            <div>
                                 <PressCardBack reporter={author} lang={lang} />
                             </div>
-                        </div>
-                        <div className="flex gap-4">
-                            <Button
-                                onClick={handleDownload}
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                            >
-                                <Download className="mr-2 h-4 w-4" />
-                                Download PDF
-                            </Button>
-                            <Button onClick={() => setIsCardOpen(false)} variant="outline">
-                                <X className="mr-2 h-4 w-4" />
-                                Close
-                            </Button>
                         </div>
                     </div>
                 </DialogContent>
