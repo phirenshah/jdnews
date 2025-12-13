@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Trash, Camera, Upload, CalendarIcon } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, Camera, Upload, Loader2 } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -60,14 +60,16 @@ export default function TeamAdminPage() {
 
     const [isAddReporterDialogOpen, setIsAddReporterDialogOpen] = useState(false);
     const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
+
+    const [findUserEmail, setFindUserEmail] = useState('');
+    const [isFindingUser, setIsFindingUser] = useState(false);
+    const [foundUser, setFoundUser] = useState<any>(null);
+    const [findUserError, setFindUserError] = useState<string | null>(null);
+
     const [newReporter, setNewReporter] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
         title: '',
         dob: '',
         officeLocation: '',
-        profilePictureUrl: '',
     });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -80,10 +82,10 @@ export default function TeamAdminPage() {
     const authorsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'authors') : null, [firestore]);
     
     const resetForm = () => {
-        setNewReporter({
-            firstName: '', lastName: '', email: '', title: '', dob: '',
-            officeLocation: '', profilePictureUrl: '',
-        });
+        setNewReporter({ title: '', dob: '', officeLocation: '' });
+        setFindUserEmail('');
+        setFoundUser(null);
+        setFindUserError(null);
         setImageFile(null);
         setImagePreview(null);
     };
@@ -118,24 +120,32 @@ export default function TeamAdminPage() {
         }
     };
 
-    const handleAddReporter = async () => {
-        if(!newReporter.email || !authorsCollection || !firestore || !usersCollection) return;
+    const handleFindUser = async () => {
+        if (!firestore || !findUserEmail) return;
+        
+        setIsFindingUser(true);
+        setFindUserError(null);
+        setFoundUser(null);
 
-        // Find user by email to get their UID
-        const userQuery = query(usersCollection, where("email", "==", newReporter.email));
-        const querySnapshot = await getDocs(userQuery);
+        const usersQuery = query(collection(firestore, 'users'), where("email", "==", findUserEmail));
         
-        if (querySnapshot.empty) {
-            toast({
-                variant: 'destructive',
-                title: 'User not found',
-                description: `No user with email ${newReporter.email} exists in the system. Please ensure they have signed up.`,
-            });
-            return;
+        try {
+            const querySnapshot = await getDocs(usersQuery);
+            if (querySnapshot.empty) {
+                setFindUserError(`No user found with email: ${findUserEmail}. Please ask them to sign up first.`);
+            } else {
+                const userDoc = querySnapshot.docs[0];
+                setFoundUser({ id: userDoc.id, ...userDoc.data() });
+            }
+        } catch (error) {
+            setFindUserError("An error occurred while searching for the user.");
+        } finally {
+            setIsFindingUser(false);
         }
-        
-        const userDoc = querySnapshot.docs[0];
-        const userId = userDoc.id;
+    };
+
+    const handleAddReporter = async () => {
+        if(!foundUser || !authorsCollection || !firestore) return;
 
         let uploadedImageUrl = '';
         if (imageFile) {
@@ -159,23 +169,21 @@ export default function TeamAdminPage() {
 
         try {
             const authorData = {
-              id: '', // This will be updated with the doc ID later
-              name: `${newReporter.firstName} ${newReporter.lastName}`,
+              id: '', 
+              name: `${foundUser.firstName} ${foundUser.lastName}`,
               title: newReporter.title,
               dob: newReporter.dob,
-              contact: newReporter.email,
+              contact: foundUser.email,
               officeLocation: newReporter.officeLocation,
               verified: true,
               profilePictureUrl: uploadedImageUrl,
-              imageId: `reporter-${userId}`
+              imageId: `reporter-${foundUser.id}`
             };
 
-            const userDocRef = doc(firestore, 'users', userId);
-            const roleDocRef = doc(firestore, 'roles', userId);
+            const userDocRef = doc(firestore, 'users', foundUser.id);
+            const roleDocRef = doc(firestore, 'roles', foundUser.id);
 
             setDocumentNonBlocking(userDocRef, {
-                firstName: newReporter.firstName,
-                lastName: newReporter.lastName,
                 role: 'reporter',
                 profilePictureUrl: uploadedImageUrl,
             }, { merge: true });
@@ -183,7 +191,7 @@ export default function TeamAdminPage() {
             setDocumentNonBlocking(roleDocRef, { role: 'reporter' }, { merge: true });
             
             if (newReporter.title === 'Director') {
-                const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
+                const adminRoleDocRef = doc(firestore, 'roles_admin', foundUser.id);
                 setDocumentNonBlocking(adminRoleDocRef, {}, { merge: true });
             }
 
@@ -194,7 +202,7 @@ export default function TeamAdminPage() {
             
             toast({
                 title: "Reporter Created",
-                description: `${newReporter.firstName} ${newReporter.lastName} has been added as an author.`,
+                description: `${foundUser.firstName} ${foundUser.lastName} has been added as a reporter.`,
             });
             resetForm();
             setIsAddReporterDialogOpen(false);
@@ -219,6 +227,15 @@ export default function TeamAdminPage() {
           const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
           setDocumentNonBlocking(adminRoleDocRef, {}, { merge: true });
         } else {
+          // Check if user being demoted is the current admin
+          if (adminUser?.uid === userId) {
+             toast({
+                variant: 'destructive',
+                title: "Action Not Allowed",
+                description: "You cannot demote yourself from the Director role.",
+            });
+            return;
+          }
           const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
           deleteDocumentNonBlocking(adminRoleDocRef);
         }
@@ -230,8 +247,16 @@ export default function TeamAdminPage() {
   
       const handleDeleteUser = async (userId: string, email?: string) => {
           if (!firestore || !userId) return;
+          
+          if (adminUser?.uid === userId) {
+            toast({
+                variant: 'destructive',
+                title: "Action Not Allowed",
+                description: "You cannot delete your own account from the admin panel.",
+            });
+            return;
+          }
   
-          // Find author doc by email to delete it
           if (email && authorsCollection) {
             const authorsQuery = query(authorsCollection, where('contact', '==', email));
             const authorDocs = await getDocs(authorsQuery);
@@ -240,14 +265,9 @@ export default function TeamAdminPage() {
             });
           }
   
-          const userDocRef = doc(firestore, 'users', userId);
-          deleteDocumentNonBlocking(userDocRef);
-          
-          const roleDocRef = doc(firestore, 'roles', userId);
-          deleteDocumentNonBlocking(roleDocRef);
-  
-          const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
-          deleteDocumentNonBlocking(adminRoleDocRef);
+          deleteDocumentNonBlocking(doc(firestore, 'users', userId));
+          deleteDocumentNonBlocking(doc(firestore, 'roles', userId));
+          deleteDocumentNonBlocking(doc(firestore, 'roles_admin', userId));
   
           toast({
               title: "User Data Deleted",
@@ -295,7 +315,7 @@ export default function TeamAdminPage() {
             <CardDescription>Manage your team of reporters and their credentials.</CardDescription>
         </div>
          <div className="ml-auto flex items-center gap-2">
-            <Dialog open={isAddReporterDialogOpen} onOpenChange={setIsAddReporterDialogOpen}>
+            <Dialog open={isAddReporterDialogOpen} onOpenChange={(isOpen) => { setIsAddReporterDialogOpen(isOpen); if (!isOpen) resetForm(); }}>
                 <DialogTrigger asChild>
                     <Button>
                         <PlusCircle className="h-4 w-4 mr-2" />
@@ -306,86 +326,103 @@ export default function TeamAdminPage() {
                     <DialogHeader>
                         <DialogTitle>Add New Reporter</DialogTitle>
                         <DialogDescription>
-                            Fill in the details to create a new reporter profile. The user must have signed up first.
+                            Find an existing user by email to promote them to a reporter role.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="space-y-4">
-                            <Label>Profile Photo</Label>
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-24 w-24">
-                                    {imagePreview ? <AvatarImage src={imagePreview} /> : <AvatarFallback className="text-3xl">?</AvatarFallback>}
-                                </Avatar>
-                                <div className="flex flex-col gap-2">
-                                     <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Choose from Gallery
+                    
+                    {!foundUser ? (
+                        <div className="grid gap-4 py-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="find-email">User's Login Email</Label>
+                                <div className="flex gap-2">
+                                    <Input id="find-email" type="email" value={findUserEmail} onChange={(e) => setFindUserEmail(e.target.value)} placeholder="user@example.com"/>
+                                    <Button onClick={handleFindUser} disabled={isFindingUser || !findUserEmail}>
+                                        {isFindingUser ? <Loader2 className="h-4 w-4 animate-spin" /> : "Find User"}
                                     </Button>
-                                    <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
-                                    <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline"><Camera className="mr-2 h-4 w-4" />Capture with Camera</Button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                                <DialogTitle>Camera</DialogTitle>
-                                            </DialogHeader>
-                                            <div className="relative">
-                                                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
-                                                {hasCameraPermission === false && (
-                                                    <Alert variant="destructive" className="mt-4">
-                                                        <AlertTitle>Camera Access Required</AlertTitle>
-                                                        <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
-                                                    </Alert>
-                                                )}
-                                            </div>
-                                            <canvas ref={canvasRef} className="hidden" />
-                                            <DialogFooter>
-                                                <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
+                                </div>
+                            </div>
+                            {findUserError && (
+                                <Alert variant="destructive">
+                                    <AlertDescription>{findUserError}</AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                        <div className="grid gap-6 py-4">
+                            <div className="space-y-4">
+                                <Label>Profile Photo</Label>
+                                <div className="flex items-center gap-4">
+                                    <Avatar className="h-24 w-24">
+                                        <AvatarImage src={imagePreview || foundUser.profilePictureUrl} />
+                                        <AvatarFallback className="text-3xl">{foundUser.firstName?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col gap-2">
+                                        <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Choose from Gallery
+                                        </Button>
+                                        <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
+                                        <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline"><Camera className="mr-2 h-4 w-4" />Capture with Camera</Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
+                                                <div className="relative">
+                                                    <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                                                    {hasCameraPermission === false && (
+                                                        <Alert variant="destructive" className="mt-4">
+                                                            <AlertTitle>Camera Access Required</AlertTitle>
+                                                            <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
+                                                        </Alert>
+                                                    )}
+                                                </div>
+                                                <canvas ref={canvasRef} className="hidden" />
+                                                <DialogFooter>
+                                                    <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>First Name</Label>
+                                    <Input value={foundUser.firstName} disabled />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Last Name</Label>
+                                    <Input value={foundUser.lastName} disabled />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Email</Label>
+                                <Input value={foundUser.email} disabled />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="title">Title</Label>
+                                <Input id="title" placeholder="e.g. Senior Correspondent" value={newReporter.title} onChange={(e) => setNewReporter({...newReporter, title: e.target.value})} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="dob">Date of Birth</Label>
+                                    <Input id="dob" placeholder="DD/MM/YYYY" value={newReporter.dob} onChange={(e) => setNewReporter({...newReporter, dob: e.target.value})} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="office">Office Location</Label>
+                                    <Input id="office" placeholder="e.g. Mumbai Bureau" value={newReporter.officeLocation} onChange={(e) => setNewReporter({...newReporter, officeLocation: e.target.value})} />
                                 </div>
                             </div>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-2">
-                                <Label htmlFor="firstName">First Name</Label>
-                                <Input id="firstName" value={newReporter.firstName} onChange={(e) => setNewReporter({...newReporter, firstName: e.target.value})} />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="lastName">Last Name</Label>
-                                <Input id="lastName" value={newReporter.lastName} onChange={(e) => setNewReporter({...newReporter, lastName: e.target.value})} />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="email">User's Login Email</Label>
-                            <Input id="email" type="email" value={newReporter.email} onChange={(e) => setNewReporter({...newReporter, email: e.target.value})} placeholder="user@example.com"/>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="title">Title</Label>
-                            <Input id="title" placeholder="e.g. Senior Correspondent" value={newReporter.title} onChange={(e) => setNewReporter({...newReporter, title: e.target.value})} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-2">
-                                <Label htmlFor="dob">Date of Birth</Label>
-                                <Input 
-                                    id="dob" 
-                                    placeholder="DD/MM/YYYY" 
-                                    value={newReporter.dob} 
-                                    onChange={(e) => setNewReporter({...newReporter, dob: e.target.value})} 
-                                />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="office">Office Location</Label>
-                                <Input id="office" placeholder="e.g. Mumbai Bureau" value={newReporter.officeLocation} onChange={(e) => setNewReporter({...newReporter, officeLocation: e.target.value})} />
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button type="submit" onClick={handleAddReporter}>Create Reporter</Button>
-                    </DialogFooter>
+                        <DialogFooter>
+                            <Button variant="ghost" onClick={resetForm}>Back</Button>
+                            <Button type="submit" onClick={handleAddReporter}>Create Reporter</Button>
+                        </DialogFooter>
+                        </>
+                    )}
                 </DialogContent>
             </Dialog>
         </div>
@@ -403,7 +440,7 @@ export default function TeamAdminPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {isLoading && <TableRow><TableCell colSpan={4}>Loading users...</TableCell></TableRow>}
+                {isLoading && <TableRow><TableCell colSpan={4} className="text-center">Loading users...</TableCell></TableRow>}
                 {!isLoading && users?.map((user: any) => {
                     const canChangeRole = adminUser?.uid !== user.id;
                     return (

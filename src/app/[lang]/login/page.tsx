@@ -69,13 +69,12 @@ export default function LoginPage() {
   }, [user, isUserLoading, router, redirectUrl]);
 
   const handleGoogleSignIn = async () => {
-    if (!auth) return;
+    if (!auth || !firestore) return;
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
       
       const userDocRef = doc(firestore, 'users', result.user.uid);
-      const roleDocRef = doc(firestore, 'roles', result.user.uid);
       const role = 'member'; // Default role
 
       setDocumentNonBlocking(userDocRef, {
@@ -87,7 +86,7 @@ export default function LoginPage() {
         role: role,
       }, { merge: true });
 
-      setDocumentNonBlocking(roleDocRef, { role: role }, { merge: true });
+      setDocumentNonBlocking(doc(firestore, 'roles', result.user.uid), { role: role }, { merge: true });
       
       toast({ title: 'Signed in with Google' });
       router.push(redirectUrl);
@@ -102,25 +101,38 @@ export default function LoginPage() {
 
   const handleEmailSignIn = async (e: FormEvent) => {
     e.preventDefault();
-    if (!auth || !email) return;
+    if (!auth || !email || !password) return;
 
     try {
-        const methods = await fetchSignInMethodsForEmail(auth, email);
-        if (methods.length === 0) {
-            // No account exists, redirect to signup
-            router.push(`/${lang}/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectUrl)}`);
-        } else {
-            // Account exists, proceed with sign-in
-            await signInWithEmailAndPassword(auth, email, password);
-            toast({ title: 'Login Successful' });
-            router.push(redirectUrl);
-        }
+        await signInWithEmailAndPassword(auth, email, password);
+        toast({ title: 'Login Successful' });
+        router.push(redirectUrl);
     } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Login Failed',
-            description: error.message,
-        });
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+             // Check if an account exists to give a better message
+            const methods = await fetchSignInMethodsForEmail(auth, email);
+            if (methods.length === 0) {
+                // No account exists, redirect to signup
+                router.push(`/${lang}/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectUrl)}`);
+                 toast({
+                    variant: 'default',
+                    title: 'No Account Found',
+                    description: 'Redirecting you to the sign up page.',
+                });
+            } else {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Login Failed',
+                    description: 'Incorrect password. Please try again.',
+                });
+            }
+        } else {
+             toast({
+                variant: 'destructive',
+                title: 'Login Failed',
+                description: error.message,
+            });
+        }
     }
   };
 
@@ -193,5 +205,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
