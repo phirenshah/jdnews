@@ -18,9 +18,8 @@ service cloud.firestore {
     // If a role document doesn't exist for the user, they are a 'member' by default.
     // This avoids needing to create a 'member' document for every single user.
     function getUserRole(uid) {
-      let userRole = get(/databases/$(database)/documents/roles/$(uid)).data;
       if (exists(/databases/$(database)/documents/roles/$(uid))) {
-        return userRole.role;
+        return get(/databases/$(database)/documents/roles/$(uid)).data.role;
       }
       return "member";
     }
@@ -52,8 +51,8 @@ service cloud.firestore {
     /* ---------------- ROLES ---------------- */
 
     match /roles/{uid} {
-      // An authenticated user can read their own role. Admins can read any role.
-      allow get: if isOwner(uid) || isAdmin();
+      // A user can read THEIR OWN role document. This is required for the app to know their permissions.
+      allow get: if isOwner(uid);
       
       // Only admins can create, update, or delete roles. This is critical for security.
       allow create, update, delete: if isAdmin();
