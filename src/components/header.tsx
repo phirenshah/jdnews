@@ -45,6 +45,7 @@ function AuthButton({ lang }: { lang: string }) {
   const { role } = useUserRole();
 
   const canAccessDashboard = role && ['reporter', 'editor', 'director'].includes(role);
+  const isAdmin = role && role === 'director';
 
   if (isUserLoading) {
     return <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />;
@@ -80,20 +81,28 @@ function AuthButton({ lang }: { lang: string }) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {canAccessDashboard ? (
-             <Link href="/admin/articles">
+          {canAccessDashboard && (
+             <Link href={`/${lang}/dashboard`}>
               <DropdownMenuItem>
                 <Newspaper className="mr-2 h-4 w-4" />
                 Dashboard
               </DropdownMenuItem>
             </Link>
-          ) : null}
+          )}
            <Link href={`/${lang}/profile`}>
               <DropdownMenuItem>
                 <UserCog className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
             </Link>
+          {isAdmin && (
+             <Link href="/admin/articles">
+              <DropdownMenuItem>
+                <UserCog className="mr-2 h-4 w-4" />
+                Admin Panel
+              </DropdownMenuItem>
+            </Link>
+          )}
 
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => auth && signOut(auth)}>

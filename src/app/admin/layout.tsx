@@ -1,18 +1,19 @@
 
 "use client";
 
-import { Users, DollarSign, ExternalLink, User, Megaphone, Menu } from "lucide-react";
+import { Users, DollarSign, ExternalLink, User, Megaphone, Menu, Newspaper, UserCog } from "lucide-react";
 import Link from 'next/link';
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Newspaper } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { useFirebase } from "@/firebase";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const navItems = [
     { href: '/admin/articles', icon: Newspaper, label: 'Articles' },
@@ -43,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   };
 
-  const activeLabel = navItems.find(item => pathname.startsWith(item.href))?.label || 'Dashboard';
+  const activeLabel = navItems.find(item => pathname.startsWith(item.href))?.label || 'Admin';
 
   if (isLoading || !user || !isAdmin) {
     return (
