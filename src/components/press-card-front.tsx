@@ -33,17 +33,18 @@ export function PressCardFront({
         />
       </div>
       <div className="border-t w-full"></div>
-      <div className="flex-grow flex flex-col items-center justify-center text-center px-4 py-2">
+      <div className="flex-grow flex flex-col items-center justify-start text-center px-4 py-2 pt-8">
         {reporter.profilePictureUrl && (
-          <Image
-            src={reporter.profilePictureUrl}
-            alt={`${reporter.name}`}
-            width={140}
-            height={140}
-            className="rounded-full border-4 border-primary/50 object-cover mb-4"
-          />
+          <div className="w-36 h-36 relative">
+            <Image
+                src={reporter.profilePictureUrl}
+                alt={`${reporter.name}`}
+                fill
+                className="rounded-full border-4 border-primary/50 object-cover"
+            />
+          </div>
         )}
-        <h3 className="font-headline text-2xl font-bold">{reporter.name}</h3>
+        <h3 className="font-headline text-2xl font-bold mt-4">{reporter.name}</h3>
         <p className="text-primary font-medium">{reporter.title}</p>
 
         <div className="space-y-2 text-left w-full text-sm mt-4">
@@ -75,5 +76,3 @@ export function PressCardFront({
     </div>
   );
 }
-
-    
