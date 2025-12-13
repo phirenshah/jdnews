@@ -4,7 +4,6 @@
 import { useAuth } from '@/firebase/auth/use-user';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc, DocumentData } from 'firebase/firestore';
-import { useMemo } from 'react';
 
 type UserRole = 'member' | 'reporter' | 'editor' | 'director' | null;
 
@@ -47,7 +46,7 @@ export function useUserRole(): UseUserRoleResult {
       role = roleDoc ? (roleDoc.role as UserRole) : 'member';
   }
   
-  const isAdmin = role === 'director' || user?.email === 'jdnewsgujarati@gmail.com';
+  const isAdmin = user?.email === 'jdnewsgujarati@gmail.com';
 
   return {
     user,

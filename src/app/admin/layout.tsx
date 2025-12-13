@@ -24,20 +24,20 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, role, isAdmin, isLoading } = useUserRole();
+  const { user, isAdmin, isLoading } = useUserRole();
   const { auth } = useFirebase();
   const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  const canAccess = role && ['reporter', 'editor', 'director'].includes(role);
-
   useEffect(() => {
-    if (!isLoading && !user) {
-        router.push(`/en/login?redirect=${pathname}`);
-    } else if (!isLoading && user && !canAccess) {
-        router.push(`/en/profile`);
+    if (!isLoading) {
+        if (!user) {
+            router.push(`/en/login?redirect=${pathname}`);
+        } else if (!isAdmin) {
+            router.push(`/en/profile`);
+        }
     }
-  }, [user, isLoading, canAccess, router, pathname]);
+  }, [user, isLoading, isAdmin, router, pathname]);
 
   const handleLogout = () => {
     if (auth) {
@@ -48,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const activeLabel = navItems.find(item => pathname.startsWith(item.href))?.label || 'Admin';
 
-  if (isLoading || !user || !canAccess) {
+  if (isLoading || !user || !isAdmin) {
     return (
         <div className="flex h-screen items-center justify-center">
             <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
@@ -65,7 +65,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <span className="sr-only">JD News</span>
                 </Link>
                 {navItems.map(item => (
-                    (isAdmin || item.href === '/admin/articles' || item.href === '/admin/team') &&
                     <Link
                         key={item.href}
                         href={item.href}
@@ -96,7 +95,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <span className="sr-only">JD News</span>
                         </Link>
                         {navItems.map(item => (
-                            (isAdmin || item.href === '/admin/articles' || item.href === '/admin/team') &&
                              <Link
                                 key={item.href}
                                 href={item.href}

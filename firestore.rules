@@ -14,24 +14,9 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Safely get a user's role. Defaults to 'member' if a role document doesn't exist.
-    function getUserRole(uid) {
-        if (exists(/databases/$(database)/documents/roles/$(uid))) {
-            return get(/databases/$(database)/documents/roles/$(uid)).data.role;
-        }
-        return "member";
-    }
-
-    // An admin is a 'director' or the hardcoded super admin email.
+    // An admin is ONLY the user with this specific email.
     function isAdmin() {
-      return isSignedIn() && 
-             (getUserRole(request.auth.uid) == 'director' || request.auth.token.email == 'jdnewsgujarati@gmail.com');
-    }
-
-    // A content creator has an elevated role.
-    function isContentCreator() {
-        let role = getUserRole(request.auth.uid);
-        return isSignedIn() && (role == 'reporter' || role == 'editor' || role == 'director');
+      return isSignedIn() && request.auth.token.email == 'jdnewsgujarati@gmail.com';
     }
     
     // Checks if the user is only trying to update allowed fields.
@@ -46,7 +31,6 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Admins have full control over all user documents.
-      // Using granular permissions instead of broad read/write.
       allow get, list, create, update, delete: if isAdmin();
       
       // A user can read their own document.
@@ -63,7 +47,7 @@ service cloud.firestore {
     /* ---------------- ROLES ---------------- */
 
     match /roles/{uid} {
-      // A user can read THEIR OWN role document. This is required for the app to know their permissions.
+      // A user can read THEIR OWN role document.
       allow get: if isOwner(uid);
       
       // Only admins can create, update, or delete roles. This is critical for security.
@@ -87,10 +71,8 @@ service cloud.firestore {
     match /articles/{articleId} {
       // Anyone can read articles.
       allow get, list: if true;
-      // Content creators can create articles.
-      allow create: if isContentCreator();
-      // Only admins can update or delete articles.
-      allow update, delete: if isAdmin();
+      // Only admins can create, update, or delete articles.
+      allow create, update, delete: if isAdmin();
     }
 
     /* ---------------- DONATIONS ---------------- */
