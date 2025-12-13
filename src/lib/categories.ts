@@ -1,13 +1,13 @@
 
 export const sections = [
-  { name: 'Top Stories', href: '#topStories' },
-  { name: 'International', href: '#international' },
-  { name: 'National', href: '#national' },
-  { name: 'Business', href: '#business' },
-  { name: 'Sports', href: '#sports' },
-  { name: 'Entertainment', href: '#entertainment' },
-  { name: 'Health', href: '#health' },
-  { name: 'Science-Technology', href: '#science-technology' },
+  { name: 'Top Stories', href: '/' },
+  { name: 'International', href: '/category/international' },
+  { name: 'National', href: '/category/national' },
+  { name: 'Business', href: '/category/business' },
+  { name: 'Sports', href: '/category/sports' },
+  { name: 'Entertainment', href: '/category/entertainment' },
+  { name: 'Health', href: '/category/health' },
+  { name: 'Science-Technology', href: '/category/science-technology' },
 ];
 
 export const CATEGORY_LABELS: Record<string, string> = {

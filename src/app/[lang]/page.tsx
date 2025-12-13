@@ -9,16 +9,17 @@ import { ArticleCard } from '@/components/article-card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, ChevronRight, Newspaper } from 'lucide-react';
 import { AdContainer } from '@/components/ad-container';
+import Link from 'next/link';
 
-const SectionTitle = ({ title, id }: { title: string, id: string }) => (
+const SectionTitle = ({ title, id, href }: { title: string, id: string, href: string }) => (
   <div id={id} className="flex items-center justify-between border-l-4 border-primary pl-3 mb-4 mt-8">
     <h2 className="text-xl font-bold text-gray-800 uppercase tracking-tight flex items-center gap-2">
       <Newspaper size={20} className="text-primary" />
       {title}
     </h2>
-    <a href="#" className="text-xs font-semibold text-gray-500 hover:text-primary flex items-center">
+    <Link href={href} className="text-xs font-semibold text-gray-500 hover:text-primary flex items-center">
       VIEW ALL <ChevronRight size={14} />
-    </a>
+    </Link>
   </div>
 );
 
@@ -27,17 +28,12 @@ export default function HomePage({
 }: {
   params: Promise<{ lang: 'en' | 'gu' }>;
 }) {
-  React.use(params);
+  const { lang } = React.use(params);
   const { news, loading, error, refresh } = useNewsAggregator();
 
   const topStories = news.topStories || [];
   const national = news.national || [];
   const international = news.international || [];
-  const business = news.business || [];
-  const sports = news.sports || [];
-  const entertainment = news.entertainment || [];
-  const health = news.health || [];
-  const tech = news.tech || [];
 
   const allHeadlines = React.useMemo(() => {
     return [...topStories, ...national].slice(0, 10);
@@ -77,11 +73,11 @@ export default function HomePage({
     </div>
   );
 
-  const renderCategorySection = (title: string, articles: any[]) => {
+  const renderCategorySection = (title: string, articles: any[], categoryId: string) => {
     if (loading && !articles.length) {
       return (
-        <section id={title.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}>
-          <SectionTitle title={title} id={title.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')} />
+        <section id={categoryId}>
+          <SectionTitle title={title} id={categoryId} href={`/${lang}/category/${categoryId}`} />
           <div className="bg-card p-4 rounded-md shadow-sm border border-border/60">
             <Skeleton className="h-48" />
           </div>
@@ -90,8 +86,8 @@ export default function HomePage({
     }
     if (!articles || articles.length === 0) return null;
     return (
-      <section id={title.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}>
-        <SectionTitle title={title} id={title.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')} />
+      <section id={categoryId}>
+        <SectionTitle title={title} id={categoryId} href={`/${lang}/category/${categoryId}`} />
         <div className="bg-card p-4 rounded-md shadow-sm border border-border/60">
             <div className="mb-4 border-b border-border pb-4">
               {articles[0] && <ArticleCard article={articles[0]} layout="vertical" />}
@@ -135,29 +131,10 @@ export default function HomePage({
         <AdContainer type="horizontal" className="w-full justify-center my-8" />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-          {renderCategorySection("National", national)}
-          {renderCategorySection("International", international)}
+          {renderCategorySection("National", national, 'national')}
+          {renderCategorySection("International", international, 'international')}
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-          {renderCategorySection("Business", business)}
-          {renderCategorySection("Sports", sports)}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-           {renderCategorySection("Entertainment", entertainment)}
-           {renderCategorySection("Health", health)}
-        </div>
-
-        <section id="science-technology">
-          <SectionTitle title="Science & Technology" id="science-technology" />
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {loading && !tech.length ? Array.from({length:4}).map((_, i) => <Skeleton key={i} className="h-64" />) : (
-            tech.slice(0, 4).map((item, idx) => <ArticleCard key={idx} article={item} layout="vertical" />)
-          )}
-          </div>
-        </section>
-
       </main>
     </div>
   );
