@@ -115,7 +115,7 @@ export default function LoginPage() {
         });
         setIsLoading(false); // Stop loading on error
       });
-  }, [auth, firestore, toast, redirectUrl, user]);
+  }, [auth, firestore, toast, user]); // Added 'user' to dependency array
 
 
   const handleGoogleSignIn = async () => {
@@ -155,7 +155,7 @@ export default function LoginPage() {
   };
 
 
-  if (isLoading) {
+  if (isLoading || isUserLoading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
