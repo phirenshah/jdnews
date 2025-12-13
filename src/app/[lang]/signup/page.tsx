@@ -17,18 +17,17 @@ import { useState, useEffect, FormEvent } from 'react';
 import {
   createUserWithEmailAndPassword,
   updateProfile,
-  linkWithCredential,
-  GoogleAuthProvider,
 } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
-export default function SignupPage({ params }: { params: { lang: string } }) {
-  const { lang } = params;
+export default function SignupPage() {
+  const params = useParams();
+  const lang = params.lang as string;
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useAuth();
   const router = useRouter();

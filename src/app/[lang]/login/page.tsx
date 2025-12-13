@@ -21,7 +21,7 @@ import {
   fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -48,8 +48,9 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function LoginPage({ params }: { params: { lang: string } }) {
-  const { lang } = params;
+export default function LoginPage() {
+  const params = useParams();
+  const lang = params.lang as string;
   const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useAuth();
   const router = useRouter();
