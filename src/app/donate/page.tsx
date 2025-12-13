@@ -1,13 +1,25 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { DollarSign, IndianRupee, Heart } from "lucide-react";
+import { DollarSign, Heart } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+
+const RupeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M6 3h12"></path>
+        <path d="M6 8h12"></path>
+        <path d="m6 13 8.5 8"></path>
+        <path d="M6 13h3"></path>
+        <path d="M9 13c6.667 0 6.667-10 0-10"></path>
+    </svg>
+);
+
 
 export default function DonatePage() {
   const [donationType, setDonationType] = useState<'onetime' | 'recurring'>('onetime');
@@ -25,8 +37,8 @@ export default function DonatePage() {
   };
   
   const amounts = currency === 'inr' ? inrAmounts : usdAmounts;
-  const currencySymbol = currency === 'inr' ? '₹' : '$';
-  const currencyIcon = currency === 'inr' ? <IndianRupee className="mr-2 h-5 w-5" /> : <DollarSign className="mr-2 h-5 w-5" />;
+  const currencySymbol = currency === 'inr' ? <RupeeIcon className="inline h-5 w-5 -ml-1" /> : '$';
+  const currencyIcon = currency === 'inr' ? <RupeeIcon className="mr-2 h-5 w-5" /> : <DollarSign className="mr-2 h-5 w-5" />;
 
 
   return (
@@ -70,7 +82,7 @@ export default function DonatePage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 {amounts.map(val => (
                   <Button key={val} variant={amount === val ? "default" : "outline"} size="lg" className="h-12 text-lg" onClick={() => setAmount(val)}>
-                    {currencySymbol}{val}
+                    <span className="flex items-center">{currencySymbol}{val}</span>
                   </Button>
                 ))}
               </div>
@@ -79,17 +91,17 @@ export default function DonatePage() {
             <TabsContent value="inr">
               <CardFooter>
                 <Button className="w-full text-lg py-6">
-                  {currencyIcon} Donate {currencySymbol}{amount} with Razorpay
+                  {currencyIcon} Donate <span className="flex items-center ml-1">{currencySymbol}{amount}</span> with Razorpay
                 </Button>
               </CardFooter>
             </TabsContent>
             <TabsContent value="usd">
               <CardFooter className="flex-col sm:flex-row gap-4">
                 <Button className="w-full text-lg py-6">
-                  {currencyIcon} Donate {currencySymbol}{amount} with Stripe
+                  {currencyIcon} Donate <span className="flex items-center ml-1">{currencySymbol}{amount}</span> with Stripe
                 </Button>
                 <Button className="w-full text-lg py-6" variant="secondary">
-                   {currencyIcon} Donate {currencySymbol}{amount} with PayPal
+                   {currencyIcon} Donate <span className="flex items-center ml-1">{currencySymbol}{amount}</span> with PayPal
                 </Button>
               </CardFooter>
             </TabsContent>

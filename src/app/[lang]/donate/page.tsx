@@ -4,12 +4,23 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Heart, IndianRupee } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+
+const RupeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M6 3h12"></path>
+        <path d="M6 8h12"></path>
+        <path d="m6 13 8.5 8"></path>
+        <path d="M6 13h3"></path>
+        <path d="M9 13c6.667 0 6.667-10 0-10"></path>
+    </svg>
+);
+
 
 export default function DonatePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = React.use(params);
@@ -67,7 +78,7 @@ export default function DonatePage({ params }: { params: Promise<{ lang: string 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 {inrAmounts.map(val => (
                   <Button key={val} variant={amount === val && !isCustom ? "default" : "outline"} size="lg" className="h-12 text-lg" onClick={() => handleAmountClick(val)}>
-                    ₹{val}
+                    <RupeeIcon className="inline h-5 w-5 mr-1" />{val}
                   </Button>
                 ))}
                  <Button variant={isCustom ? "default" : "outline"} size="lg" className="h-12 text-lg" onClick={handleCustomClick}>
@@ -79,7 +90,7 @@ export default function DonatePage({ params }: { params: Promise<{ lang: string 
                  <div className="mt-6 space-y-2">
                     <Label htmlFor="custom-amount" className="font-semibold">Custom Amount (INR)</Label>
                     <div className="relative">
-                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <RupeeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                             ref={customAmountRef}
                             id="custom-amount"
@@ -95,7 +106,7 @@ export default function DonatePage({ params }: { params: Promise<{ lang: string 
             </div>
 
              <Button className="w-full text-lg py-6" onClick={handleDonateClick} disabled={!amount || Number(amount) <= 0}>
-                <IndianRupee className="mr-2 h-5 w-5" /> Donate ₹{Number(amount) > 0 ? amount : ''} with UPI
+                <RupeeIcon className="mr-2 h-5 w-5" /> Donate {Number(amount) > 0 ? amount : ''} with UPI
             </Button>
         </CardContent>
       </Card>

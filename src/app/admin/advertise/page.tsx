@@ -80,6 +80,17 @@ type Ad = {
   htmlCode?: string;
 };
 
+const RupeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M6 3h12"></path>
+        <path d="M6 8h12"></path>
+        <path d="m6 13 8.5 8"></path>
+        <path d="M6 13h3"></path>
+        <path d="M9 13c6.667 0 6.667-10 0-10"></path>
+    </svg>
+);
+
+
 export default function AdvertiseAdminPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
@@ -292,8 +303,8 @@ export default function AdvertiseAdminPage() {
                     <TableCell className="max-w-xs truncate">
                       {req.topic}
                     </TableCell>
-                    <TableCell>
-                      ₹{req.budget.toLocaleString('en-IN')}
+                    <TableCell className="flex items-center">
+                      <RupeeIcon className="inline h-4 w-4 mr-1" />{req.budget.toLocaleString('en-IN')}
                     </TableCell>
                     <TableCell>
                       <Button variant="outline" size="sm" asChild>
