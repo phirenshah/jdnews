@@ -15,7 +15,6 @@ import { useState, useEffect, FormEvent } from 'react';
 import {
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
@@ -24,6 +23,7 @@ import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { doc, setDoc } from 'firebase/firestore';
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
@@ -60,16 +60,15 @@ const formatErrorMessage = (code: string) => {
     }
 };
 
-export default function LoginPage() {
+export default function SignupPage() {
   const params = useParams();
   const lang = params.lang as string;
-  const { auth } = useFirebase();
+  const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -85,18 +84,23 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router, redirectUrl]);
 
-  const handleGoogleSignIn = async () => {
-    if (!auth) return;
+ const handleGoogleSignIn = async () => {
+    if (!auth || !firestore) return;
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // onAuthStateChanged in the provider will handle the rest
-      toast({ title: 'Login Successful', description: 'Welcome back!' });
+      const result = await signInWithPopup(auth, provider);
+      const googleUser = result.user;
+      
+      const userDocRef = doc(firestore, 'users', googleUser.uid);
+      
+      // The provider now handles user creation, so we don't need to do it here
+      // But we can toast a welcome message
+      toast({ title: 'Account Created', description: 'Welcome to JD News!' });
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Google Sign-In Failed',
+        title: 'Google Sign-Up Failed',
         description: formatErrorMessage(error.code),
       });
     } finally {
@@ -106,24 +110,21 @@ export default function LoginPage() {
 
   const handleEmailAuth = async (e: FormEvent) => {
     e.preventDefault();
-    if (!auth) return;
+    if (!auth || !firestore) return;
     setIsLoading(true);
 
     try {
-      if (isLoginView) {
-        await signInWithEmailAndPassword(auth, email, password);
-        toast({ title: 'Login Successful' });
-      } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const newUserName = `${firstName} ${lastName}`.trim();
-        await updateProfile(userCredential.user, { displayName: newUserName });
-        toast({ title: 'Account Created Successfully' });
-      }
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const newUserName = `${firstName} ${lastName}`.trim();
+      await updateProfile(userCredential.user, { displayName: newUserName });
+      
+      // User profile document is created by the FirebaseProvider now
+      toast({ title: 'Account Created Successfully' });
       // onAuthStateChanged will handle redirect
     } catch (error: any) {
        toast({
           variant: 'destructive',
-          title: isLoginView ? 'Login Failed' : 'Sign-up Failed',
+          title: 'Sign-up Failed',
           description: formatErrorMessage(error.code),
       });
     } finally {
@@ -153,10 +154,10 @@ export default function LoginPage() {
             />
           </Link>
           <CardTitle className="text-2xl font-headline">
-            {isLoginView ? 'Welcome Back' : 'Create an Account'}
+            Create an Account
           </CardTitle>
           <CardDescription>
-            {isLoginView ? 'Sign in to continue to JD News' : 'Join JD News today.'}
+            Join JD News today.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -177,18 +178,16 @@ export default function LoginPage() {
             </div>
             
             <form onSubmit={handleEmailAuth} className="space-y-4">
-               {!isLoginView && (
-                 <div className='grid grid-cols-2 gap-4'>
-                    <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
-                        <Input id="firstName" type="text" placeholder="John" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
-                        <Input id="lastName" type="text" placeholder="Doe" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                    </div>
-                </div>
-               )}
+               <div className='grid grid-cols-2 gap-4'>
+                  <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input id="firstName" type="text" placeholder="John" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input id="lastName" type="text" placeholder="Doe" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                  </div>
+              </div>
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -206,14 +205,14 @@ export default function LoginPage() {
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isLoginView ? 'Sign In' : 'Create Account'}
+                  Create Account
                 </Button>
             </form>
             <div className="text-center text-sm text-muted-foreground">
-                {isLoginView ? "Don't have an account?" : "Already have an account?"}{' '}
-                <button onClick={() => setIsLoginView(!isLoginView)} className="underline hover:text-primary">
-                    {isLoginView ? 'Sign up' : 'Sign in'}
-                </button>
+                Already have an account?{' '}
+                <Link href={`/${lang}/login`} className="underline hover:text-primary">
+                    Sign in
+                </Link>
             </div>
           </div>
         </CardContent>
