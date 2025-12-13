@@ -33,7 +33,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -69,15 +69,24 @@ export default function TeamAdminPage() {
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const [reporterTitle, setReporterTitle] = useState('');
     const [reporterDob, setReporterDob] = useState('');
-    const [reporterContact, setReporterContact] = useState('');
     const [reporterOffice, setReporterOffice] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+
+    useEffect(() => {
+        if (selectedUser) {
+            setFirstName(selectedUser.firstName || '');
+            setLastName(selectedUser.lastName || '');
+        }
+    }, [selectedUser]);
+    
 
     const handleAddReporter = () => {
-        if (!firestore || !selectedUser || !reporterTitle) {
+        if (!firestore || !selectedUser || !reporterTitle || !firstName) {
             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: 'Please select a user and a title.',
+                description: 'Please select a user, provide a title, and ensure first name is filled.',
             });
             return;
         }
@@ -94,10 +103,11 @@ export default function TeamAdminPage() {
         }
 
         const authorId = selectedUser.email.split('@')[0].toLowerCase();
+        const newName = `${firstName} ${lastName}`.trim();
 
         const newAuthorData: Partial<Reporter> = {
             id: authorId,
-            name: `${selectedUser.firstName} ${selectedUser.lastName}`,
+            name: newName,
             title: reporterTitle,
             contact: selectedUser.email,
             dob: reporterDob,
@@ -109,9 +119,14 @@ export default function TeamAdminPage() {
         if (authorsCollection) {
             const newAuthorRef = doc(authorsCollection, authorId);
             setDocumentNonBlocking(newAuthorRef, newAuthorData, { merge: true });
+
+            // Also update the user's name in the users collection
+            const userDocRef = doc(firestore, 'users', selectedUser.id);
+            setDocumentNonBlocking(userDocRef, { firstName, lastName }, { merge: true });
+
             toast({
                 title: 'Reporter Added',
-                description: `${selectedUser.firstName} has been added to the team.`,
+                description: `${newName} has been added to the team.`,
             });
             resetAddDialog();
             refetchAuthors();
@@ -131,8 +146,9 @@ export default function TeamAdminPage() {
         setSelectedUser(null);
         setReporterTitle('');
         setReporterDob('');
-        setReporterContact('');
         setReporterOffice('');
+        setFirstName('');
+        setLastName('');
     };
 
     if (areAuthorsLoading || areUsersLoading) {
@@ -181,6 +197,20 @@ export default function TeamAdminPage() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
+
+                         {selectedUser && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="firstName">First Name</Label>
+                                    <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="lastName">Last Name</Label>
+                                    <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                                </div>
+                            </div>
+                        )}
+
                          <div className="space-y-2">
                             <Label htmlFor="title">Title</Label>
                              <DropdownMenu>
