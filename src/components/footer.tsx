@@ -52,8 +52,8 @@ export function Footer({ lang }: { lang: string }) {
             <ul className="space-y-2">
               <li><Link href={`/${lang}/about`} className="hover:text-primary">About Us</Link></li>
               <li><Link href={`/${lang}/team`} className="hover:text-primary">Our Team</Link></li>
-              <li><Link href="#" className="hover:text-primary">Contact</Link></li>
-              <li><Link href="#" className="hover:text-primary">Privacy Policy</Link></li>
+              <li><a href="tel:+919773242022" className="hover:text-primary">Contact</a></li>
+              <li><Link href={`/${lang}/privacy-policy`} className="hover:text-primary">Privacy Policy</Link></li>
             </ul>
           </div>
         </div>
