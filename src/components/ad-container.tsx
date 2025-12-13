@@ -52,14 +52,18 @@ export function AdContainer({ type, className }: AdContainerProps) {
   }, [ads, type]);
 
   const adToDisplay = ads && ads.length > 0 ? ads[currentAdIndex] : null;
+  
+  const adWidth = type === 'horizontal' ? '728px' : '300px';
+  const adHeight = type === 'horizontal' ? '90px' : '600px';
 
   if (isLoading) {
     return (
         <div className={cn(
             'flex flex-col items-center justify-center bg-muted/50 border border-dashed rounded-lg p-4 space-y-2 text-muted-foreground text-xs animate-pulse',
-            type === 'vertical' ? 'h-[600px] w-full' : 'h-[90px] w-full',
             className
-          )}>
+          )}
+          style={{ width: adWidth, height: adHeight }}
+          >
             <span className="font-semibold">Advertisement</span>
         </div>
     )
@@ -105,8 +109,6 @@ export function AdContainer({ type, className }: AdContainerProps) {
     return null;
   };
 
-  const adWidth = type === 'horizontal' ? '728px' : '300px';
-  const adHeight = type === 'horizontal' ? '90px' : '600px';
 
   return (
     <div
@@ -114,10 +116,13 @@ export function AdContainer({ type, className }: AdContainerProps) {
         'flex flex-col items-center justify-center bg-muted/50 border border-dashed rounded-lg p-4 space-y-2 text-muted-foreground text-xs',
         className
       )}
-      style={{width: 'auto', height: 'auto'}}
+      style={{
+          width: type === 'horizontal' ? 'max-content' : adWidth, 
+          height: 'max-content'
+      }}
     >
       <span className="font-semibold">Advertisement</span>
-      <div className="relative overflow-hidden" style={{width: adWidth, height: adHeight}}>
+      <div className="relative overflow-hidden bg-background" style={{width: adWidth, height: adHeight}}>
         {renderAdContent()}
       </div>
     </div>
