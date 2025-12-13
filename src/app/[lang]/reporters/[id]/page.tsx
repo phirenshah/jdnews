@@ -1,5 +1,6 @@
 
 'use client';
+import * as React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,8 +20,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Reporter, Article } from '@/lib/definitions';
 import { placeholderReporters, placeholderArticles } from '@/lib/placeholder-data';
 
-export default function ReporterProfilePage({ params }: { params: { lang: 'en' | 'gu', id: string } }) {
-    const { lang, id } = params;
+export default function ReporterProfilePage({ params }: { params: Promise<{ lang: 'en' | 'gu', id: string }> }) {
+    const { lang, id } = React.use(params);
     const [isCardOpen, setIsCardOpen] = useState(false);
     const [clientReporterUrl, setClientReporterUrl] = useState('');
 

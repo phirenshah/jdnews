@@ -3,15 +3,16 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { SectionHeader } from '@/components/section-header';
 import { ArticlesProvider } from '@/contexts/ArticlesContext';
+import * as React from 'react';
 
 export default function PublicLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { lang: string };
+  params: Promise<{ lang: string }>;
 }) {
-  const { lang } = params;
+  const { lang } = React.use(params);
   return (
     <ArticlesProvider>
       <div className="flex min-h-screen flex-col">

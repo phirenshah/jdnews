@@ -1,5 +1,6 @@
 
 'use client';
+import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,8 +8,8 @@ import { AdContainer } from '@/components/ad-container';
 import { Separator } from '@/components/ui/separator';
 import { useArticles } from '@/contexts/ArticlesContext';
 
-export default function HomePage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const { lang } = params;
+export default function HomePage({ params }: { params: Promise<{ lang: 'en' | 'gu' }> }) {
+  const { lang } = React.use(params);
   const { articles } = useArticles();
 
   if (articles.length === 0) {

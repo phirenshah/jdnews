@@ -14,6 +14,7 @@ import { placeholderReporters } from '@/lib/placeholder-data';
 import { fullPlaceholderArticles } from '@/lib/placeholder-data-full';
 import { useState, useEffect } from 'react';
 import { useArticles } from '@/contexts/ArticlesContext';
+import * as React from 'react';
 
 type Article = ReturnType<typeof useArticles>['articles'][0] & { contentEnglish: string, contentGujarati: string };
 
@@ -46,10 +47,8 @@ function AuthorDisplay({ author }: { author: Reporter | null }) {
     );
 }
 
-export default function ArticlePage() {
-    const params = useParams();
-    const lang = params.lang as 'en' | 'gu';
-    const slug = params.slug as string;
+export default function ArticlePage({ params }: { params: Promise<{ lang: 'en' | 'gu', slug: string }> }) {
+    const { lang, slug } = React.use(params);
 
     const { articles } = useArticles();
 

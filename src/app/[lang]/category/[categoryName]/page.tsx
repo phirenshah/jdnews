@@ -9,13 +9,12 @@ import { Loader2 } from 'lucide-react';
 import type { Article } from '@/lib/definitions';
 import { useArticles } from '@/contexts/ArticlesContext';
 import { useEffect, useState } from 'react';
+import * as React from 'react';
 
 type StrippedArticle = Omit<Article, 'authorId' | 'contentEnglish' | 'contentGujarati'>;
 
-export default function CategoryPage() {
-  const params = useParams();
-  const lang = params.lang as 'en' | 'gu';
-  const categoryName = params.categoryName as string;
+export default function CategoryPage({ params }: { params: Promise<{ lang: 'en' | 'gu', categoryName: string }> }) {
+  const { lang, categoryName } = React.use(params);
   const { articles: allArticles } = useArticles();
   const [filteredArticles, setFilteredArticles] = useState<StrippedArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);

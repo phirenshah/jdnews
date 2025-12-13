@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Award, Target, Users, Newspaper } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import * as React from 'react';
 
-export default function AboutPage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const { lang } = params;
+export default function AboutPage({ params }: { params: Promise<{ lang: 'en' | 'gu' }> }) {
+  const { lang } = React.use(params);
   const translations = {
     en: {
       title: 'About JD News',
