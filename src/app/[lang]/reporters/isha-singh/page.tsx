@@ -15,12 +15,16 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default function ReporterProfilePage() {
     const params = useParams<{ lang: 'en' | 'gu', id: string }>();
     const { lang } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
     const [clientReporterUrl, setClientReporterUrl] = useState('');
+    const frontCardRef = useRef<HTMLDivElement>(null);
+    const backCardRef = useRef<HTMLDivElement>(null);
 
     const author = placeholderReporters.find((r) => r.id === 'isha-singh');
 
@@ -36,6 +40,40 @@ export default function ReporterProfilePage() {
     
     const authorImage = PlaceHolderImages.find(img => img.id === author.imageId);
     const authorArticles = placeholderArticles.filter(a => a.author === author.name);
+
+    const handleDownload = async () => {
+        if (!frontCardRef.current || !backCardRef.current) return;
+    
+        const pdf = new jsPDF();
+    
+        const canvasFront = await html2canvas(frontCardRef.current, { scale: 2 });
+        const imgDataFront = canvasFront.toDataURL('image/png');
+    
+        const cardWidth = 340;
+        const cardHeight = 540;
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const ratio = cardHeight / cardWidth;
+        let finalWidth = pdfWidth * 0.8;
+        let finalHeight = finalWidth * ratio;
+        
+        if (finalHeight > pdfHeight * 0.9) {
+            finalHeight = pdfHeight * 0.9;
+            finalWidth = finalHeight / ratio;
+        }
+
+        const x = (pdfWidth - finalWidth) / 2;
+        const y = (pdfHeight - finalHeight) / 2;
+
+        pdf.addImage(imgDataFront, 'PNG', x, y, finalWidth, finalHeight);
+    
+        const canvasBack = await html2canvas(backCardRef.current, { scale: 2 });
+        const imgDataBack = canvasBack.toDataURL('image/png');
+        pdf.addPage();
+        pdf.addImage(imgDataBack, 'PNG', x, y, finalWidth, finalHeight);
+    
+        pdf.save(`${author.name}-Press-Card.pdf`);
+    };
 
     return (
         <>
@@ -130,15 +168,17 @@ export default function ReporterProfilePage() {
                     </VisuallyHidden>
                     <div className="flex flex-col items-center gap-4">
                         <div className="flex flex-wrap justify-center gap-4">
-                            <PressCardFront reporter={author} lang={lang} />
-                            <PressCardBack reporter={author} lang={lang} />
+                            <div ref={frontCardRef}>
+                                <PressCardFront reporter={author} lang={lang} />
+                            </div>
+                            <div ref={backCardRef}>
+                                <PressCardBack reporter={author} lang={lang} />
+                            </div>
                         </div>
                         <div className="flex justify-center mt-4">
-                            <Button asChild>
-                                <a href={`/logo.png`} download={`${author.name}-Front.png`}>
-                                    <Download className="mr-2 h-4 w-4" />
-                                    Download Cards
-                                </a>
+                            <Button onClick={handleDownload}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download Cards
                             </Button>
                         </div>
                     </div>
