@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Twitter, Facebook, Instagram, Heart } from 'lucide-react';
+import { Twitter, Facebook, Instagram, Heart, Youtube } from 'lucide-react';
 import Image from 'next/image';
 import { sections } from '@/lib/categories';
 
@@ -21,9 +21,10 @@ export function Footer({ lang }: { lang: string }) {
               Your trusted source for news.
             </p>
             <div className="flex space-x-4">
-              <Link href="#" className="hover:text-primary"><Twitter /></Link>
-              <Link href="#" className="hover:text-primary"><Facebook /></Link>
-              <Link href="#" className="hover:text-primary"><Instagram /></Link>
+              <Link href="https://x.com/JDNewsGujarati" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Twitter /></Link>
+              <Link href="https://www.facebook.com/share/1AYaJa2Qxe/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Facebook /></Link>
+              <Link href="https://www.instagram.com/jd.news23" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Instagram /></Link>
+              <Link href="https://youtube.com/@jdnews23" target="_blank" rel="noopener noreferrer" className="hover:text-primary"><Youtube /></Link>
             </div>
           </div>
           <div className="sm:col-start-2 md:col-start-auto">
