@@ -55,7 +55,7 @@ export function AdContainer({ type, className }: AdContainerProps) {
   
   const adStyles = {
     horizontal: {
-      container: 'w-full max-w-[728px]',
+      container: 'w-full max-w-full lg:max-w-4xl',
       inner: 'aspect-[728/90]',
       placeholderHeight: 'h-[90px]',
     },
