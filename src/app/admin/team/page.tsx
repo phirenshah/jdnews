@@ -41,12 +41,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
-import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 
 export default function TeamAdminPage() {
     const { user: adminUser, role: adminRole, isLoading: isRoleLoading } = useUserRole();
@@ -70,7 +65,7 @@ export default function TeamAdminPage() {
         lastName: '',
         email: '',
         title: '',
-        dob: undefined as Date | undefined,
+        dob: '',
         officeLocation: '',
         profilePictureUrl: '',
     });
@@ -86,7 +81,7 @@ export default function TeamAdminPage() {
     
     const resetForm = () => {
         setNewReporter({
-            firstName: '', lastName: '', email: '', title: '', dob: undefined,
+            firstName: '', lastName: '', email: '', title: '', dob: '',
             officeLocation: '', profilePictureUrl: '',
         });
         setImageFile(null);
@@ -124,7 +119,7 @@ export default function TeamAdminPage() {
     };
 
     const handleAddReporter = async () => {
-        if(!newReporter.email || !authorsCollection || !firestore || !users) return;
+        if(!newReporter.email || !authorsCollection || !firestore || !usersCollection) return;
 
         // Find user by email to get their UID
         const userQuery = query(usersCollection, where("email", "==", newReporter.email));
@@ -167,7 +162,7 @@ export default function TeamAdminPage() {
               id: '', // This will be updated with the doc ID later
               name: `${newReporter.firstName} ${newReporter.lastName}`,
               title: newReporter.title,
-              dob: newReporter.dob ? format(newReporter.dob, 'dd/MM/yyyy') : '',
+              dob: newReporter.dob,
               contact: newReporter.email,
               officeLocation: newReporter.officeLocation,
               verified: true,
@@ -182,6 +177,7 @@ export default function TeamAdminPage() {
                 firstName: newReporter.firstName,
                 lastName: newReporter.lastName,
                 role: 'reporter',
+                profilePictureUrl: uploadedImageUrl,
             }, { merge: true });
 
             setDocumentNonBlocking(roleDocRef, { role: 'reporter' }, { merge: true });
@@ -236,11 +232,13 @@ export default function TeamAdminPage() {
           if (!firestore || !userId) return;
   
           // Find author doc by email to delete it
-          const authorsQuery = query(collection(firestore, 'authors'), where('contact', '==', email));
-          const authorDocs = await getDocs(authorsQuery);
-          authorDocs.forEach(authorDoc => {
-              deleteDocumentNonBlocking(authorDoc.ref);
-          });
+          if (email && authorsCollection) {
+            const authorsQuery = query(authorsCollection, where('contact', '==', email));
+            const authorDocs = await getDocs(authorsQuery);
+            authorDocs.forEach(authorDoc => {
+                deleteDocumentNonBlocking(authorDoc.ref);
+            });
+          }
   
           const userDocRef = doc(firestore, 'users', userId);
           deleteDocumentNonBlocking(userDocRef);
@@ -316,8 +314,7 @@ export default function TeamAdminPage() {
                             <Label>Profile Photo</Label>
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-24 w-24">
-                                    {imagePreview && <AvatarImage src={imagePreview} />}
-                                    <AvatarFallback className="text-3xl">?</AvatarFallback>
+                                    {imagePreview ? <AvatarImage src={imagePreview} /> : <AvatarFallback className="text-3xl">?</AvatarFallback>}
                                 </Avatar>
                                 <div className="flex flex-col gap-2">
                                      <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
@@ -373,28 +370,12 @@ export default function TeamAdminPage() {
                         <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-2">
                                 <Label htmlFor="dob">Date of Birth</Label>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button
-                                      variant={"outline"}
-                                      className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !newReporter.dob && "text-muted-foreground"
-                                      )}
-                                    >
-                                      <CalendarIcon className="mr-2 h-4 w-4" />
-                                      {newReporter.dob ? format(newReporter.dob, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                      mode="single"
-                                      selected={newReporter.dob}
-                                      onSelect={(date) => setNewReporter({...newReporter, dob: date})}
-                                      initialFocus
-                                    />
-                                  </PopoverContent>
-                                </Popover>
+                                <Input 
+                                    id="dob" 
+                                    placeholder="DD/MM/YYYY" 
+                                    value={newReporter.dob} 
+                                    onChange={(e) => setNewReporter({...newReporter, dob: e.target.value})} 
+                                />
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="office">Office Location</Label>
