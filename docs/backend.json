@@ -255,11 +255,15 @@
             "type": {
                 "type": "string",
                 "description": "The type of advertisement.",
-                "enum": ["image", "iframe"]
+                "enum": ["image", "html"]
             },
             "url": {
                 "type": "string",
-                "description": "The URL for the ad source (image link or iframe page)."
+                "description": "The URL for the ad source (used for image types)."
+            },
+            "htmlCode": {
+                "type": "string",
+                "description": "The raw HTML code for the ad (used for html types)."
             },
             "placement": {
                 "type": "string",
@@ -267,7 +271,7 @@
                 "enum": ["horizontal", "vertical"]
             }
         },
-        "required": ["id", "name", "type", "url", "placement"]
+        "required": ["id", "name", "type", "placement"]
     }
   },
   "auth": {

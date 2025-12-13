@@ -39,6 +39,7 @@ import {
 import { useState } from 'react';
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
 
 // This would come from a database in a real application
 const placeholderAdRequests = [
@@ -62,33 +63,14 @@ const placeholderAdRequests = [
     status: 'Contacted',
     date: '2024-07-28',
   },
-  {
-    id: 'ad-req-3',
-    topic: 'E-commerce Summer Sale',
-    phoneNumber: '+91 98765 43212',
-    budget: 600000,
-    details:
-      'Annual summer sale event. Need banner ads across the website for the month of August.',
-    status: 'Pending',
-    date: '2024-07-28',
-  },
-  {
-    id: 'ad-req-4',
-    topic: 'Financial Services Webinar',
-    phoneNumber: '+91 98765 43213',
-    budget: 1200000,
-    details:
-      'Promoting a webinar on investment strategies for young professionals. Need sponsored content and email blast.',
-    status: 'Closed',
-    date: '2024-07-25',
-  },
 ];
 
 type Ad = {
   id: string;
   name: string;
-  type: 'image' | 'iframe';
-  url: string;
+  type: 'image' | 'html';
+  url?: string;
+  htmlCode?: string;
   placement: 'horizontal' | 'vertical';
 };
 
@@ -104,8 +86,9 @@ export default function AdvertiseAdminPage() {
 
   const [editingAd, setEditingAd] = useState<Ad | null>(null);
   const [adName, setAdName] = useState('');
-  const [adType, setAdType] = useState<'image' | 'iframe' | ''>('');
+  const [adType, setAdType] = useState<'image' | 'html' | ''>('');
   const [adUrl, setAdUrl] = useState('');
+  const [adHtmlCode, setAdHtmlCode] = useState('');
   const [adPlacement, setAdPlacement] = useState<'horizontal' | 'vertical' | ''>('');
 
   const resetForm = () => {
@@ -113,6 +96,7 @@ export default function AdvertiseAdminPage() {
     setAdName('');
     setAdType('');
     setAdUrl('');
+    setAdHtmlCode('');
     setAdPlacement('');
   };
 
@@ -120,7 +104,8 @@ export default function AdvertiseAdminPage() {
     setEditingAd(ad);
     setAdName(ad.name);
     setAdType(ad.type);
-    setAdUrl(ad.url);
+    setAdUrl(ad.url || '');
+    setAdHtmlCode(ad.htmlCode || '');
     setAdPlacement(ad.placement);
   };
 
@@ -133,29 +118,38 @@ export default function AdvertiseAdminPage() {
   };
 
   const handleSubmit = () => {
-    if (!firestore || !adName || !adType || !adUrl || !adPlacement) {
+    if (!firestore || !adName || !adType || !adPlacement) {
         toast({
             variant: 'destructive',
             title: 'Missing Fields',
-            description: 'Please fill out all fields to create or update an ad.',
+            description: 'Please fill out all required fields to create or update an ad.',
         });
         return;
     }
+    
+    if (adType === 'image' && !adUrl) {
+      toast({ variant: 'destructive', title: 'Missing URL', description: 'Please provide an image URL.' });
+      return;
+    }
 
-    const adData = {
+    if (adType === 'html' && !adHtmlCode) {
+        toast({ variant: 'destructive', title: 'Missing HTML Code', description: 'Please provide the ad HTML code.' });
+        return;
+    }
+
+    const adData: Omit<Ad, 'id'> = {
         name: adName,
         type: adType,
-        url: adUrl,
         placement: adPlacement,
+        ...(adType === 'image' && { url: adUrl }),
+        ...(adType === 'html' && { htmlCode: adHtmlCode }),
     };
 
     if (editingAd) {
-        // Update existing ad
         const adDocRef = doc(firestore, 'advertisements', editingAd.id);
         setDocumentNonBlocking(adDocRef, adData, { merge: true });
         toast({ title: 'Advertisement Updated' });
     } else {
-        // Create new ad
         const newAdRef = collection(firestore, 'advertisements');
         addDocumentNonBlocking(newAdRef, adData);
         toast({ title: 'Advertisement Created' });
@@ -250,22 +244,6 @@ export default function AdvertiseAdminPage() {
                             <Input id="ad-name" placeholder="e.g. Summer Sale Banner" value={adName} onChange={(e) => setAdName(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="ad-type">Type</Label>
-                            <Select value={adType} onValueChange={(value) => setAdType(value as any)}>
-                                <SelectTrigger id="ad-type">
-                                    <SelectValue placeholder="Select ad type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="image">Image</SelectItem>
-                                    <SelectItem value="iframe">Iframe</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="ad-url">URL</Label>
-                            <Input id="ad-url" placeholder="https://..." value={adUrl} onChange={(e) => setAdUrl(e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
                             <Label htmlFor="ad-placement">Placement</Label>
                             <Select value={adPlacement} onValueChange={(value) => setAdPlacement(value as any)}>
                                 <SelectTrigger id="ad-placement">
@@ -277,6 +255,32 @@ export default function AdvertiseAdminPage() {
                                 </SelectContent>
                             </Select>
                         </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="ad-type">Type</Label>
+                            <Select value={adType} onValueChange={(value) => setAdType(value as any)}>
+                                <SelectTrigger id="ad-type">
+                                    <SelectValue placeholder="Select ad type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="image">Image</SelectItem>
+                                    <SelectItem value="html">HTML Code</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {adType === 'image' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="ad-url">Image URL</Label>
+                                <Input id="ad-url" placeholder="https://..." value={adUrl} onChange={(e) => setAdUrl(e.target.value)} />
+                            </div>
+                        )}
+                        {adType === 'html' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="ad-html">HTML Code</Label>
+                                <Textarea id="ad-html" rows={6} placeholder="<iframe src=... ></iframe>" value={adHtmlCode} onChange={(e) => setAdHtmlCode(e.target.value)} />
+                            </div>
+                        )}
+                        
                         <div className="flex gap-2">
                             <Button onClick={handleSubmit} className="w-full">{editingAd ? 'Update Ad' : 'Create Ad'}</Button>
                             {editingAd && <Button variant="outline" onClick={resetForm} className="w-full">Cancel</Button>}
