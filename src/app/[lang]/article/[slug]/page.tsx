@@ -1,20 +1,16 @@
 
-'use client';
-
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where, DocumentData } from 'firebase/firestore';
-import { useParams, notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
+import { collection, query, where, getDocs, doc } from 'firebase/firestore';
+import { firestore } from '@/firebase/server';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Twitter, Facebook, Linkedin, Link as LinkIcon, MessageCircle, User, Loader2 } from 'lucide-react';
+import { Twitter, Facebook, Linkedin, Link as LinkIcon, MessageCircle, User } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { AdContainer } from '@/components/ad-container';
-import { useDoc } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { getDoc } from 'firebase/firestore';
 import type { Reporter } from '@/lib/definitions';
 
 type Article = {
@@ -32,13 +28,43 @@ type Article = {
     slug: string;
 };
 
+async function getArticleBySlug(slug: string): Promise<Article | null> {
+    try {
+        const articlesCollection = collection(firestore, 'articles');
+        const q = query(articlesCollection, where('slug', '==', slug));
+        const querySnapshot = await getDocs(q);
 
-function AuthorDisplay({ authorId }: { authorId: string }) {    
-    const { firestore } = useFirebase();
-    const authorRef = useMemoFirebase(() => (firestore && authorId ? doc(firestore, 'authors', authorId) : null), [firestore, authorId]);
-    const { data: author, isLoading } = useDoc<Reporter>(authorRef);
+        if (querySnapshot.empty) {
+            return null;
+        }
 
-    if (isLoading) return <div className="h-10 w-24 bg-muted rounded-md animate-pulse" />;
+        const articleDoc = querySnapshot.docs[0];
+        return {
+            id: articleDoc.id,
+            ...articleDoc.data(),
+        } as Article;
+    } catch (error) {
+        console.error("Error fetching article by slug:", error);
+        return null;
+    }
+}
+
+async function getAuthorById(authorId: string): Promise<Reporter | null> {
+    if (!authorId) return null;
+    try {
+        const authorRef = doc(firestore, 'authors', authorId);
+        const authorSnap = await getDoc(authorRef);
+        if (authorSnap.exists()) {
+            return authorSnap.data() as Reporter;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching author:", error);
+        return null;
+    }
+}
+
+function AuthorDisplay({ author }: { author: Reporter | null }) {
     if (!author) return <p>Unknown Author</p>;
 
     return (
@@ -54,40 +80,17 @@ function AuthorDisplay({ authorId }: { authorId: string }) {
     );
 }
 
+export default async function ArticlePage({ params }: { params: { lang: 'en' | 'gu', slug: string } }) {
+    const { lang, slug } = params;
 
-export default function ArticlePage() {
-    const params = useParams();
-    const lang = params.lang as 'en' | 'gu';
-    const slug = params.slug as string;
+    const article = await getArticleBySlug(slug);
 
-    const { firestore } = useFirebase();
-
-    const articlesQuery = useMemoFirebase(
-        () => firestore && slug ? query(collection(firestore, 'articles'), where('slug', '==', slug)) : null,
-        [firestore, slug]
-    );
-
-    const { data: articles, isLoading, error } = useCollection<Article>(articlesQuery);
-
-    if (isLoading) {
-        return (
-            <div className="flex h-screen items-center justify-center">
-                <Loader2 className="h-16 w-16 animate-spin" />
-            </div>
-        );
-    }
-    
-    if (error) {
-        console.error(error);
-        return <div className="container py-8 text-center">Error loading article. Please check your Firestore security rules and index configuration.</div>
-    }
-
-    const article = articles?.[0];
-    
-    if (!isLoading && !article) {
+    if (!article) {
         return notFound();
     }
     
+    const author = await getAuthorById(article.authorId);
+
     const articleTitle = lang === 'en' ? article.titleEnglish : article.titleGujarati;
     const articleExcerpt = lang === 'en' ? article.excerptEnglish : article.excerptGujarati;
     const articleContent = lang === 'en' ? article.contentEnglish : article.contentGujarati;
@@ -105,7 +108,7 @@ export default function ArticlePage() {
                         {articleExcerpt}
                     </p>
                     <div className="flex items-center justify-center gap-4">
-                        {article.authorId && <AuthorDisplay authorId={article.authorId} />}
+                        <AuthorDisplay author={author} />
                         <p className="text-sm text-muted-foreground">
                         Published on {new Date(article.publicationDate.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}
                         </p>
@@ -135,7 +138,7 @@ export default function ArticlePage() {
                         </div>
 
                         <div className="col-span-12 md:col-span-8 lg:col-span-7 prose prose-lg dark:prose-invert max-w-full font-body">
-                           {articleContent.split('\\n').map((paragraph, index) => (
+                           {(articleContent || '').split('\\n').map((paragraph, index) => (
                                 <p key={index}>{paragraph}</p>
                            ))}
                         </div>
@@ -148,15 +151,6 @@ export default function ArticlePage() {
 
                 <Separator />
 
-                {/* Related Stories: This can be implemented later by fetching related articles */}
-                {/* <div className="container mx-auto px-4 py-12">
-                    <h2 className="font-headline text-3xl font-bold mb-6">Related Stories</h2>
-                    ...
-                </div> */}
-
-                <Separator />
-
-                {/* Comments Section */}
                 <div className="container mx-auto px-4 py-12 max-w-3xl">
                     <h2 className="font-headline text-3xl font-bold mb-6 flex items-center">
                         <MessageCircle className="mr-3 h-7 w-7" />
@@ -206,4 +200,3 @@ export default function ArticlePage() {
         </div>
     );
 }
-
