@@ -2,9 +2,8 @@
 'use client';
 
 import { useAuth } from '@/firebase/auth/use-user';
-import { useDoc, useFirebase } from '@/firebase';
+import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc, DocumentData } from 'firebase/firestore';
-import { useMemo } from 'react';
 
 type UserRole = 'member' | 'reporter' | 'editor' | 'director' | null;
 
@@ -20,26 +19,26 @@ export function useUserRole(): UseUserRoleResult {
   const { user, isUserLoading: isAuthLoading } = useAuth();
   const { firestore } = useFirebase();
 
-  const userDocRef = useMemo(() => {
-    if (user?.uid) {
+  const userDocRef = useMemoFirebase(() => {
+    if (user?.uid && firestore) {
       return doc(firestore, 'users', user.uid);
     }
     return null;
-  }, [user?.uid, firestore]);
+  }, [user, firestore]);
   
-  const roleDocRef = useMemo(() => {
-    if(user?.uid) {
+  const roleDocRef = useMemoFirebase(() => {
+    if(user?.uid && firestore) {
         return doc(firestore, 'roles', user.uid);
     }
     return null;
-  }, [user?.uid, firestore]);
+  }, [user, firestore]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
   const { data: roleDoc, isLoading: isRoleLoading } = useDoc(roleDocRef);
 
   // If a role document exists, use its role. Otherwise, default to 'member'.
   // This check is safe because the security rules now default to 'member' if the doc doesn't exist.
-  const role: UserRole = roleDoc ? (roleDoc.role as UserRole) : 'member';
+  const role: UserRole = roleDoc ? (roleDoc.role as UserRole) : (user ? 'member' : null);
   
   const isAdmin = role === 'director' || user?.email === 'jdnewsgujarati@gmail.com';
 

@@ -19,7 +19,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Newspaper } from "lucide-react";
-import { useAuth } from "@/firebase/auth/use-user";
+import { useUserRole } from "@/hooks/use-user-role";
 import { useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { useFirebase } from "@/firebase";
@@ -34,23 +34,28 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, isUserLoading } = useAuth();
+  const { user, isAdmin, isLoading } = useUserRole();
   const { auth } = useFirebase();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-        router.push(`/login?redirect=${pathname}`);
+    if (!isLoading && !user) {
+        router.push(`/en/login?redirect=${pathname}`);
+    } else if (!isLoading && user && !isAdmin) {
+        // If the user is logged in but not an admin, redirect them away.
+        // You can redirect them to their profile or the homepage.
+        router.push(`/en/profile`);
     }
-    // Add logic to check for admin role later
-  }, [user, isUserLoading, router, pathname]);
+  }, [user, isLoading, isAdmin, router, pathname]);
 
   const handleLogout = () => {
-    signOut(auth);
-    router.push('/login');
+    if (auth) {
+      signOut(auth);
+      router.push('/en/login');
+    }
   };
 
-  if (isUserLoading || !user) {
+  if (isLoading || !user || !isAdmin) {
     return (
         <div className="flex h-screen items-center justify-center">
             <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
