@@ -84,7 +84,7 @@ export default function ArticlePage() {
 
     const article = articles?.[0];
     
-    if (!article) {
+    if (!isLoading && !article) {
         return notFound();
     }
     
