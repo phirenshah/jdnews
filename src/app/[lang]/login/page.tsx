@@ -73,15 +73,22 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      // Create user profile if it doesn't exist, merging data
+      
       const userDocRef = doc(firestore, 'users', result.user.uid);
+      const roleDocRef = doc(firestore, 'roles', result.user.uid);
+      const role = 'member'; // Default role
+
       setDocumentNonBlocking(userDocRef, {
         id: result.user.uid,
         email: result.user.email,
         firstName: result.user.displayName?.split(' ')[0] || '',
         lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
         phoneNumber: result.user.phoneNumber,
+        role: role,
       }, { merge: true });
+
+      setDocumentNonBlocking(roleDocRef, { role: role }, { merge: true });
+      
       toast({ title: 'Signed in with Google' });
       router.push(redirectUrl);
     } catch (error: any) {
@@ -186,3 +193,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

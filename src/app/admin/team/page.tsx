@@ -31,7 +31,7 @@ import {
   } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -46,6 +46,9 @@ export default function TeamAdminPage() {
         if (!firestore) return;
         const userDocRef = doc(firestore, 'users', userId);
         updateDocumentNonBlocking(userDocRef, { role: newRole });
+
+        const roleDocRef = doc(firestore, 'roles', userId);
+        setDocumentNonBlocking(roleDocRef, { role: newRole }, { merge: true });
     };
 
   return (
@@ -119,3 +122,5 @@ export default function TeamAdminPage() {
     </Card>
   );
 }
+
+    

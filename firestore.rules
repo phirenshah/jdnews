@@ -13,8 +13,8 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    function getUserRole(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    function getUserRole(uid) {
+      return get(/databases/$(database)/documents/roles/$(uid)).data.role;
     }
 
     function isAdmin() {
@@ -45,6 +45,12 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow delete: if isAdmin();
     }
+    
+    match /roles/{userId} {
+      allow get: if isAdmin();
+      allow create, update: if isAdmin();
+      allow list, delete: if false; // List and delete should be restricted
+    }
 
     match /authors/{authorId} {
       allow get, list: if true;
@@ -63,9 +69,7 @@ service cloud.firestore {
       allow update: if isOwner(resource.data.userId) && isExistingDocument() && isOwnershipImmutable('userId');
       allow delete: if isOwner(resource.data.userId) && isExistingDocument();
     }
-    
-    match /roles_admin/{uid} {
-        allow read, write: if false;
-    }
   }
 }
+
+    
