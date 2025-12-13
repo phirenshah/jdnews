@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, Upload, Edit, Trash2, Send } from "lucide-react";
+import { MoreHorizontal, Upload, Edit, Trash2 } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -89,20 +89,13 @@ export default function ArticlesAdminPage() {
         toast({ title: 'Delete action is disabled.' , description: "This is a mock action and doesn't persist."});
     };
     
-    const handleSubmitArticle = () => {
-        toast({
-            title: "Article Submitted (Simulated)",
-            description: "In a real app, this would trigger a publish workflow.",
-        });
-    }
-
   return (
     <>
       <div className="flex items-center mb-4">
         <div className="ml-auto flex items-center gap-2">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm">
                         <Upload className="h-4 w-4 mr-2" />
                         Upload Article
                     </Button>
@@ -157,14 +150,10 @@ export default function ArticlesAdminPage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button onClick={handleCreateArticle}>Save Article</Button>
+                        <Button onClick={handleCreateArticle}>Create Article</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <Button size="sm" onClick={handleSubmitArticle}>
-                <Send className="h-4 w-4 mr-2" />
-                Submit Article
-            </Button>
         </div>
       </div>
       <Card>
