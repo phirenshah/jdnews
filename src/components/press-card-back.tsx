@@ -1,3 +1,4 @@
+
 'use client';
 import Image from 'next/image';
 import { Reporter } from '@/lib/definitions';
@@ -35,15 +36,14 @@ export function PressCardBack({
           className="mx-auto"
         />
         <h3 className="font-bold text-lg">{t.headOffice}</h3>
-        <p className="text-xs text-muted-foreground">
-          201/202, Akhbar Bhavan, Sector 11,
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Near Hotel Haveli, Gandhinagar, Gujarat
-        </p>
+        <div className="text-xs text-muted-foreground">
+          <p>346 rashmi south park</p>
+          <p>Nr. Divine life school</p>
+          <p>Opp.Karnavati 3 flats</p>
+          <p>Narol, Gujarat</p>
+        </div>
         <p className="text-xs mt-2 text-muted-foreground">
-          <span className="font-semibold">{t.officePhone}:</span> +91 79
-          1234 5678
+          <span className="font-semibold">{t.officePhone}:</span> +91 9773242022
         </p>
       </div>
       <div className="flex items-center justify-center relative">
