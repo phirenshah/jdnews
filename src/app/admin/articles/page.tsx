@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Upload, Camera } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,18 +30,22 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { collection, serverTimestamp } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useAuth } from "@/firebase/auth/use-user";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
+import axios from "axios";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ArticlesAdminPage() {
     const firestore = useFirestore();
     const { user } = useAuth();
     const { toast } = useToast();
     const articlesCollection = useMemoFirebase(() => collection(firestore, 'articles'), [firestore]);
-    const { data: articles } = useCollection(articlesCollection);
+    const { data: articles, forceRefetch } = useCollection(articlesCollection);
 
     const [titleEnglish, setTitleEnglish] = useState('');
     const [titleGujarati, setTitleGujarati] = useState('');
@@ -50,11 +54,110 @@ export default function ArticlesAdminPage() {
     const [excerptEnglish, setExcerptEnglish] = useState('');
     const [excerptGujarati, setExcerptGujarati] = useState('');
     const [category, setCategory] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
     
-    const handlePublish = () => {
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
+    const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+    
+    const resetForm = () => {
+        setTitleEnglish('');
+        setTitleGujarati('');
+        setContentEnglish('');
+        setContentGujarati('');
+        setExcerptEnglish('');
+        setExcerptGujarati('');
+        setCategory('');
+        setImageFile(null);
+        setImagePreview(null);
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCameraCapture = () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (video && canvas) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d')?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            canvas.toBlob(blob => {
+                if (blob) {
+                    const file = new File([blob], "capture.png", { type: "image/png" });
+                    setImageFile(file);
+                    setImagePreview(canvas.toDataURL('image/png'));
+                }
+            }, 'image/png');
+            setIsCameraDialogOpen(false);
+        }
+    };
+    
+    useEffect(() => {
+        if (isCameraDialogOpen) {
+            const getCameraPermission = async () => {
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({video: true});
+                setHasCameraPermission(true);
+        
+                if (videoRef.current) {
+                  videoRef.current.srcObject = stream;
+                }
+              } catch (error) {
+                console.error('Error accessing camera:', error);
+                setHasCameraPermission(false);
+                toast({
+                  variant: 'destructive',
+                  title: 'Camera Access Denied',
+                  description: 'Please enable camera permissions in your browser settings.',
+                });
+              }
+            };
+            getCameraPermission();
+        } else {
+            if (videoRef.current?.srcObject) {
+                const stream = videoRef.current.srcObject as MediaStream;
+                stream.getTracks().forEach(track => track.stop());
+            }
+        }
+    }, [isCameraDialogOpen, toast]);
+
+    const handlePublish = async () => {
         if (!user || !articlesCollection) return;
         
+        let finalImageUrl = '';
+
+        if(imageFile) {
+            try {
+              const formData = new FormData();
+              formData.append('key', "3f5f08b61f4298484f11df25a094c176");
+              formData.append('image', imageFile);
+    
+              const response = await axios.post('https://api.imgbb.com/1/upload', formData);
+              finalImageUrl = response.data.data.url;
+            } catch (error) {
+                console.error("Image upload failed:", error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Image Upload Failed',
+                    description: 'Could not upload the article image. Please try again.',
+                });
+                return;
+            }
+        }
+
         const articleData = {
             titleEnglish,
             titleGujarati,
@@ -63,10 +166,11 @@ export default function ArticlesAdminPage() {
             excerptEnglish,
             excerptGujarati,
             category,
-            imageUrl,
+            imageUrl: finalImageUrl,
             authorId: user.uid,
             publicationDate: serverTimestamp(),
             tags: category ? [category] : [],
+            slug: titleEnglish.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         };
         addDocumentNonBlocking(articlesCollection, articleData);
 
@@ -75,14 +179,8 @@ export default function ArticlesAdminPage() {
             description: "Your new article has been submitted."
         });
 
-        setTitleEnglish('');
-        setTitleGujarati('');
-        setContentEnglish('');
-        setContentGujarati('');
-        setExcerptEnglish('');
-        setExcerptGujarati('');
-        setCategory('');
-        setImageUrl('');
+        resetForm();
+        forceRefetch();
     }
 
   return (
@@ -186,14 +284,50 @@ export default function ArticlesAdminPage() {
                             <Textarea id="content-gu" placeholder="Full article content in Gujarati" rows={10} value={contentGujarati} onChange={(e) => setContentGujarati(e.target.value)} />
                         </div>
                     </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="category">Category</Label>
                             <Input id="category" placeholder="e.g. Politics" value={category} onChange={(e) => setCategory(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="imageUrl">Image URL</Label>
-                            <Input id="imageUrl" placeholder="https://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+                            <Label>Article Image</Label>
+                            <div className="flex items-center gap-4">
+                                <div className="w-full h-24 bg-muted rounded-md flex items-center justify-center">
+                                    {imagePreview ? (
+                                    <Image src={imagePreview} alt="Article preview" width={200} height={96} className="object-contain h-24" />
+                                    ) : (
+                                    <span className="text-xs text-muted-foreground">Image Preview</span>
+                                    )}
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Upload
+                                    </Button>
+                                    <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
+                                    <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="sm"><Camera className="mr-2 h-4 w-4" />Take</Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
+                                                <div className="relative">
+                                                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                                                {hasCameraPermission === false && (
+                                                    <Alert variant="destructive" className="mt-4">
+                                                        <AlertTitle>Camera Access Required</AlertTitle>
+                                                        <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
+                                                    </Alert>
+                                                )}
+                                                </div>
+                                                <canvas ref={canvasRef} className="hidden" />
+                                            <DialogFooter>
+                                                <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
+                                            </DialogFooter>
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <Button onClick={handlePublish}>Publish Article</Button>
@@ -203,3 +337,5 @@ export default function ArticlesAdminPage() {
     </Tabs>
   );
 }
+
+    

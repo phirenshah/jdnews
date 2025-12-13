@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -6,14 +7,14 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 const sections = [
-  { name: 'Politics', href: '#' },
-  { name: 'Business', href: '#' },
-  { name: 'Technology', href: '#' },
-  { name: 'Sports', href: '#' },
-  { name: 'World', href: '#' },
-  { name: 'Entertainment', href: '#' },
-  { name: 'Health', href: '#' },
-  { name: 'Science', href: '#' },
+  { name: 'Politics', href: '/category/politics' },
+  { name: 'Business', href: '/category/business' },
+  { name: 'Technology', href: '/category/technology' },
+  { name: 'Sports', href: '/category/sports' },
+  { name: 'World', href: '/category/world' },
+  { name: 'Entertainment', href: '/category/entertainment' },
+  { name: 'Health', href: '/category/health' },
+  { name: 'Science', href: '/category/science' },
 ];
 
 export function SectionHeader({ lang }: { lang: string }) {
@@ -23,14 +24,14 @@ export function SectionHeader({ lang }: { lang: string }) {
 
   useEffect(() => {
     // Logic to determine active section from pathname
-    const currentPath = pathname.split('/')[2];
+    const currentPath = pathname.split('/')[3]; // e.g. /en/category/politics -> politics
     const section = sections.find(
-      (s) => s.href.substring(1) === currentPath
+      (s) => s.href.split('/')[2] === currentPath
     );
     if (section) {
       setActiveSection(section.name);
     } else {
-        // Default to first section if no match, or handle as needed
+        // Default to null if no match
         setActiveSection(null);
     }
   }, [pathname]);
@@ -70,3 +71,5 @@ export function SectionHeader({ lang }: { lang: string }) {
     </nav>
   );
 }
+
+    

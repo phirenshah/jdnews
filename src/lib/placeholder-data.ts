@@ -1,9 +1,10 @@
+
 import type { Article, Reporter, Donation } from '@/lib/definitions';
 
 export const placeholderArticles: Article[] = [
   {
     id: '1',
-    slug: 'major-political-summit-concludes',
+    slug: 'major-political-summit-concludes-with-historic-agreement',
     title: {
       en: 'Major Political Summit Concludes with Historic Agreement',
       gu: 'મુખ્ય રાજકીય શિખર સંમેલન ઐતિહાસિક સમજૂતી સાથે સમાપ્ત થયું',
@@ -23,7 +24,7 @@ export const placeholderArticles: Article[] = [
   },
   {
     id: '2',
-    slug: 'tech-giant-unveils-new-ai-chip',
+    slug: 'tech-giant-unveils-revolutionary-ai-chip',
     title: {
       en: 'Tech Giant Unveils Revolutionary AI Chip',
       gu: 'ટેક જાયન્ટે ક્રાંતિકારી AI ચિપનું અનાવરણ કર્યું',
@@ -43,7 +44,7 @@ export const placeholderArticles: Article[] = [
   },
     {
     id: '3',
-    slug: 'national-cricket-team-wins-championship',
+    slug: 'national-cricket-team-wins-world-championship',
     title: {
       en: 'National Cricket Team Wins World Championship in Thriller Final',
       gu: 'રાષ્ટ્રીય ક્રિકેટ ટીમે રોમાંચક ફાઇનલમાં વર્લ્ડ ચેમ્પિયનશિપ જીતી',
@@ -63,7 +64,7 @@ export const placeholderArticles: Article[] = [
   },
   {
     id: '4',
-    slug: 'exploring-the-ancient-ruins',
+    slug: 'archaeologists-uncover-lost-city-in-dense-jungle',
     title: {
       en: 'Archaeologists Uncover Lost City in Dense Jungle',
       gu: 'પુરાતત્વવિદોએ ગાઢ જંગલમાં ખોવાયેલું શહેર શોધી કાઢ્યું',
@@ -146,3 +147,5 @@ export const rssFeeds = {
       { title: "New Metro Line to Open Next Month", link: "#"},
   ],
 };
+
+    

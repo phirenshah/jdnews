@@ -1,0 +1,108 @@
+
+'use client';
+
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
+import { notFound } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+
+type Article = {
+  id: string;
+  slug: string;
+  titleEnglish: string;
+  titleGujarati: string;
+  excerptEnglish: string;
+  excerptGujarati: string;
+  imageUrl: string;
+  publicationDate: any;
+  category: string;
+};
+
+export default function CategoryPage({ params }: { params: { lang: 'en' | 'gu'; categoryName: string } }) {
+  const { lang, categoryName } = params;
+  const { firestore } = useFirebase();
+
+  // Capitalize first letter for query
+  const formattedCategory = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
+
+  const articlesCollectionRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'articles') : null),
+    [firestore]
+  );
+
+  const categoryQuery = useMemoFirebase(
+    () => articlesCollectionRef ? query(articlesCollectionRef, where('category', '==', formattedCategory)) : null,
+    [articlesCollectionRef, formattedCategory]
+  );
+
+  const { data: articles, isLoading, error } = useCollection<Article>(categoryQuery);
+  
+  const title = lang === 'en' ? formattedCategory : formattedCategory; // Add Gujarati translations if available
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error("Firestore error:", error);
+    return <div className="container mx-auto px-4 py-8">Failed to load articles. Please check your Firestore permissions.</div>;
+  }
+  
+  if (!isLoading && !articles?.length) {
+      return (
+        <div className="container mx-auto px-4 py-8">
+            <h1 className="text-4xl font-bold font-headline mb-8">{title}</h1>
+            <p>No articles found in this category yet.</p>
+        </div>
+      )
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold font-headline mb-8">{title}</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {articles?.map((article) => {
+          const articleTitle = lang === 'en' ? article.titleEnglish : article.titleGujarati;
+          const articleExcerpt = lang === 'en' ? article.excerptEnglish : article.excerptGujarati;
+
+          return (
+            <Card key={article.id} className="flex flex-col shadow-md halo-effect">
+              <Link href={`/${lang}/article/${article.slug}`} className="flex flex-col flex-grow">
+                <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
+                  {article.imageUrl ? (
+                    <Image
+                      src={article.imageUrl}
+                      alt={articleTitle}
+                      fill
+                      className="object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                  ) : <div className="w-full h-full bg-muted"></div>}
+                </div>
+                <CardContent className="p-4 flex flex-col flex-grow">
+                  <h3 className="font-headline text-xl font-bold mb-2 flex-grow">
+                    {articleTitle}
+                  </h3>
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {articleExcerpt}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {new Date(article.publicationDate?.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                </CardContent>
+              </Link>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+    
