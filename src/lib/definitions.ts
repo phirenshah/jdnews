@@ -8,7 +8,6 @@ export type Article = {
   contentEnglish: string;
   contentGujarati: string;
   authorId: string;
-  author: string;
   category: string;
   publicationDate: any;
   imageUrl: string;

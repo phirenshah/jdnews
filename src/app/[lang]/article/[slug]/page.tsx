@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { AdContainer } from '@/components/ad-container';
 import { useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import type { Reporter } from '@/lib/definitions';
 
 type Article = {
     id: string;
@@ -31,16 +32,11 @@ type Article = {
     slug: string;
 };
 
-type Author = {
-    id: string;
-    name: string;
-    profilePictureUrl?: string;
-}
 
 function AuthorDisplay({ authorId }: { authorId: string }) {    
     const { firestore } = useFirebase();
     const authorRef = useMemoFirebase(() => (firestore && authorId ? doc(firestore, 'authors', authorId) : null), [firestore, authorId]);
-    const { data: author, isLoading } = useDoc<Author>(authorRef);
+    const { data: author, isLoading } = useDoc<Reporter>(authorRef);
 
     if (isLoading) return <div className="h-10 w-24 bg-muted rounded-md animate-pulse" />;
     if (!author) return <p>Unknown Author</p>;
@@ -109,7 +105,7 @@ export default function ArticlePage() {
                         {articleExcerpt}
                     </p>
                     <div className="flex items-center justify-center gap-4">
-                        <AuthorDisplay authorId={article.authorId} />
+                        {article.authorId && <AuthorDisplay authorId={article.authorId} />}
                         <p className="text-sm text-muted-foreground">
                         Published on {new Date(article.publicationDate.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}
                         </p>
