@@ -36,10 +36,10 @@ service cloud.firestore {
     // Rules for collections
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin(); // Allow admins to list users
       allow create: if isOwner(userId);
       // An admin can update anything. A regular user can update their own profile, but cannot change their role.
       allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
-      allow list: if false; // Deny list for security
       allow delete: if isAdmin(); // Allow admins to delete user profiles
     }
     
@@ -69,3 +69,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
