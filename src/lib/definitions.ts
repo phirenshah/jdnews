@@ -1,25 +1,17 @@
 export type Article = {
   id: string;
   slug: string;
-  title: {
-    en: string;
-    gu: string;
-  };
-  excerpt: {
-    en: string;
-gu: string;
-  };
-  content: {
-    en: string;
-    gu: string;
-  };
   titleEnglish: string;
   titleGujarati: string;
+  excerptEnglish: string;
+  excerptGujarati: string;
+  contentEnglish: string;
+  contentGujarati: string;
   authorId: string;
   author: string;
   category: string;
   publicationDate: any;
-  imageId: string;
+  imageUrl: string;
 };
 
 export type Reporter = {
