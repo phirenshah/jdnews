@@ -81,7 +81,7 @@ function AuthButton({ lang }: { lang: string }) {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {canAccessDashboard && (
-             <Link href={`/admin/articles`}>
+             <Link href={`/${lang}/dashboard`}>
               <DropdownMenuItem>
                 <Newspaper className="mr-2 h-4 w-4" />
                 Dashboard

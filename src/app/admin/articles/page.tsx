@@ -34,10 +34,12 @@ import { useState } from "react";
 import { collection, serverTimestamp } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useAuth } from "@/firebase/auth/use-user";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ArticlesAdminPage() {
     const firestore = useFirestore();
     const { user } = useAuth();
+    const { toast } = useToast();
     const articlesCollection = useMemoFirebase(() => collection(firestore, 'articles'), [firestore]);
     const { data: articles } = useCollection(articlesCollection);
 
@@ -67,6 +69,11 @@ export default function ArticlesAdminPage() {
             tags: category ? [category] : [],
         };
         addDocumentNonBlocking(articlesCollection, articleData);
+
+        toast({
+            title: "Article Published!",
+            description: "Your new article has been submitted."
+        });
 
         setTitleEnglish('');
         setTitleGujarati('');
