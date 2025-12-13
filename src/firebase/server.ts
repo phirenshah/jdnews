@@ -1,8 +1,7 @@
 
 import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/admin/app';
-import { getFirestore } from 'firebase/admin/firestore';
-import { credential } from 'firebase-admin';
+import { initializeApp, getApps, getApp, type FirebaseApp, credential } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 // IMPORTANT: DO NOT MODIFY THIS FILE
 
