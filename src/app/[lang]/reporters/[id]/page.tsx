@@ -1,7 +1,7 @@
 
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Mail, Newspaper, Link as LinkIcon, Download, CreditCard, Loader2 } from 'lucide-react';
@@ -15,11 +15,9 @@ import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, where } from 'firebase/firestore';
-import type { Reporter, Article } from '@/lib/definitions';
-import { useCollection } from '@/firebase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import type { Reporter, Article } from '@/lib/definitions';
+import { placeholderReporters, placeholderArticles } from '@/lib/placeholder-data';
 
 export default function ReporterProfilePage() {
     const params = useParams<{ lang: 'en' | 'gu', id: string }>();
@@ -30,22 +28,19 @@ export default function ReporterProfilePage() {
     const frontCardRef = useRef<HTMLDivElement>(null);
     const backCardRef = useRef<HTMLDivElement>(null);
 
-    const { firestore } = useFirebase();
+    const [author, setAuthor] = useState<Reporter | null | undefined>(undefined);
+    const [authorArticles, setAuthorArticles] = useState<typeof placeholderArticles>([]);
 
-    const authorDocRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'authors', id) : null), [firestore, id]);
-    const { data: author, isLoading: isAuthorLoading } = useDoc<Reporter>(authorDocRef);
-    
-    const articlesCollectionRef = useMemoFirebase(
-      () => (firestore ? collection(firestore, 'articles') : null),
-      [firestore]
-    );
-
-    const authorArticlesQuery = useMemoFirebase(
-      () => (articlesCollectionRef && author?.id ? query(articlesCollectionRef, where('authorId', '==', author.id)) : null),
-      [articlesCollectionRef, author?.id]
-    );
-    
-    const { data: authorArticles, isLoading: areArticlesLoading } = useCollection<Article>(authorArticlesQuery);
+    useEffect(() => {
+        const foundAuthor = placeholderReporters.find(r => r.id === id);
+        if (foundAuthor) {
+            setAuthor(foundAuthor);
+            const articles = placeholderArticles.filter(a => a.author === foundAuthor.name);
+            setAuthorArticles(articles);
+        } else {
+            setAuthor(null); // Not found
+        }
+    }, [id]);
     
     useEffect(() => {
         if (typeof window !== 'undefined' && author) {
@@ -53,7 +48,7 @@ export default function ReporterProfilePage() {
         }
     }, [lang, author]);
     
-    if (isAuthorLoading) {
+    if (author === undefined) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <Loader2 className="h-16 w-16 animate-spin" />
@@ -166,21 +161,20 @@ export default function ReporterProfilePage() {
                             <Separator className="my-8" />
                             <h2 className="text-2xl font-bold font-headline mb-4">Recent Articles</h2>
                             <div className="space-y-4">
-                                {areArticlesLoading && <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin"/></div>}
-                                {!areArticlesLoading && authorArticles && authorArticles.length > 0 ? (
+                                {authorArticles && authorArticles.length > 0 ? (
                                     authorArticles.map(article => {
                                         const title = lang === 'en' ? article.titleEnglish : article.titleGujarati;
                                         return (
                                             <Link key={article.id} href={`/${lang}/article/${article.slug}`} className="block hover:bg-muted/50 p-3 rounded-md">
                                                 <h3 className="font-bold">{title}</h3>
                                                 {article.publicationDate && (
-                                                    <p className="text-sm text-muted-foreground">{new Date(article.publicationDate.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                                    <p className="text-sm text-muted-foreground">{new Date(article.publicationDate).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                                 )}
                                             </Link>
                                         )
                                     })
                                 ) : (
-                                   !areArticlesLoading && <p className="text-muted-foreground">No articles published yet.</p>
+                                   <p className="text-muted-foreground">No articles published yet.</p>
                                 )}
                             </div>
                         </div>

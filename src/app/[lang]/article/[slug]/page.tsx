@@ -1,7 +1,5 @@
 
 import { notFound } from 'next/navigation';
-import { collection, query, where, getDocs, doc, getDoc, DocumentData } from 'firebase/firestore';
-import { firestore } from '@/firebase/server';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -11,60 +9,29 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { AdContainer } from '@/components/ad-container';
 import type { Reporter } from '@/lib/definitions';
+import { placeholderArticles, placeholderReporters } from '@/lib/placeholder-data';
+import { fullPlaceholderArticles } from '@/lib/placeholder-data-full';
 
-type Article = {
-    id: string;
-    titleEnglish: string;
-    titleGujarati: string;
-    contentEnglish: string;
-    contentGujarati: string;
-    excerptEnglish: string;
-    excerptGujarati: string;
-    imageUrl: string;
-    authorId: string;
-    publicationDate: { seconds: number; nanoseconds: number; };
-    category: string;
-    slug: string;
-    lang: 'en' | 'gu';
-};
+type Article = (typeof placeholderArticles)[0] & { contentEnglish: string, contentGujarati: string, author: string, publicationDate: string };
 
 async function getArticleBySlug(slug: string): Promise<Article | null> {
-  try {
-    const articlesCollection = collection(firestore, 'articles');
-    // A composite index on ('slug', 'lang') would be ideal, but for now,
-    // querying by slug is more resilient if that index doesn't exist.
-    const q = query(articlesCollection, where('slug', '==', slug));
-    const querySnapshot = await getDocs(q);
+    const articleContent = fullPlaceholderArticles.find(a => a.slug === slug);
+    const articleExcerpt = placeholderArticles.find(a => a.slug === slug);
 
-    if (querySnapshot.empty) {
-      return null;
+    if (!articleContent || !articleExcerpt) {
+        return null;
     }
 
-    // If multiple articles have the same slug (e.g., for different languages),
-    // this will pick the first one. This logic can be refined if needed.
-    const articleDoc = querySnapshot.docs[0];
-    return { id: articleDoc.id, ...articleDoc.data() } as Article;
-  } catch (error) {
-    console.error("Error fetching article by slug:", error);
-    // Re-throw the error to be caught by the page component
-    throw new Error('Failed to fetch article from database.');
-  }
+    return {
+        ...articleExcerpt,
+        ...articleContent,
+    } as Article;
 }
 
-async function getAuthorById(authorId: string): Promise<Reporter | null> {
-    if (!authorId) return null;
-    try {
-        const authorRef = doc(firestore, 'authors', authorId);
-        const authorSnap = await getDoc(authorRef);
-        if (authorSnap.exists()) {
-            return authorSnap.data() as Reporter;
-        }
-        return null;
-    } catch (error) {
-        console.error("Error fetching author:", error);
-        // Don't throw here, an article can exist without an author
-        return null;
-    }
+async function getAuthorByName(authorName: string): Promise<Reporter | null> {
+    if (!authorName) return null;
+    const author = placeholderReporters.find(r => r.name === authorName);
+    return author || null;
 }
 
 function AuthorDisplay({ author }: { author: Reporter | null }) {
@@ -86,7 +53,7 @@ function AuthorDisplay({ author }: { author: Reporter | null }) {
     return (
         <div className="flex items-center space-x-4">
             <Avatar>
-                <AvatarImage src={author.profilePictureUrl} alt={authorName} />
+                {author.profilePictureUrl && <AvatarImage src={author.profilePictureUrl} alt={authorName} />}
                 <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
@@ -99,38 +66,17 @@ function AuthorDisplay({ author }: { author: Reporter | null }) {
 export default async function ArticlePage({ params }: { params: { lang: 'en' | 'gu', slug: string } }) {
     const { lang, slug } = params;
 
-    let article: Article | null = null;
-    let author: Reporter | null = null;
-    let fetchError: string | null = null;
-
-    try {
-        article = await getArticleBySlug(slug);
-
-        if (article) {
-            author = await getAuthorById(article.authorId);
-        }
-    } catch (error: any) {
-        fetchError = error.message || "An unexpected error occurred while loading the article.";
-    }
-
-    if (fetchError) {
-        return (
-            <div className="container mx-auto px-4 py-16 text-center text-destructive">
-                <h1 className="text-2xl font-bold mb-4">Error Loading Article</h1>
-                <p>{fetchError}</p>
-                <p className="mt-2 text-sm text-muted-foreground">Please check your Firestore security rules and collection indexes.</p>
-            </div>
-        );
-    }
+    const article = await getArticleBySlug(slug);
 
     if (!article) {
-        return notFound();
+        notFound();
     }
+    
+    const author = await getAuthorByName(article.author);
 
     const articleTitle = lang === 'en' ? article.titleEnglish : article.titleGujarati;
     const articleExcerpt = lang === 'en' ? article.excerptEnglish : article.excerptGujarati;
     const articleContent = (lang === 'en' ? article.contentEnglish : article.contentGujarati) || '';
-
 
     return (
         <div className="bg-background">
@@ -146,7 +92,7 @@ export default async function ArticlePage({ params }: { params: { lang: 'en' | '
                     <div className="flex items-center justify-center gap-4">
                         <AuthorDisplay author={author} />
                         <p className="text-sm text-muted-foreground">
-                        Published on {new Date(article.publicationDate.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}
+                        Published on {new Date(article.publicationDate).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}
                         </p>
                     </div>
                 </header>

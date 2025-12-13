@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Upload, Camera, Trash2, Edit } from "lucide-react";
+import { MoreHorizontal, Upload, Edit, Trash2 } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -25,294 +25,33 @@ import {
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useCollection, useFirebase, useMemoFirebase } from "@/firebase";
-import { useState, useRef, useEffect } from "react";
-import { collection, serverTimestamp, doc } from "firebase/firestore";
-import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { useAuth } from "@/firebase/auth/use-user";
 import { useToast } from "@/hooks/use-toast";
-import Image from "next/image";
-import axios from "axios";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { sections } from "@/lib/categories";
+import { useState } from "react";
+import { placeholderArticles, placeholderReporters } from "@/lib/placeholder-data";
 
 export default function ArticlesAdminPage() {
-    const { firestore } = useFirebase();
-    const { user } = useAuth();
     const { toast } = useToast();
-    const articlesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'articles'): null, [firestore]);
-    const { data: articles, forceRefetch } = useCollection(articlesCollection);
+    const [articles, setArticles] = useState(placeholderArticles);
 
-    const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-    const [titleEnglish, setTitleEnglish] = useState('');
-    const [titleGujarati, setTitleGujarati] = useState('');
-    const [contentEnglish, setContentEnglish] = useState('');
-    const [contentGujarati, setContentGujarati] = useState('');
-    const [excerptEnglish, setExcerptEnglish] = useState('');
-    const [excerptGujarati, setExcerptGujarati] = useState('');
-    const [category, setCategory] = useState('');
-    
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
-    const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-    
-    const resetForm = () => {
-        setTitleEnglish('');
-        setTitleGujarati('');
-        setContentEnglish('');
-        setContentGujarati('');
-        setExcerptEnglish('');
-        setExcerptGujarati('');
-        setCategory('');
-        setImageFile(null);
-        setImagePreview(null);
-    };
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleCameraCapture = () => {
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        if (video && canvas) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d')?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-            canvas.toBlob(blob => {
-                if (blob) {
-                    const file = new File([blob], "capture.png", { type: "image/png" });
-                    setImageFile(file);
-                    setImagePreview(canvas.toDataURL('image/png'));
-                }
-            }, 'image/png');
-            setIsCameraDialogOpen(false);
-        }
-    };
-    
-    useEffect(() => {
-        if (isCameraDialogOpen) {
-            const getCameraPermission = async () => {
-              try {
-                const stream = await navigator.mediaDevices.getUserMedia({video: true});
-                setHasCameraPermission(true);
-        
-                if (videoRef.current) {
-                  videoRef.current.srcObject = stream;
-                }
-              } catch (error) {
-                console.error('Error accessing camera:', error);
-                setHasCameraPermission(false);
-                toast({
-                  variant: 'destructive',
-                  title: 'Camera Access Denied',
-                  description: 'Please enable camera permissions in your browser settings.',
-                });
-              }
-            };
-            getCameraPermission();
-        } else {
-            if (videoRef.current?.srcObject) {
-                const stream = videoRef.current.srcObject as MediaStream;
-                stream.getTracks().forEach(track => track.stop());
-            }
-        }
-    }, [isCameraDialogOpen, toast]);
-
-    const handlePublish = async () => {
-        if (!user || !articlesCollection) return;
-        
-        let finalImageUrl = '';
-
-        if(imageFile) {
-            try {
-              const formData = new FormData();
-              formData.append('key', "3f5f08b61f4298484f11df25a094c176");
-              formData.append('image', imageFile);
-    
-              const response = await axios.post('https://api.imgbb.com/1/upload', formData);
-              finalImageUrl = response.data.data.url;
-            } catch (error) {
-                console.error("Image upload failed:", error);
-                toast({
-                    variant: 'destructive',
-                    title: 'Image Upload Failed',
-                    description: 'Could not upload the article image. Please try again.',
-                });
-                return;
-            }
-        }
-
-        const articleData = {
-            titleEnglish,
-            titleGujarati,
-            contentEnglish,
-            contentGujarati,
-            excerptEnglish,
-            excerptGujarati,
-            category,
-            imageUrl: finalImageUrl,
-            authorId: user.uid,
-            publicationDate: serverTimestamp(),
-            tags: category ? [category] : [],
-            slug: titleEnglish.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-        };
-        addDocumentNonBlocking(articlesCollection, articleData);
-
-        toast({
-            title: "Article Published!",
-            description: "Your new article has been submitted."
-        });
-
-        resetForm();
-        setIsUploadDialogOpen(false);
-        forceRefetch();
-    }
-    
     const handleDelete = (articleId: string) => {
-        if (!firestore) return;
-        const articleDocRef = doc(firestore, 'articles', articleId);
-        deleteDocumentNonBlocking(articleDocRef);
-        toast({ title: 'Article deleted.' });
-        forceRefetch();
+        setArticles(prev => prev.filter(a => a.id !== articleId));
+        toast({ title: 'Article "deleted".' , description: "This is a mock action. Data is static."});
     };
-
 
   return (
     <>
       <div className="flex items-center mb-4">
         <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="outline">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Schedule Content
+            <Button size="sm" disabled>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Article
             </Button>
-             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button size="sm">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Article
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[80vw] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Create New Article</DialogTitle>
-                        <CardDescription>Fill in the details for the new article in both languages.</CardDescription>
-                    </DialogHeader>
-                    <div className="space-y-6 py-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="title-en">Title (English)</Label>
-                                <Input id="title-en" placeholder="Enter English title" value={titleEnglish} onChange={(e) => setTitleEnglish(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="title-gu">Title (Gujarati)</Label>
-                                <Input id="title-gu" placeholder="Enter Gujarati title" value={titleGujarati} onChange={(e) => setTitleGujarati(e.target.value)} />
-                            </div>
-                        </div>
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="excerpt-en">Excerpt (English)</Label>
-                                <Textarea id="excerpt-en" placeholder="Short summary in English" value={excerptEnglish} onChange={(e) => setExcerptEnglish(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="excerpt-gu">Excerpt (Gujarati)</Label>
-                                <Textarea id="excerpt-gu" placeholder="Short summary in Gujarati" value={excerptGujarati} onChange={(e) => setExcerptGujarati(e.target.value)} />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="content-en">Content (English)</Label>
-                                <Textarea id="content-en" placeholder="Full article content in English" rows={10} value={contentEnglish} onChange={(e) => setContentEnglish(e.target.value)}/>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="content-gu">Content (Gujarati)</Label>
-                                <Textarea id="content-gu" placeholder="Full article content in Gujarati" rows={10} value={contentGujarati} onChange={(e) => setContentGujarati(e.target.value)} />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="category">Category</Label>
-                                <Select value={category} onValueChange={setCategory}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a category" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {sections.map(section => (
-                                            <SelectItem key={section.name} value={section.name}>{section.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Article Image</Label>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-full h-24 bg-muted rounded-md flex items-center justify-center">
-                                        {imagePreview ? (
-                                        <Image src={imagePreview} alt="Article preview" width={200} height={96} className="object-contain h-24" />
-                                        ) : (
-                                        <span className="text-xs text-muted-foreground">Image Preview</span>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                            <Upload className="mr-2 h-4 w-4" />
-                                            Upload
-                                        </Button>
-                                        <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
-                                        <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" size="sm"><Camera className="mr-2 h-4 w-4" />Take</Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
-                                                    <div className="relative">
-                                                    <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
-                                                    {hasCameraPermission === false && (
-                                                        <Alert variant="destructive" className="mt-4">
-                                                            <AlertTitle>Camera Access Required</AlertTitle>
-                                                            <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
-                                                        </Alert>
-                                                    )}
-                                                    </div>
-                                                    <canvas ref={canvasRef} className="hidden" />
-                                                <DialogFooter>
-                                                    <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={handlePublish}>Publish Article</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
       </div>
       <Card>
           <CardHeader>
           <CardTitle>Manage Articles</CardTitle>
-          <CardDescription>View, edit, or delete published articles.</CardDescription>
+          <CardDescription>View, edit, or delete published articles from the static placeholder data.</CardDescription>
           </CardHeader>
           <CardContent>
           <Table>
@@ -331,11 +70,11 @@ export default function ArticlesAdminPage() {
               {articles?.map((article: any) => (
                   <TableRow key={article.id}>
                   <TableCell className="font-medium max-w-xs truncate">{article.titleEnglish}</TableCell>
-                  <TableCell>{article.authorId}</TableCell>
+                  <TableCell>{article.author}</TableCell>
                   <TableCell>
                       <Badge variant="outline">{article.category}</Badge>
                   </TableCell>
-                  <TableCell>{article.publicationDate?.toDate().toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(article.publicationDate).toLocaleDateString()}</TableCell>
                   <TableCell>
                       <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -346,7 +85,7 @@ export default function ArticlesAdminPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem disabled>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                           </DropdownMenuItem>

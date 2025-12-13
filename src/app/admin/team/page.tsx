@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Trash, Camera, Upload, Loader2, Edit, RefreshCw } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, Edit, RefreshCw, Loader2 } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -32,373 +32,26 @@ import {
   } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useUserRole } from "@/hooks/use-user-role";
-import { useFirebase, useCollection, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import { collection, doc, query, where, getDocs, writeBatch, documentId } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import axios from "axios";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { placeholderReporters } from "@/lib/placeholder-data";
 
-const contentCreatorRoles = ['reporter', 'editor', 'director'];
 
 export default function TeamAdminPage() {
-    const { user: adminUser, isAdmin, isLoading: isRoleLoading } = useUserRole();
-    const { firestore } = useFirebase();
     const { toast } = useToast();
 
-    const usersCollection = useMemoFirebase(() => {
-        if (firestore && isAdmin) {
-            return collection(firestore, 'users');
-        }
-        return null;
-    }, [firestore, isAdmin]);
-    
-    const { data: users, isLoading: areUsersLoading, forceRefetch } = useCollection(usersCollection);
+    const [team, setTeam] = useState(placeholderReporters);
 
-    const [isAddReporterDialogOpen, setIsAddReporterDialogOpen] = useState(false);
-    const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
-    const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
-    const [isUpdatingCredits, setIsUpdatingCredits] = useState(false);
-
-    const [findUserEmail, setFindUserEmail] = useState('');
-    const [isFindingUser, setIsFindingUser] = useState(false);
-    const [foundUser, setFoundUser] = useState<any>(null);
-    const [findUserError, setFindUserError] = useState<string | null>(null);
-
-    const [editingUser, setEditingUser] = useState<any>(null);
-    const [newReporter, setNewReporter] = useState({
-        title: '',
-        dob: '',
-        officeLocation: '',
-    });
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-
-    const authorsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'authors') : null, [firestore]);
-    
-    const resetForm = () => {
-        setNewReporter({ title: '', dob: '', officeLocation: '' });
-        setFindUserEmail('');
-        setFoundUser(null);
-        setFindUserError(null);
-        setImageFile(null);
-        setImagePreview(null);
-        setEditingUser(null);
+    const handleDeleteUser = (userId: string) => {
+        setTeam(prev => prev.filter(r => r.id !== userId));
+        toast({
+            title: "Reporter 'Deleted'",
+            description: "This is a mock action. The underlying static data has not changed.",
+        });
     };
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleCameraCapture = () => {
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        if (video && canvas) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d')?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-            canvas.toBlob(blob => {
-                if (blob) {
-                    const file = new File([blob], "capture.png", { type: "image/png" });
-                    setImageFile(file);
-                    setImagePreview(canvas.toDataURL('image/png'));
-                }
-            }, 'image/png');
-            setIsCameraDialogOpen(false);
-        }
-    };
-
-    const handleFindUser = async () => {
-        if (!firestore || !findUserEmail) return;
-        
-        setIsFindingUser(true);
-        setFindUserError(null);
-        setFoundUser(null);
-
-        const usersQuery = query(collection(firestore, 'users'), where("email", "==", findUserEmail));
-        
-        try {
-            const querySnapshot = await getDocs(usersQuery);
-            if (querySnapshot.empty) {
-                setFindUserError(`No user found with email: ${findUserEmail}. Please ask them to sign up first.`);
-            } else {
-                const userDoc = querySnapshot.docs[0];
-                setFoundUser({ id: userDoc.id, ...userDoc.data() });
-            }
-        } catch (error: any) {
-             const defaultMessage = "An error occurred while searching for the user. Firestore may require an index. Please check the browser console for a link to create one.";
-             const errorMessage = error.message ? `${defaultMessage} Firestore error: ${error.message}` : defaultMessage;
-             setFindUserError(errorMessage);
-             console.error(error);
-        } finally {
-            setIsFindingUser(false);
-        }
-    };
-
-    const handleAddReporter = async () => {
-        if(!foundUser || !authorsCollection || !firestore) return;
-
-        let uploadedImageUrl = '';
-        if (imageFile) {
-            try {
-                const formData = new FormData();
-                formData.append('key', "3f5f08b61f4298484f11df25a094c176");
-                formData.append('image', imageFile);
-
-                const response = await axios.post('https://api.imgbb.com/1/upload', formData);
-                uploadedImageUrl = response.data.data.url;
-            } catch (error) {
-                console.error("Image upload failed:", error);
-                toast({
-                    variant: 'destructive',
-                    title: 'Image Upload Failed',
-                    description: 'Could not upload the profile picture. Please try again.',
-                });
-                return;
-            }
-        }
-
-        try {
-            const batch = writeBatch(firestore);
-
-            const userDocRef = doc(firestore, 'users', foundUser.id);
-            const roleDocRef = doc(firestore, 'roles', foundUser.id);
-            const newAuthorRef = doc(authorsCollection);
-            
-            const newRole = newReporter.title.toLowerCase() === 'director' ? 'director' : 'reporter';
-
-            batch.set(userDocRef, {
-                role: newRole,
-                profilePictureUrl: uploadedImageUrl,
-            }, { merge: true });
-
-            batch.set(roleDocRef, { role: newRole }, { merge: true });
-            
-            const authorData = {
-              id: newAuthorRef.id,
-              name: `${foundUser.firstName} ${foundUser.lastName}`,
-              title: newReporter.title,
-              dob: newReporter.dob,
-              contact: foundUser.email,
-              officeLocation: newReporter.officeLocation,
-              verified: true,
-              profilePictureUrl: uploadedImageUrl || foundUser.profilePictureUrl || '',
-              imageId: `reporter-${foundUser.id}`
-            };
-            batch.set(newAuthorRef, authorData);
-            
-            await batch.commit();
-            
-            toast({
-                title: "Reporter Created",
-                description: `${foundUser.firstName} ${foundUser.lastName} has been added as a reporter.`,
-            });
-            resetForm();
-            setIsAddReporterDialogOpen(false);
-            forceRefetch(); // Refresh user list
-        } catch(error: any) {
-             toast({
-                variant: 'destructive',
-                title: "Error Creating Reporter",
-                description: error.message,
-            });
-        }
-    };
-
-    const openEditDialog = (user: any) => {
-        setEditingUser(user);
-        setIsEditUserDialogOpen(true);
-    };
-
-    const handleUpdateUser = async () => {
-        if (!firestore || !editingUser) return;
-        const userDocRef = doc(firestore, 'users', editingUser.id);
-        
-        try {
-            setDocumentNonBlocking(userDocRef, {
-                firstName: editingUser.firstName,
-                lastName: editingUser.lastName,
-            }, { merge: true });
-
-            toast({
-                title: 'User Updated',
-                description: "The user's profile has been successfully updated.",
-            });
-            setIsEditUserDialogOpen(false);
-            setEditingUser(null);
-            forceRefetch();
-        } catch (error: any) {
-             toast({
-                variant: 'destructive',
-                title: "Error Updating User",
-                description: error.message,
-            });
-        }
-    };
-    
-    const handleRoleChange = async (user: any, newRole: string) => {
-        if (!firestore || !user.id || !user.email) return;
-
-        try {
-            const batch = writeBatch(firestore);
-    
-            const userDocRef = doc(firestore, 'users', user.id);
-            const roleDocRef = doc(firestore, 'roles', user.id);
-    
-            batch.set(userDocRef, { role: newRole }, { merge: true });
-            batch.set(roleDocRef, { role: newRole }, { merge: true });
-            
-            await batch.commit();
-    
-            toast({
-                title: "Role Updated",
-                description: `${user.firstName}'s role has been changed to ${newRole}. Click 'Update Credits' to sync with the team page.`,
-            });
-            forceRefetch();
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: "Error Updating Role",
-                description: error.message,
-            });
-        }
-    };
-  
-      const handleDeleteUser = async (userId: string, email?: string) => {
-          if (!firestore || !userId) return;
-          
-          if (adminUser?.uid === userId) {
-            toast({
-                variant: 'destructive',
-                title: "Action Not Allowed",
-                description: "You cannot delete your own account from the admin panel.",
-            });
-            return;
-          }
-  
-          if (email && authorsCollection) {
-            const authorsQuery = query(authorsCollection, where('contact', '==', email));
-            const authorDocs = await getDocs(authorsQuery);
-            authorDocs.forEach(authorDoc => {
-                deleteDocumentNonBlocking(authorDoc.ref);
-            });
-          }
-  
-          deleteDocumentNonBlocking(doc(firestore, 'users', userId));
-          deleteDocumentNonBlocking(doc(firestore, 'roles', userId));
-  
-          toast({
-              title: "User Data Deleted",
-              description: `User ${email} has been removed from Firestore. Note: Auth account still exists.`,
-          });
-          forceRefetch();
-      };
-      
-    const handleUpdateCredits = async () => {
-        if (!firestore || !users) return;
-
-        setIsUpdatingCredits(true);
-        const batch = writeBatch(firestore);
-        const authorsQuery = query(collection(firestore, 'authors'));
-        const allAuthorsSnapshot = await getDocs(authorsQuery);
-        const existingAuthorsByEmail = new Map(allAuthorsSnapshot.docs.map(d => [d.data().contact, {id: d.id, ...d.data()}]));
-
-        for (const user of users) {
-            const isContentCreator = contentCreatorRoles.includes(user.role);
-            const existingAuthor = existingAuthorsByEmail.get(user.email);
-
-            if (isContentCreator && !existingAuthor) {
-                // Add to authors
-                const newAuthorRef = doc(collection(firestore, 'authors'));
-                batch.set(newAuthorRef, {
-                    id: newAuthorRef.id,
-                    name: `${user.firstName || ''} ${user.lastName || ''}`,
-                    title: user.role.charAt(0).toUpperCase() + user.role.slice(1),
-                    contact: user.email,
-                    verified: true,
-                    profilePictureUrl: user.profilePictureUrl || '',
-                    dob: '', // Defaults
-                    officeLocation: '', // Defaults
-                });
-            } else if (!isContentCreator && existingAuthor) {
-                // Remove from authors
-                const authorDocRef = doc(firestore, 'authors', existingAuthor.id);
-                batch.delete(authorDocRef);
-            } else if (isContentCreator && existingAuthor) {
-                // Ensure author data is up-to-date
-                 const authorDocRef = doc(firestore, 'authors', existingAuthor.id);
-                 batch.update(authorDocRef, {
-                     name: `${user.firstName || ''} ${user.lastName || ''}`,
-                     title: user.role.charAt(0).toUpperCase() + user.role.slice(1),
-                     profilePictureUrl: user.profilePictureUrl || '',
-                 });
-            }
-        }
-        
-        try {
-            await batch.commit();
-            toast({
-                title: "Credits Updated",
-                description: "The public team page has been synchronized with the latest user roles.",
-            });
-        } catch (error: any) {
-             toast({
-                variant: 'destructive',
-                title: "Failed to Update Credits",
-                description: error.message,
-            });
-        } finally {
-            setIsUpdatingCredits(false);
-        }
-    };
-
-    useEffect(() => {
-        if (isCameraDialogOpen) {
-            const getCameraPermission = async () => {
-              try {
-                const stream = await navigator.mediaDevices.getUserMedia({video: true});
-                setHasCameraPermission(true);
-        
-                if (videoRef.current) {
-                  videoRef.current.srcObject = stream;
-                }
-              } catch (error) {
-                console.error('Error accessing camera:', error);
-                setHasCameraPermission(false);
-                toast({
-                  variant: 'destructive',
-                  title: 'Camera Access Denied',
-                  description: 'Please enable camera permissions in your browser settings.',
-                });
-              }
-            };
-            getCameraPermission();
-        } else {
-            if (videoRef.current?.srcObject) {
-                const stream = videoRef.current.srcObject as MediaStream;
-                stream.getTracks().forEach(track => track.stop());
-            }
-        }
-    }, [isCameraDialogOpen, toast]);
-
-    const isLoading = isRoleLoading || areUsersLoading;
 
   return (
     <>
@@ -409,120 +62,14 @@ export default function TeamAdminPage() {
             <CardDescription>Manage your team of reporters and their credentials.</CardDescription>
         </div>
          <div className="ml-auto flex items-center gap-2">
-            <Button onClick={handleUpdateCredits} disabled={isUpdatingCredits}>
-                {isUpdatingCredits ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+            <Button disabled>
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Update Credits
             </Button>
-            <Dialog open={isAddReporterDialogOpen} onOpenChange={(isOpen) => { setIsAddReporterDialogOpen(isOpen); if (!isOpen) resetForm(); }}>
-                <DialogTrigger asChild>
-                    <Button disabled={!isAdmin}>
-                        <PlusCircle className="h-4 w-4 mr-2" />
-                        Add Reporter
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[625px]">
-                    <DialogHeader>
-                        <DialogTitle>Add New Reporter</DialogTitle>
-                        <DialogDescription>
-                            Find an existing user by email to promote them to a reporter role.
-                        </DialogDescription>
-                    </DialogHeader>
-                    
-                    {!foundUser ? (
-                        <div className="grid gap-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="find-email">User's Login Email</Label>
-                                <div className="flex gap-2">
-                                    <Input id="find-email" type="email" value={findUserEmail} onChange={(e) => setFindUserEmail(e.target.value)} placeholder="user@example.com"/>
-                                    <Button onClick={handleFindUser} disabled={isFindingUser || !findUserEmail}>
-                                        {isFindingUser ? <Loader2 className="h-4 w-4 animate-spin" /> : "Find User"}
-                                    </Button>
-                                </div>
-                            </div>
-                            {findUserError && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{findUserError}</AlertDescription>
-                                </Alert>
-                            )}
-                        </div>
-                    ) : (
-                        <>
-                        <div className="grid gap-6 py-4">
-                            <div className="space-y-4">
-                                <Label>Profile Photo</Label>
-                                <div className="flex items-center gap-4">
-                                    <Avatar className="h-24 w-24">
-                                        <AvatarImage src={imagePreview || foundUser.profilePictureUrl} />
-                                        <AvatarFallback className="text-3xl">{foundUser.firstName?.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col gap-2">
-                                        <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                            <Upload className="mr-2 h-4 w-4" />
-                                            Choose from Gallery
-                                        </Button>
-                                        <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
-                                        <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline"><Camera className="mr-2 h-4 w-4" />Capture with Camera</Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
-                                                <div className="relative">
-                                                    <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
-                                                    {hasCameraPermission === false && (
-                                                        <Alert variant="destructive" className="mt-4">
-                                                            <AlertTitle>Camera Access Required</AlertTitle>
-                                                            <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
-                                                        </Alert>
-                                                    )}
-                                                </div>
-                                                <canvas ref={canvasRef} className="hidden" />
-                                                <DialogFooter>
-                                                    <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>First Name</Label>
-                                    <Input value={foundUser.firstName} disabled />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Last Name</Label>
-                                    <Input value={foundUser.lastName} disabled />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Email</Label>
-                                <Input value={foundUser.email} disabled />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="title">Title</Label>
-                                <Input id="title" placeholder="e.g. Senior Correspondent" value={newReporter.title} onChange={(e) => setNewReporter({...newReporter, title: e.target.value})} />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="dob">Date of Birth</Label>
-                                    <Input id="dob" placeholder="DD/MM/YYYY" value={newReporter.dob} onChange={(e) => setNewReporter({...newReporter, dob: e.target.value})} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="office">Office Location</Label>
-                                    <Input id="office" placeholder="e.g. Mumbai Bureau" value={newReporter.officeLocation} onChange={(e) => setNewReporter({...newReporter, officeLocation: e.target.value})} />
-                                </div>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button variant="ghost" onClick={resetForm}>Back</Button>
-                            <Button type="submit" onClick={handleAddReporter}>Create Reporter</Button>
-                        </DialogFooter>
-                        </>
-                    )}
-                </DialogContent>
-            </Dialog>
+            <Button disabled>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Reporter
+            </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -530,67 +77,53 @@ export default function TeamAdminPage() {
             <TableHeader>
                 <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>Email/Contact</TableHead>
+                <TableHead>Title</TableHead>
                 <TableHead>
                     <span className="sr-only">Actions</span>
                 </TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {isLoading && <TableRow><TableCell colSpan={4} className="text-center">Loading users...</TableCell></TableRow>}
-                {!isLoading && !isAdmin && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">You must be an admin to manage users.</TableCell></TableRow>}
-                {!isLoading && isAdmin && users?.map((user: any) => {
-                    const canChangeRole = adminUser?.uid !== user.id;
+                {team.map((reporter) => {
                     return (
-                        <TableRow key={user.id}>
+                        <TableRow key={reporter.id}>
                             <TableCell className="font-medium">
                                 <div className="flex items-center gap-3">
                                     <Avatar>
-                                        <AvatarImage src={user.profilePictureUrl || `https://avatar.vercel.sh/${user.email}.png`} />
-                                        <AvatarFallback>{user.firstName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                                        <AvatarImage src={reporter.profilePictureUrl} />
+                                        <AvatarFallback>{reporter.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                    {user.firstName} {user.lastName}
+                                    {reporter.name}
                                 </div>
                             </TableCell>
-                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{reporter.contact}</TableCell>
                             <TableCell>
-                                <Badge variant={user.role === 'director' ? 'default' : user.role === 'editor' ? 'secondary' : 'outline'} className="capitalize">{user.role}</Badge>
+                                <Badge variant={'outline'} className="capitalize">{reporter.title}</Badge>
                             </TableCell>
                             <TableCell>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button aria-haspopup="true" size="icon" variant="ghost" disabled={!canChangeRole}>
+                                    <Button aria-haspopup="true" size="icon" variant="ghost">
                                     <MoreHorizontal className="h-4 w-4" />
                                     <span className="sr-only">Toggle menu</span>
                                     </Button>
                                 </DropdownMenuTrigger>
-                                {canChangeRole && <DropdownMenuContent align="end">
+                                <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem onSelect={() => openEditDialog(user)}>
+                                    <DropdownMenuItem disabled>
                                         <Edit className="mr-2 h-4 w-4" />
                                         Edit User
                                     </DropdownMenuItem>
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Change Role</DropdownMenuSubTrigger>
-                                        <DropdownMenuPortal>
-                                            <DropdownMenuSubContent>
-                                                <DropdownMenuItem onSelect={() => handleRoleChange(user, 'member')}>Member</DropdownMenuItem>
-                                                <DropdownMenuItem onSelect={() => handleRoleChange(user, 'reporter')}>Reporter</DropdownMenuItem>
-                                                <DropdownMenuItem onSelect={() => handleRoleChange(user, 'editor')}>Editor</DropdownMenuItem>
-                                                <DropdownMenuItem onSelect={() => handleRoleChange(user, 'director')}>Director</DropdownMenuItem>
-                                            </DropdownMenuSubContent>
-                                        </DropdownMenuPortal>
-                                    </DropdownMenuSub>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                         className="text-destructive"
-                                        onSelect={() => handleDeleteUser(user.id, user.email)}
+                                        onSelect={() => handleDeleteUser(reporter.id)}
                                     >
                                         <Trash className="mr-2 h-4 w-4" />
-                                        <span>Delete User</span>
+                                        <span>Delete</span>
                                     </DropdownMenuItem>
-                                </DropdownMenuContent>}
+                                </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
                         </TableRow>
@@ -599,49 +132,6 @@ export default function TeamAdminPage() {
             </Table>
       </CardContent>
     </Card>
-
-    <Dialog open={isEditUserDialogOpen} onOpenChange={(isOpen) => { setIsEditUserDialogOpen(isOpen); if (!isOpen) setEditingUser(null); }}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Edit User Profile</DialogTitle>
-                <DialogDescription>
-                    Update the user's name and other details.
-                </DialogDescription>
-            </DialogHeader>
-            {editingUser && (
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="firstName">First Name</Label>
-                            <Input
-                                id="firstName"
-                                value={editingUser.firstName}
-                                onChange={(e) => setEditingUser({ ...editingUser, firstName: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="lastName">Last Name</Label>
-                            <Input
-                                id="lastName"
-                                value={editingUser.lastName}
-                                onChange={(e) => setEditingUser({ ...editingUser, lastName: e.target.value })}
-                            />
-                        </div>
-                    </div>
-                     <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input value={editingUser.email} disabled />
-                    </div>
-                </div>
-            )}
-            <DialogFooter>
-                <Button variant="outline" onClick={() => setIsEditUserDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleUpdateUser}>Save Changes</Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
     </>
   );
 }
-
-    

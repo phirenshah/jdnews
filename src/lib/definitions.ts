@@ -1,3 +1,4 @@
+
 export type Article = {
   id: string;
   slug: string;
@@ -7,7 +8,7 @@ export type Article = {
   excerptGujarati: string;
   contentEnglish: string;
   contentGujarati: string;
-  authorId: string;
+  author: string;
   category: string;
   publicationDate: any;
   imageUrl: string;
@@ -17,7 +18,7 @@ export type Reporter = {
   id: string;
   name: string;
   title: string;
-  imageId?: string; // Made optional as it might not always be there
+  imageId?: string;
   dob: string;
   contact: string;
   officeLocation: string;
@@ -50,5 +51,3 @@ export type UserProfile = {
     role: 'member' | 'reporter' | 'editor' | 'director';
     profilePictureUrl?: string;
 };
-
-    

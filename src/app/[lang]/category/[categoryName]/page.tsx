@@ -1,48 +1,34 @@
 
 'use client';
 
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { useParams, notFound } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { placeholderArticles } from '@/lib/placeholder-data';
+import { useEffect, useState } from 'react';
 
-type Article = {
-  id: string;
-  slug: string;
-  titleEnglish: string;
-  titleGujarati: string;
-  excerptEnglish: string;
-  excerptGujarati: string;
-  imageUrl: string;
-  publicationDate: any;
-  category: string;
-};
+type Article = (typeof placeholderArticles)[0];
 
 export default function CategoryPage() {
   const params = useParams();
   const lang = params.lang as 'en' | 'gu';
   const categoryName = params.categoryName as string;
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { firestore } = useFirebase();
-
-  // Capitalize first letter for query, handles both 'politics' and 'Politics'
+  // Capitalize first letter for query
   const formattedCategory = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase();
 
-
-  const articlesCollectionRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'articles') : null),
-    [firestore]
-  );
-
-  const categoryQuery = useMemoFirebase(
-    () => articlesCollectionRef ? query(articlesCollectionRef, where('category', '==', formattedCategory)) : null,
-    [articlesCollectionRef, formattedCategory]
-  );
-
-  const { data: articles, isLoading, error } = useCollection<Article>(categoryQuery);
+  useEffect(() => {
+    setIsLoading(true);
+    const filteredArticles = placeholderArticles.filter(
+      (article) => article.category === formattedCategory
+    );
+    setArticles(filteredArticles);
+    setIsLoading(false);
+  }, [formattedCategory]);
   
   const title = lang === 'en' ? formattedCategory : formattedCategory; // Add Gujarati translations if available
 
@@ -52,11 +38,6 @@ export default function CategoryPage() {
         <Loader2 className="h-16 w-16 animate-spin" />
       </div>
     );
-  }
-
-  if (error) {
-    console.error("Firestore error:", error);
-    return <div className="container mx-auto px-4 py-8">Failed to load articles. Please check your Firestore permissions.</div>;
   }
   
   if (!isLoading && !articles?.length) {
@@ -97,7 +78,7 @@ export default function CategoryPage() {
                     {articleExcerpt}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {new Date(article.publicationDate?.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}
+                    {new Date(article.publicationDate).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}
                   </p>
                 </CardContent>
               </Link>
