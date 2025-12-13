@@ -34,6 +34,11 @@ import { setDocumentNonBlocking, useCollection, useFirebase, useMemoFirebase } f
 import { collection, doc } from "firebase/firestore";
 import type { UserProfile } from "@/lib/definitions";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 type Role = "member" | "reporter" | "editor" | "director";
 const roles: Role[] = ["member", "reporter", "editor", "director"];
@@ -45,17 +50,56 @@ export default function UsersAdminPage() {
     const usersCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'users') : null), [firestore]);
     const { data: users, isLoading, forceRefetch } = useCollection<UserProfile>(usersCollection);
 
+    const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+
+    const openEditDialog = (user: UserProfile) => {
+        setEditingUser(user);
+        setFirstName(user.firstName);
+        setLastName(user.lastName);
+    };
+
+    const closeEditDialog = () => {
+        setEditingUser(null);
+        setFirstName('');
+        setLastName('');
+    };
+
+    const handleUpdateUser = () => {
+        if (!firestore || !editingUser || !firstName) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'First name is required.',
+            });
+            return;
+        }
+
+        const userDocRef = doc(firestore, 'users', editingUser.id);
+        setDocumentNonBlocking(userDocRef, { firstName, lastName }, { merge: true });
+        
+        toast({
+            title: 'User Updated',
+            description: `${firstName} ${lastName}'s profile has been updated.`,
+        });
+        forceRefetch();
+        closeEditDialog();
+    };
+
     const handleRoleChange = async (userId: string, newRole: Role) => {
         if (!firestore) return;
+        const userDocRef = doc(firestore, 'users', userId);
         const roleDocRef = doc(firestore, 'roles', userId);
         try {
+            // Set role in both users and roles collection for consistency
+            setDocumentNonBlocking(userDocRef, { role: newRole }, { merge: true });
             setDocumentNonBlocking(roleDocRef, { role: newRole }, { merge: true });
             toast({
                 title: 'Role Updated',
                 description: `User role has been set to ${newRole}.`,
             });
-            // Note: A full implementation might need to refetch user data or manage state differently.
-            // For now, a UI refresh would show the change.
+            forceRefetch();
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -70,6 +114,7 @@ export default function UsersAdminPage() {
     }
 
     return (
+    <>
       <Card>
         <CardHeader>
           <CardTitle>Users</CardTitle>
@@ -115,6 +160,10 @@ export default function UsersAdminPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onSelect={() => openEditDialog(user)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            <span>Edit Name</span>
+                        </DropdownMenuItem>
                         <DropdownMenuSub>
                             <DropdownMenuSubTrigger>
                                 <Edit className="mr-2 h-4 w-4" />
@@ -146,5 +195,31 @@ export default function UsersAdminPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!editingUser} onOpenChange={(isOpen) => !isOpen && closeEditDialog()}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit User</DialogTitle>
+                <DialogDescription>Update the name for {editingUser?.email}.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                    </div>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={closeEditDialog}>Cancel</Button>
+                <Button onClick={handleUpdateUser}>Save Changes</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
     );
 }
