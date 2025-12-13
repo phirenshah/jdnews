@@ -13,10 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Image from 'next/image';
 import { useState, FormEvent, useEffect } from 'react';
-import {
-  signInWithEmailAndPassword,
-  fetchSignInMethodsForEmail,
-} from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useFirebase, useUser } from '@/firebase';
 import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -27,11 +24,9 @@ const formatErrorMessage = (code: string) => {
     switch (code) {
       case 'auth/invalid-email': return 'Invalid email address format.';
       case 'auth/user-disabled': return 'This account has been disabled.';
-      case 'auth/user-not-found': return 'No account found with this email.';
+      case 'auth/user-not-found': return 'No account found with this email. Redirecting to sign up...';
       case 'auth/invalid-credential': return 'Incorrect email or password.';
       case 'auth/wrong-password': return 'Incorrect password.';
-      case 'auth/email-already-in-use': return 'An account with this email already exists.';
-      case 'auth/weak-password': return 'Password should be at least 6 characters.';
       default: return 'An error occurred. Please try again.';
     }
 };
@@ -44,7 +39,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [step, setStep] = useState<'email' | 'password'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -57,32 +51,6 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router, redirectUrl]);
 
-  const handleEmailCheck = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!auth) return;
-    setIsLoading(true);
-
-    try {
-        const methods = await fetchSignInMethodsForEmail(auth, email);
-        if (methods.length > 0) {
-            // User exists, prompt for password
-            setStep('password');
-        } else {
-            // User does not exist, redirect to signup
-            router.push(`/${lang}/signup?email=${encodeURIComponent(email)}`);
-        }
-    } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: formatErrorMessage(error.code),
-        });
-    } finally {
-        setIsLoading(false);
-    }
-  };
-
-
   const handleEmailAuth = async (e: FormEvent) => {
     e.preventDefault();
     if (!auth) return;
@@ -93,11 +61,17 @@ export default function LoginPage() {
       toast({ title: 'Login Successful' });
       // The useEffect will handle the redirect
     } catch (error: any) {
+       const errorMessage = formatErrorMessage(error.code);
        toast({
           variant: 'destructive',
           title: 'Login Failed',
-          description: formatErrorMessage(error.code),
+          description: errorMessage,
       });
+      if (error.code === 'auth/user-not-found') {
+        setTimeout(() => {
+            router.push(`/${lang}/signup?email=${encodeURIComponent(email)}`);
+        }, 2000);
+      }
     } finally {
         setIsLoading(false);
     }
@@ -131,44 +105,28 @@ export default function LoginPage() {
             Sign in to continue to JD News
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-            {step === 'email' ? (
-                <form onSubmit={handleEmailCheck} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading || !email}>
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Continue with Email
-                    </Button>
-                </form>
-            ) : (
-                <form onSubmit={handleEmailAuth} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" value={email} disabled />
-                    </div>
-                     <div className="relative space-y-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus/>
-                         <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-2 top-7 text-muted-foreground"
-                        >
-                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                        </button>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Sign In
-                    </Button>
-                     <Button variant="link" size="sm" onClick={() => setStep('email')} className="p-0 h-auto">
-                        Use a different email
-                    </Button>
-                </form>
-            )}
+        <CardContent>
+            <form onSubmit={handleEmailAuth} className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+                 <div className="relative space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required />
+                     <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-7 text-muted-foreground"
+                    >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading || !email || !password}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Sign In
+                </Button>
+            </form>
             <div className="mt-4 text-center text-sm text-muted-foreground">
                 Don't have an account?{' '}
                 <Link href={`/${lang}/signup`} className="underline hover:text-primary">
