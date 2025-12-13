@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
 type AdContainerProps = {
@@ -17,7 +17,6 @@ type Ad = {
   type: 'image' | 'html';
   url?: string;
   htmlCode?: string;
-  placement: 'horizontal' | 'vertical';
 };
 
 export function AdContainer({ type, className }: AdContainerProps) {
@@ -27,12 +26,9 @@ export function AdContainer({ type, className }: AdContainerProps) {
   const adsQuery = useMemoFirebase(
     () =>
       firestore
-        ? query(
-            collection(firestore, 'advertisements'),
-            where('placement', '==', type)
-          )
+        ? query(collection(firestore, 'advertisements'))
         : null,
-    [firestore, type]
+    [firestore]
   );
   
   const { data: ads, isLoading } = useCollection<Ad>(adsQuery);

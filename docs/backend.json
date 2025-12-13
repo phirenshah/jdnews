@@ -158,8 +158,8 @@
           "enum": [
             "member",
             "reporter",
-            "director",
-            "editor"
+            "editor",
+            "director"
           ],
           "default": "member"
         }
@@ -264,14 +264,9 @@
             "htmlCode": {
                 "type": "string",
                 "description": "The raw HTML code for the ad (used for html types)."
-            },
-            "placement": {
-                "type": "string",
-                "description": "Where the ad should be displayed on the website.",
-                "enum": ["horizontal", "vertical"]
             }
         },
-        "required": ["id", "name", "type", "placement"]
+        "required": ["id", "name", "type"]
     }
   },
   "auth": {

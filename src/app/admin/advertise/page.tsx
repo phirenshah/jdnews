@@ -76,7 +76,6 @@ type Ad = {
   type: 'image' | 'html';
   url?: string;
   htmlCode?: string;
-  placement: 'horizontal' | 'vertical';
 };
 
 export default function AdvertiseAdminPage() {
@@ -94,7 +93,6 @@ export default function AdvertiseAdminPage() {
   const [adType, setAdType] = useState<'image' | 'html' | ''>('');
   const [adUrl, setAdUrl] = useState('');
   const [adHtmlCode, setAdHtmlCode] = useState('');
-  const [adPlacement, setAdPlacement] = useState<'horizontal' | 'vertical' | ''>('');
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -110,7 +108,6 @@ export default function AdvertiseAdminPage() {
     setAdType('');
     setAdUrl('');
     setAdHtmlCode('');
-    setAdPlacement('');
     setImageFile(null);
     setImagePreview(null);
   };
@@ -121,7 +118,6 @@ export default function AdvertiseAdminPage() {
     setAdType(ad.type);
     setAdUrl(ad.url || '');
     setAdHtmlCode(ad.htmlCode || '');
-    setAdPlacement(ad.placement);
     setImagePreview(ad.url || null);
     setImageFile(null);
   };
@@ -194,7 +190,7 @@ export default function AdvertiseAdminPage() {
 }, [isCameraDialogOpen, toast]);
 
   const handleSubmit = async () => {
-    if (!firestore || !adName || !adType || !adPlacement) {
+    if (!firestore || !adName || !adType) {
         toast({
             variant: 'destructive',
             title: 'Missing Fields',
@@ -237,7 +233,6 @@ export default function AdvertiseAdminPage() {
     const adData = {
         name: adName,
         type: adType,
-        placement: adPlacement,
         url: adType === 'image' ? finalAdUrl : '',
         htmlCode: adType === 'html' ? adHtmlCode : '',
     };
@@ -340,18 +335,6 @@ export default function AdvertiseAdminPage() {
                             <Label htmlFor="ad-name">Ad Name</Label>
                             <Input id="ad-name" placeholder="e.g. Summer Sale Banner" value={adName} onChange={(e) => setAdName(e.target.value)} />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="ad-placement">Placement</Label>
-                            <Select value={adPlacement} onValueChange={(value) => setAdPlacement(value as any)}>
-                                <SelectTrigger id="ad-placement">
-                                    <SelectValue placeholder="Select placement" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="horizontal">Horizontal Banner</SelectItem>
-                                    <SelectItem value="vertical">Vertical Sidebar</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
                          <div className="space-y-2">
                             <Label htmlFor="ad-type">Type</Label>
                             <Select value={adType} onValueChange={(value) => setAdType(value as any)}>
@@ -432,7 +415,6 @@ export default function AdvertiseAdminPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Name</TableHead>
-                                    <TableHead>Placement</TableHead>
                                     <TableHead>Type</TableHead>
                                     <TableHead>Actions</TableHead>
                                 </TableRow>
@@ -441,7 +423,6 @@ export default function AdvertiseAdminPage() {
                                 {ads?.map((ad) => (
                                     <TableRow key={ad.id}>
                                         <TableCell className="font-medium">{ad.name}</TableCell>
-                                        <TableCell className="capitalize">{ad.placement}</TableCell>
                                         <TableCell>
                                             <Badge variant="outline">{ad.type}</Badge>
                                         </TableCell>
