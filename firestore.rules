@@ -95,5 +95,13 @@ service cloud.firestore {
         // Only admins can manage ads.
         allow create, update, delete: if isAdmin();
     }
+
+    /* ---------------- AD REQUESTS ---------------- */
+    match /ad_requests/{adRequestId} {
+        // Anyone can create an ad request.
+        allow create: if true;
+        // Only admins can read, update, or delete ad requests.
+        allow get, list, update, delete: if isAdmin();
+    }
   }
 }

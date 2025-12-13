@@ -288,6 +288,54 @@
         "type",
         "placement"
       ]
+    },
+    "AdRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AdRequest",
+      "type": "object",
+      "description": "Represents an inquiry from a potential advertiser.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AdRequest entity."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Contact phone number of the advertiser."
+        },
+        "budget": {
+          "type": "number",
+          "description": "Proposed budget for the campaign in INR."
+        },
+        "topic": {
+          "type": "string",
+          "description": "The subject or topic of the advertising inquiry."
+        },
+        "details": {
+          "type": "string",
+          "description": "A detailed explanation of the advertising needs."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the inquiry.",
+          "enum": ["Pending", "Contacted", "Closed"],
+          "default": "Pending"
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "Timestamp when the inquiry was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "phoneNumber",
+        "budget",
+        "topic",
+        "details",
+        "status",
+        "submittedAt"
+      ]
     }
   },
   "auth": {
@@ -393,10 +441,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/ad_requests/{adRequestId}",
+        "definition": {
+          "entityName": "AdRequest",
+          "schema": {
+            "$ref": "#/backend/entities/AdRequest"
+          },
+          "description": "Stores advertising inquiries from the public form. Writable by anyone, but only readable and manageable by admins.",
+          "params": [
+            {
+              "name": "adRequestId",
+              "description": "The unique identifier for the ad request."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed for secure, role-based access. The `/roles` collection is critical for securely identifying admin users ('directors'), which is checked in security rules to grant elevated permissions across other collections like `/users`. This separation of user data and roles is a key security pattern."
+    "reasoning": "The Firestore structure is designed for secure, role-based access. The `/roles` collection is critical for securely identifying admin users ('directors'), which is checked in security rules to grant elevated permissions across other collections like `/users`. This separation of user data and roles is a key security pattern. A new `/ad_requests` collection has been added to capture inquiries from the public 'Advertise' form, with rules allowing public writes but admin-only reads."
   }
 }
-
-    

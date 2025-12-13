@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -12,15 +13,41 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { addDocumentNonBlocking, useFirebase } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { collection } from "firebase/firestore";
 import { Megaphone } from "lucide-react";
 import { useState } from "react";
 
 export default function AdvertisePage() {
   const [submitted, setSubmitted] = useState(false);
+  const { firestore } = useFirebase();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Here you would typically send the form data to your backend
+    if (!firestore) {
+      toast({
+        variant: "destructive",
+        title: "Database Error",
+        description: "Could not connect to the database. Please try again later.",
+      });
+      return;
+    }
+    
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      phoneNumber: formData.get("phone") as string,
+      budget: Number(formData.get("budget")),
+      topic: formData.get("topic") as string,
+      details: formData.get("details") as string,
+      status: "Pending",
+      submittedAt: new Date().toISOString(),
+    };
+
+    const adRequestsCollection = collection(firestore, "ad_requests");
+    addDocumentNonBlocking(adRequestsCollection, data);
+
     setSubmitted(true);
   };
 
@@ -67,6 +94,7 @@ export default function AdvertisePage() {
                     <Label htmlFor="phone">Phone Number</Label>
                     <Input
                       id="phone"
+                      name="phone"
                       type="tel"
                       placeholder="e.g., +91 98765 43210"
                       required
@@ -76,6 +104,7 @@ export default function AdvertisePage() {
                     <Label htmlFor="budget">Your Budget (INR)</Label>
                     <Input
                       id="budget"
+                      name="budget"
                       type="number"
                       placeholder="e.g., 50000"
                       required
@@ -86,6 +115,7 @@ export default function AdvertisePage() {
                   <Label htmlFor="topic">Topic / Subject</Label>
                   <Input
                     id="topic"
+                    name="topic"
                     placeholder="e.g., Product Launch Campaign"
                     required
                   />
@@ -94,6 +124,7 @@ export default function AdvertisePage() {
                   <Label htmlFor="details">Detailed Explanation</Label>
                   <Textarea
                     id="details"
+                    name="details"
                     placeholder="Describe your product, target audience, and campaign goals..."
                     rows={6}
                     required

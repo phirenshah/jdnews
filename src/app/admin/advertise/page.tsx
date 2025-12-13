@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, Trash2, Edit, Camera, Upload } from 'lucide-react';
+import { Phone, Trash2, Edit, Camera, Upload, Loader2, Check } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,7 +37,7 @@ import {
   deleteDocumentNonBlocking
 } from '@/firebase';
 import { useState, useRef, useEffect } from 'react';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -46,29 +46,15 @@ import Image from 'next/image';
 import axios from 'axios';
 
 
-// This would come from a database in a real application
-const placeholderAdRequests = [
-  {
-    id: 'ad-req-1',
-    topic: 'New Smartphone Launch',
-    phoneNumber: '+91 98765 43210',
-    budget: 800000,
-    details:
-      'We are launching a new smartphone and want to target tech-savvy readers in major metro areas. Campaign to run for 2 weeks.',
-    status: 'Pending',
-    date: '2024-07-29',
-  },
-  {
-    id: 'ad-req-2',
-    topic: 'Local Restaurant Opening',
-    phoneNumber: '+91 98765 43211',
-    budget: 200000,
-    details:
-      'Grand opening of a new Italian restaurant in downtown. Looking for a full-page feature.',
-    status: 'Contacted',
-    date: '2024-07-28',
-  },
-];
+type AdRequest = {
+  id: string;
+  topic: string;
+  phoneNumber: string;
+  budget: number;
+  details: string;
+  status: 'Pending' | 'Contacted' | 'Closed';
+  submittedAt: string;
+}
 
 type Ad = {
   id: string;
@@ -95,11 +81,17 @@ export default function AdvertiseAdminPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
 
+  const adRequestsCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'ad_requests') : null),
+    [firestore]
+  );
+  const { data: adRequests, isLoading: adRequestsLoading, forceRefetch: refetchAdRequests } = useCollection<AdRequest>(adRequestsCollection);
+
   const adsCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'advertisements') : null),
     [firestore]
   );
-  const { data: ads, forceRefetch } = useCollection<Ad>(adsCollection);
+  const { data: ads, isLoading: adsLoading, forceRefetch: refetchAds } = useCollection<Ad>(adsCollection);
 
   const [editingAd, setEditingAd] = useState<Ad | null>(null);
   const [adName, setAdName] = useState('');
@@ -146,8 +138,16 @@ export default function AdvertiseAdminPage() {
     const adDocRef = doc(firestore, 'advertisements', adId);
     deleteDocumentNonBlocking(adDocRef);
     toast({ title: 'Advertisement deleted.' });
-    forceRefetch();
+    refetchAds();
   };
+  
+  const handleUpdateRequestStatus = (requestId: string, newStatus: 'Pending' | 'Contacted' | 'Closed') => {
+    if (!firestore) return;
+    const requestDocRef = doc(firestore, 'ad_requests', requestId);
+    setDocumentNonBlocking(requestDocRef, { status: newStatus }, { merge: true });
+    toast({ title: 'Status Updated' });
+    refetchAdRequests();
+  }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -268,7 +268,7 @@ export default function AdvertiseAdminPage() {
         toast({ title: 'Advertisement Created' });
     }
     resetForm();
-    forceRefetch();
+    refetchAds();
   };
 
   return (
@@ -286,58 +286,68 @@ export default function AdvertiseAdminPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Topic</TableHead>
-                  <TableHead>Budget (INR)</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {placeholderAdRequests.map((req) => (
-                  <TableRow key={req.id}>
-                    <TableCell className="font-medium">{req.date}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {req.topic}
-                    </TableCell>
-                    <TableCell className="flex items-center">
-                      <RupeeIcon className="inline h-4 w-4 mr-1" />{req.budget.toLocaleString('en-IN')}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={`tel:${req.phoneNumber}`}>
-                          <Phone className="mr-2 h-4 w-4" />
-                          Call
-                        </a>
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          req.status === 'Pending'
-                            ? 'secondary'
-                            : req.status === 'Contacted'
-                            ? 'default'
-                            : 'outline'
-                        }
-                        className={
-                          req.status === 'Pending'
-                            ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/40'
-                            : req.status === 'Contacted'
-                            ? 'bg-blue-500/20 text-blue-700 border-blue-500/40'
-                            : ''
-                        }
-                      >
-                        {req.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {adRequestsLoading ? (
+              <div className="flex justify-center items-center h-48"><Loader2 className="w-8 h-8 animate-spin" /></div>
+            ) : (
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Topic</TableHead>
+                    <TableHead>Budget (INR)</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {adRequests?.map((req) => (
+                    <TableRow key={req.id}>
+                        <TableCell className="font-medium">{new Date(req.submittedAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="max-w-xs truncate">
+                        {req.topic}
+                        </TableCell>
+                        <TableCell className="flex items-center">
+                        <RupeeIcon className="inline h-4 w-4 mr-1" />{req.budget.toLocaleString('en-IN')}
+                        </TableCell>
+                        <TableCell>
+                        <Button variant="outline" size="sm" asChild>
+                            <a href={`tel:${req.phoneNumber}`}>
+                            <Phone className="mr-2 h-4 w-4" />
+                            Call
+                            </a>
+                        </Button>
+                        </TableCell>
+                        <TableCell>
+                        <Badge
+                            variant={
+                            req.status === 'Pending'
+                                ? 'secondary'
+                                : req.status === 'Contacted'
+                                ? 'default'
+                                : 'outline'
+                            }
+                            className={
+                            req.status === 'Pending'
+                                ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/40'
+                                : req.status === 'Contacted'
+                                ? 'bg-blue-500/20 text-blue-700 border-blue-500/40'
+                                : ''
+                            }
+                        >
+                            {req.status}
+                        </Badge>
+                        </TableCell>
+                         <TableCell>
+                            <Button variant="ghost" size="sm" onClick={() => handleUpdateRequestStatus(req.id, 'Contacted')} disabled={req.status === 'Contacted'}>
+                                <Check className="mr-2 h-4 w-4" /> Mark as Contacted
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+                </Table>
+            )}
           </CardContent>
         </Card>
       </TabsContent>
@@ -453,33 +463,37 @@ export default function AdvertiseAdminPage() {
                         <CardDescription>List of all active advertisements.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Placement</TableHead>
-                                    <TableHead>Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {ads?.map((ad) => (
-                                    <TableRow key={ad.id}>
-                                        <TableCell className="font-medium">{ad.name}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{ad.type}</Badge>
-                                        </TableCell>
-                                         <TableCell>
-                                            <Badge variant="secondary">{ad.placement}</Badge>
-                                        </TableCell>
-                                        <TableCell className="flex gap-2">
-                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(ad)}><Edit className="h-4 w-4" /></Button>
-                                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(ad.id)}><Trash2 className="h-4 w-4" /></Button>
-                                        </TableCell>
+                        {adsLoading ? (
+                            <div className="flex justify-center items-center h-48"><Loader2 className="w-8 h-8 animate-spin" /></div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Placement</TableHead>
+                                        <TableHead>Actions</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {ads?.map((ad) => (
+                                        <TableRow key={ad.id}>
+                                            <TableCell className="font-medium">{ad.name}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">{ad.type}</Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="secondary">{ad.placement}</Badge>
+                                            </TableCell>
+                                            <TableCell className="flex gap-2">
+                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(ad)}><Edit className="h-4 w-4" /></Button>
+                                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(ad.id)}><Trash2 className="h-4 w-4" /></Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -488,5 +502,3 @@ export default function AdvertiseAdminPage() {
     </Tabs>
   );
 }
-
-    
