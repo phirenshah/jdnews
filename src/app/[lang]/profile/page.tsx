@@ -1,9 +1,15 @@
+
 'use client';
 
-import { useAuth } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -12,44 +18,73 @@ import { Separator } from '@/components/ui/separator';
 import { updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { useUserRole } from '@/hooks/use-user-role';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Badge } from '@/components/ui/badge';
 
-export default function ProfilePage({ params: { lang } }: { params: { lang: string } }) {
-  const { user, isUserLoading } = useAuth();
-  const { auth } = useFirebase();
+export default function ProfilePage({
+  params: { lang },
+}: {
+  params: { lang: string };
+}) {
+  const { user, userProfile, isLoading, role } = useUserRole();
+  const { auth, firestore } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
-  
-  const [displayName, setDisplayName] = useState('');
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!isLoading && !user) {
       router.push(`/${lang}/login?redirect=/${lang}/profile`);
     }
-    if (user) {
-        setDisplayName(user.displayName || '');
+    if (userProfile) {
+      setFirstName(userProfile.firstName || '');
+      setLastName(userProfile.lastName || '');
+      setPhoneNumber(userProfile.phoneNumber || '');
+      setAddress(userProfile.address || '');
     }
-  }, [user, isUserLoading, router, lang]);
+  }, [user, userProfile, isLoading, router, lang]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !firestore) return;
 
     try {
+      const displayName = `${firstName} ${lastName}`.trim();
+      // Update Firebase Auth profile
+      if (user.displayName !== displayName) {
         await updateProfile(user, { displayName });
-        // Here you would also update firestore doc with phone/address
-        toast({ title: "Profile Updated Successfully" });
-    } catch(error: any) {
-        toast({
-            variant: "destructive",
-            title: "Update Failed",
-            description: error.message,
-        })
-    }
-  }
+      }
 
-  if (isUserLoading || !user) {
+      // Update Firestore document
+      const userDocRef = doc(firestore, 'users', user.uid);
+      setDocumentNonBlocking(
+        userDocRef,
+        {
+          firstName,
+          lastName,
+          phoneNumber,
+          address,
+        },
+        { merge: true }
+      );
+
+      toast({ title: 'Profile Updated Successfully' });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: error.message,
+      });
+    }
+  };
+
+  if (isLoading || !user || !userProfile) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
@@ -62,31 +97,55 @@ export default function ProfilePage({ params: { lang } }: { params: { lang: stri
       <Card>
         <CardHeader>
           <CardTitle className="font-headline text-3xl">My Profile</CardTitle>
-          <CardDescription>Manage your personal information and settings.</CardDescription>
+          <CardDescription>
+            Manage your personal information and settings.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
           <div className="flex items-center space-x-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={user.photoURL || `https://avatar.vercel.sh/${user.email}.png`} alt={user.displayName || ''} />
-              <AvatarFallback className="text-3xl">{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarImage
+                src={
+                  user.photoURL || `https://avatar.vercel.sh/${user.email}.png`
+                }
+                alt={user.displayName || ''}
+              />
+              <AvatarFallback className="text-3xl">
+                {user.email?.charAt(0).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div className="space-y-1">
               <h2 className="text-2xl font-bold">{user.displayName || 'User'}</h2>
-              <p className="text-muted-foreground">{user.email}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-muted-foreground">{user.email}</p>
+                {role && (
+                  <Badge variant="outline" className="capitalize">
+                    {role}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
-          
+
           <Separator />
-          
+
           <form onSubmit={handleUpdateProfile} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" defaultValue={user.email || ''} disabled />
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -99,11 +158,16 @@ export default function ProfilePage({ params: { lang } }: { params: { lang: stri
                     <Input id="address" placeholder="123, News Street" value={address} onChange={(e) => setAddress(e.target.value)} />
                 </div>
             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input id="email" type="email" defaultValue={user.email || ''} disabled />
+                </div>
+            </div>
             <div>
               <Button type="submit">Save Changes</Button>
             </div>
           </form>
-
         </CardContent>
       </Card>
     </div>
