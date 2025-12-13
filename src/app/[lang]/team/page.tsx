@@ -12,7 +12,7 @@ import { PressCardFront } from '@/components/press-card-front';
 import { Reporter } from '@/lib/definitions';
 import { Separator } from '@/components/ui/separator';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { useMemo } from 'react';
 
 const contentCreatorRoles = ['reporter', 'editor', 'director'];
@@ -25,12 +25,7 @@ export default function ReportersPage() {
 
   // Query to get only authors that have a content creator role.
   const authorsCollection = useMemoFirebase(
-    () => (firestore ? 
-        query(
-            collection(firestore, 'authors'),
-            where('title', 'in', ['Reporter', 'Editor', 'Director', 'Senior Political Correspondent', 'Technology Editor', 'Sports Journalist', 'Investigative Reporter']) // Match against titles
-        ) 
-        : null),
+    () => (firestore ? collection(firestore, 'authors') : null),
     [firestore]
   );
   const { data: authors, isLoading: areAuthorsLoading } = useCollection<Reporter>(authorsCollection);

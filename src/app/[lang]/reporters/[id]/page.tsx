@@ -2,7 +2,7 @@
 'use client';
 import * as React from 'react';
 import { useState, useRef, useEffect } from 'react';
-import { useParams, notFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Mail, Newspaper, Link as LinkIcon, Download, CreditCard, Loader2 } from 'lucide-react';
@@ -18,29 +18,34 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Reporter, Article } from '@/lib/definitions';
-import { placeholderReporters, placeholderArticles } from '@/lib/placeholder-data';
+import { placeholderArticles } from '@/lib/placeholder-data';
+import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
-export default function ReporterProfilePage({ params }: { params: Promise<{ lang: 'en' | 'gu', id: string }> }) {
-    const { lang, id } = React.use(params);
+export default function ReporterProfilePage() {
+    const params = useParams();
+    const lang = params.lang as 'en' | 'gu';
+    const id = params.id as string;
+    
     const [isCardOpen, setIsCardOpen] = useState(false);
     const [clientReporterUrl, setClientReporterUrl] = useState('');
 
     const frontCardRef = useRef<HTMLDivElement>(null);
     const backCardRef = useRef<HTMLDivElement>(null);
 
-    const [author, setAuthor] = useState<Reporter | null | undefined>(undefined);
+    const { firestore } = useFirebase();
+    const authorDocRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'authors', id) : null), [firestore, id]);
+    const { data: author, isLoading: isAuthorLoading } = useDoc<Reporter>(authorDocRef);
+    
+    // Using placeholder articles for now as we don't have a live article collection by author
     const [authorArticles, setAuthorArticles] = useState<typeof placeholderArticles>([]);
 
     useEffect(() => {
-        const foundAuthor = placeholderReporters.find(r => r.id === id);
-        if (foundAuthor) {
-            setAuthor(foundAuthor);
-            const articles = placeholderArticles.filter(a => a.author === foundAuthor.name);
+        if (author) {
+            const articles = placeholderArticles.filter(a => a.author === author.name);
             setAuthorArticles(articles);
-        } else {
-            setAuthor(null); // Not found
         }
-    }, [id]);
+    }, [author]);
     
     useEffect(() => {
         if (typeof window !== 'undefined' && author) {
@@ -48,7 +53,7 @@ export default function ReporterProfilePage({ params }: { params: Promise<{ lang
         }
     }, [lang, author]);
     
-    if (author === undefined) {
+    if (isAuthorLoading) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <Loader2 className="h-16 w-16 animate-spin" />
@@ -181,7 +186,7 @@ export default function ReporterProfilePage({ params }: { params: Promise<{ lang
                     </div>
                 </div>
             </div>
-            <Dialog open={isCardOpen} onOpenChange={setIsCardOpen}>
+            {author && <Dialog open={isCardOpen} onOpenChange={setIsCardOpen}>
                 <DialogContent className="bg-transparent border-none shadow-none p-4 sm:max-w-4xl flex flex-col max-h-[90vh]">
                     <VisuallyHidden>
                         <DialogTitle>Reporter Press Card</DialogTitle>
@@ -203,7 +208,7 @@ export default function ReporterProfilePage({ params }: { params: Promise<{ lang
                         </Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog>
+            </Dialog>}
         </>
     )
 }
