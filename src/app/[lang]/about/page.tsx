@@ -8,7 +8,7 @@ import { Award, Target, Users, Newspaper } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default async function AboutPage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const { lang } = await params;
+  const { lang } = params;
   const translations = {
     en: {
       title: 'About JD News',

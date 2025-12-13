@@ -19,8 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Reporter, Article } from '@/lib/definitions';
 import { placeholderReporters, placeholderArticles } from '@/lib/placeholder-data';
 
-export default function ReporterProfilePage() {
-    const params = useParams<{ lang: 'en' | 'gu', id: string }>();
+export default function ReporterProfilePage({ params }: { params: { lang: 'en' | 'gu', id: string } }) {
     const { lang, id } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
     const [clientReporterUrl, setClientReporterUrl] = useState('');

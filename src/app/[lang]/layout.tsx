@@ -11,7 +11,7 @@ export default async function PublicLayout({
   children: React.ReactNode;
   params: { lang: string };
 }) {
-  const { lang } = await params;
+  const { lang } = params;
   return (
     <ArticlesProvider>
       <div className="flex min-h-screen flex-col">

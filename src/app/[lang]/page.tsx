@@ -7,7 +7,8 @@ import { AdContainer } from '@/components/ad-container';
 import { Separator } from '@/components/ui/separator';
 import { useArticles } from '@/contexts/ArticlesContext';
 
-export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 'gu' } }) {
+export default function HomePage({ params }: { params: { lang: 'en' | 'gu' } }) {
+  const { lang } = params;
   const { articles } = useArticles();
 
   if (articles.length === 0) {
