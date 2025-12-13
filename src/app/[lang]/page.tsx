@@ -25,8 +25,8 @@ export default function HomePage({
   } = useRssFeed(feedUrl);
 
   const heroArticle = articles.length > 0 ? articles[0] : null;
-  const topSubArticles = articles.slice(1, 5);
-  const secondaryArticles = articles.slice(5, 13);
+  const topSubArticles = articles.slice(1, 8);
+  const secondaryArticles = articles.slice(8, 16);
   const breakingNews = articles.slice(0, 10);
 
   const renderSkeleton = () => (
@@ -39,9 +39,16 @@ export default function HomePage({
           <Skeleton className="h-4 w-5/6" />
         </div>
       </div>
-      <div className="space-y-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full" />
+      <div className="space-y-4 bg-card p-4 rounded-md border">
+        {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex gap-3 py-2 border-b last:border-0">
+                <div className='flex-1 space-y-2'>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="h-3 w-1/4" />
+                </div>
+                 <Skeleton className="h-16 w-20" />
+            </div>
         ))}
       </div>
     </div>
@@ -64,19 +71,26 @@ export default function HomePage({
           </Alert>
         )}
         {!isLoading && !error && heroArticle && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8">
               <FeaturedStory article={heroArticle} />
             </div>
-            <div className="space-y-4">
-              {topSubArticles.map((article) => (
-                <ArticleCard
-                  key={article.link}
-                  article={article}
-                  layout="horizontal"
-                  showImage={true}
-                />
-              ))}
+            <div className="lg:col-span-4 flex flex-col h-full bg-card rounded-md shadow-sm border border-border/60 overflow-hidden">
+                <div className="bg-muted px-4 py-2 border-b font-bold text-sm text-primary uppercase flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                    Latest Updates
+               </div>
+               <div className="overflow-y-auto">
+                 {topSubArticles.map((article) => (
+                    <div key={article.link} className="px-4 hover:bg-muted/50 transition-colors">
+                        <ArticleCard
+                        article={article}
+                        layout="compact"
+                        showImage={true}
+                        />
+                    </div>
+                ))}
+               </div>
             </div>
           </div>
         )}
