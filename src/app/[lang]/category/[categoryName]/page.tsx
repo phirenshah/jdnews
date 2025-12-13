@@ -6,7 +6,7 @@ import { collection, query, where } from 'firebase/firestore';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { notFound } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 type Article = {
@@ -21,8 +21,11 @@ type Article = {
   category: string;
 };
 
-export default function CategoryPage({ params }: { params: { lang: 'en' | 'gu'; categoryName: string } }) {
-  const { lang, categoryName } = params;
+export default function CategoryPage() {
+  const params = useParams();
+  const lang = params.lang as 'en' | 'gu';
+  const categoryName = params.categoryName as string;
+
   const { firestore } = useFirebase();
 
   // Capitalize first letter for query
@@ -104,5 +107,3 @@ export default function CategoryPage({ params }: { params: { lang: 'en' | 'gu'; 
     </div>
   );
 }
-
-    
