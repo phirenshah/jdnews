@@ -15,19 +15,13 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export default function ReporterProfilePage() {
     const params = useParams<{ lang: 'en' | 'gu', id: string }>();
     const { lang } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
-    
     const [clientReporterUrl, setClientReporterUrl] = useState('');
     
-    const frontCardRef = useRef<HTMLDivElement>(null);
-    const backCardRef = useRef<HTMLDivElement>(null);
-
     const author = placeholderReporters.find((r) => r.id === 'priya-patel');
     
     useEffect(() => {
@@ -40,23 +34,6 @@ export default function ReporterProfilePage() {
         notFound();
     }
     
-    const handleDownload = async () => {
-        if (frontCardRef.current) {
-          const canvas = await html2canvas(frontCardRef.current, { scale: 2 });
-          const link = document.createElement('a');
-          link.href = canvas.toDataURL('image/png');
-          link.download = `${author.name}-Front.png`;
-          link.click();
-        }
-        if (backCardRef.current) {
-          const canvas = await html2canvas(backCardRef.current, { scale: 2 });
-          const link = document.createElement('a');
-          link.href = canvas.toDataURL('image/png');
-          link.download = `${author.name}-Back.png`;
-          link.click();
-        }
-    };
-
     const authorImage = PlaceHolderImages.find(img => img.id === author.imageId);
     const authorArticles = placeholderArticles.filter(a => a.author === author.name);
 
@@ -153,17 +130,15 @@ export default function ReporterProfilePage() {
                     </VisuallyHidden>
                     <div className="flex flex-col items-center gap-4">
                         <div className="flex flex-wrap justify-center gap-4">
-                            <div ref={frontCardRef}>
-                                <PressCardFront reporter={author} lang={lang} />
-                            </div>
-                            <div ref={backCardRef}>
-                                <PressCardBack reporter={author} lang={lang} />
-                            </div>
+                            <PressCardFront reporter={author} lang={lang} />
+                            <PressCardBack reporter={author} lang={lang} />
                         </div>
                          <div className="flex justify-center mt-4">
-                            <Button onClick={handleDownload}>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download Cards
+                            <Button asChild>
+                                <a href={`/logo.png`} download={`${author.name}-Front.png`}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download Cards
+                                </a>
                             </Button>
                         </div>
                     </div>
