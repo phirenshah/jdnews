@@ -1,7 +1,7 @@
+
 'use client';
 import Image from 'next/image';
 import { Reporter } from '@/lib/definitions';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Cake, Phone, Building } from 'lucide-react';
 
 export function PressCardFront({
@@ -11,10 +11,6 @@ export function PressCardFront({
   reporter: Reporter;
   lang: string;
 }) {
-  const reporterImage = PlaceHolderImages.find(
-    (img) => img.id === reporter.imageId
-  );
-
   const t = {
     dob: lang === 'en' ? 'D.O.B' : 'જન્મતારીખ',
     contact: lang === 'en' ? 'Contact' : 'સંપર્ક',
@@ -38,9 +34,9 @@ export function PressCardFront({
       </div>
       <div className="border-t w-full"></div>
       <div className="flex-grow flex flex-col items-center justify-center text-center px-4 py-2">
-        {reporterImage && (
+        {reporter.profilePictureUrl && (
           <Image
-            src={reporterImage.imageUrl}
+            src={reporter.profilePictureUrl}
             alt={`${reporter.name}`}
             width={140}
             height={140}
@@ -79,3 +75,5 @@ export function PressCardFront({
     </div>
   );
 }
+
+    

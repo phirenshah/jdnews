@@ -7,8 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Mail, Newspaper, Link as LinkIcon, Download, CreditCard, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { placeholderArticles } from '@/lib/placeholder-data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import QRCode from 'qrcode.react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -162,7 +160,7 @@ export default function ReporterProfilePage() {
                             <Separator className="my-8" />
                             <h2 className="text-2xl font-bold font-headline mb-4">Recent Articles</h2>
                             <div className="space-y-4">
-                                {areArticlesLoading && <p>Loading articles...</p>}
+                                {areArticlesLoading && <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin"/></div>}
                                 {!areArticlesLoading && authorArticles && authorArticles.length > 0 ? (
                                     authorArticles.map(article => (
                                         <Link key={article.id} href={`/${lang}/article/${article.slug}`} className="block hover:bg-muted/50 p-3 rounded-md">
@@ -171,7 +169,7 @@ export default function ReporterProfilePage() {
                                         </Link>
                                     ))
                                 ) : (
-                                    <p className="text-muted-foreground">No articles published yet.</p>
+                                   !areArticlesLoading && <p className="text-muted-foreground">No articles published yet.</p>
                                 )}
                             </div>
                         </div>
@@ -204,3 +202,5 @@ export default function ReporterProfilePage() {
         </>
     )
 }
+
+    
