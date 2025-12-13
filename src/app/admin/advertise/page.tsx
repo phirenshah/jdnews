@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, Trash2, Edit, Camera, Upload, Loader2 } from 'lucide-react';
+import { Phone, Trash2, Edit, Camera, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -247,8 +247,8 @@ export default function AdvertiseAdminPage() {
         setDocumentNonBlocking(adDocRef, adData, { merge: true });
         toast({ title: 'Advertisement Updated' });
     } else {
-        const newAdRef = collection(firestore, 'advertisements');
-        addDocumentNonBlocking(newAdRef, adData);
+        if (!adsCollection) return;
+        addDocumentNonBlocking(adsCollection, adData);
         toast({ title: 'Advertisement Created' });
     }
     resetForm();
@@ -461,5 +461,3 @@ export default function AdvertiseAdminPage() {
     </Tabs>
   );
 }
-
-    
