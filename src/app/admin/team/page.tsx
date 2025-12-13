@@ -33,14 +33,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks/use-user-role";
-import { useCollection, useFirebase, useMemoFirebase } from "@/firebase";
-import { addDoc, collection, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { useCollection, useFirebase, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
+import { collection, doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { createReporter, deleteUser, updateUserRole } from "@/ai/flows/user-management";
 
 export default function TeamAdminPage() {
     const { user: adminUser } = useUserRole();
@@ -63,11 +62,22 @@ export default function TeamAdminPage() {
       [firestore]
     );
 
+    const authorsCollection = useMemoFirebase(
+      () => collection(firestore, 'authors'),
+      [firestore]
+    );
+
     const { data: users, isLoading: usersIsLoading } = useCollection(usersCollection);
 
     const handleRoleChange = async (userId: string, newRole: string) => {
+        if (!firestore) return;
         try {
-            await updateUserRole({ userId, role: newRole });
+            const userRef = doc(firestore, 'users', userId);
+            const roleRef = doc(firestore, 'roles', userId);
+
+            setDocumentNonBlocking(userRef, { role: newRole }, { merge: true });
+            setDocumentNonBlocking(roleRef, { role: newRole }, { merge: true });
+
             toast({
                 title: "Role Updated",
                 description: `User role has been successfully changed to ${newRole}.`,
@@ -82,28 +92,32 @@ export default function TeamAdminPage() {
     };
     
     const handleDeleteUser = async (userId: string) => {
-      if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
-      
-      try {
-        await deleteUser({ userId });
-        toast({
-          title: "User Deleted",
-          description: "The user has been successfully deleted.",
-        });
-      } catch (error: any) {
-         toast({
-            variant: 'destructive',
-            title: "Error Deleting User",
-            description: error.message,
-        });
-      }
+       toast({
+          variant: 'destructive',
+          title: "Action Not Supported",
+          description: "Deleting users from the client is not supported for security reasons. This should be done from a secure backend environment.",
+      });
     };
 
     const handleAddReporter = async () => {
-        if(!newReporter.email) return;
+        if(!newReporter.email || !authorsCollection) return;
 
         try {
-          await createReporter(newReporter);
+          const reporterData = {
+            id: '',
+            firstName: newReporter.firstName,
+            lastName: newReporter.lastName,
+            email: newReporter.email,
+            title: newReporter.title,
+            dob: newReporter.dob,
+            officeLocation: newReporter.officeLocation,
+            profilePictureUrl: newReporter.profilePictureUrl || `https://avatar.vercel.sh/${newReporter.email}.png`,
+            verified: true,
+            joinedDate: new Date().toLocaleDateString('en-CA') // YYYY-MM-DD
+          };
+          const docRef = await addDocumentNonBlocking(authorsCollection, reporterData);
+          setDocumentNonBlocking(docRef, { id: docRef.id }, { merge: true });
+
            toast({
                 title: "Reporter Created",
                 description: `${newReporter.firstName} ${newReporter.lastName} has been added.`,
@@ -243,7 +257,7 @@ export default function TeamAdminPage() {
                                     </DropdownMenuPortal>
                                 </DropdownMenuSub>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteUser(user.id)} disabled={!canChangeRole}>Delete</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteUser(user.id)} disabled={!canChangeRole}>Delete (Not Supported)</DropdownMenuItem>
                             </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
