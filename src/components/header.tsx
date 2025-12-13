@@ -206,38 +206,12 @@ export function Header({ lang }: { lang: string }) {
       searchInputRef.current?.focus();
     }
   }, [isSearchOpen]);
-
-  return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <div className="mr-4 flex">
-          <Link href={`/${lang}`} className="flex items-center">
-            <Image
-              src="/logo.png"
-              alt="JD News Logo"
-              width={120}
-              height="0"
-              style={{ height: 'auto' }}
-            />
-          </Link>
-        </div>
-
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={
-                link.href.startsWith('#') ? link.href : `/${lang}${link.href}`
-              }
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
-            >
-              {link.name}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <div
+  
+  const renderClientComponents = () => {
+    if(!isMounted) return null;
+    return (
+        <>
+             <div
             className={cn(
               'relative transition-all duration-300 md:block hidden',
               isSearchOpen ? 'w-48' : 'w-8'
@@ -281,6 +255,41 @@ export function Header({ lang }: { lang: string }) {
             <AuthButton lang={lang} />
             <MobileNav lang={lang} />
           </div>
+        </>
+    )
+  }
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center">
+        <div className="mr-4 flex">
+          <Link href={`/${lang}`} className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="JD News Logo"
+              width={120}
+              height="0"
+              style={{ height: 'auto' }}
+            />
+          </Link>
+        </div>
+
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={
+                link.href.startsWith('#') ? link.href : `/${lang}${link.href}`
+              }
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              {link.name}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex flex-1 items-center justify-end space-x-2">
+         {renderClientComponents()}
         </div>
       </div>
     </header>
