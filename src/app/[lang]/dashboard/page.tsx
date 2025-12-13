@@ -42,20 +42,21 @@ export default function DashboardPage() {
     const [imageUrl, setImageUrl] = useState('');
 
     useEffect(() => {
-        if (!isLoading) {
-            if (!user) {
-                router.push(`/${lang}/login?redirect=/${lang}/dashboard`);
-                return;
-            }
-            const canAccess = role && ['reporter', 'editor', 'director'].includes(role);
-            if (!canAccess) {
-                 toast({
-                    variant: "destructive",
-                    title: "Access Denied",
-                    description: "You do not have permission to access this page.",
-                });
-                router.push(`/${lang}/profile`);
-            }
+        if (isLoading) return; // Wait until loading is complete
+
+        if (!user) {
+            router.push(`/${lang}/login?redirect=/${lang}/dashboard`);
+            return;
+        }
+
+        const canAccess = role && ['reporter', 'editor', 'director'].includes(role);
+        if (!canAccess) {
+             toast({
+                variant: "destructive",
+                title: "Access Denied",
+                description: "You do not have permission to access this page.",
+            });
+            router.push(`/${lang}/profile`);
         }
     }, [user, role, isLoading, router, lang, toast]);
     
