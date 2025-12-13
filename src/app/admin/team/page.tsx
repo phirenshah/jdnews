@@ -30,8 +30,7 @@ import {
     DropdownMenuPortal
   } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useMemo } from "react";
-import { useCollection, useFirestore } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +39,7 @@ import { useUserRole } from "@/hooks/use-user-role";
 export default function TeamAdminPage() {
     const firestore = useFirestore();
     const { user: adminUser } = useUserRole();
-    const usersCollection = useMemo(() => collection(firestore, 'users'), [firestore]);
+    const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
     const { data: users } = useCollection(usersCollection);
 
     const handleRoleChange = (userId: string, newRole: string) => {
