@@ -57,8 +57,8 @@ service cloud.firestore {
     
     match /roles_admin/{uid} {
         // Admins need to be able to check if this document exists for themselves.
-        // Nobody can write to it from the client.
-        allow get: if isAdmin();
+        // Nobody else can read it, and nobody can write to it from the client.
+        allow get: if request.auth.uid == uid;
         allow list, create, update, delete: if false;
     }
   }
