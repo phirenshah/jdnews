@@ -72,7 +72,7 @@ export default function TeamAdminPage() {
         role: r.title.toLowerCase().includes('editor') ? 'editor' : 'reporter'
     }));
 
-    const authorsCollection = collection(firestore, 'authors');
+    const authorsCollection = firestore ? collection(firestore, 'authors') : null;
 
 
     const handleAddReporter = async () => {
@@ -81,23 +81,22 @@ export default function TeamAdminPage() {
         try {
           const reporterData = {
             id: '',
-            firstName: newReporter.firstName,
-            lastName: newReporter.lastName,
-            email: newReporter.email,
+            name: `${newReporter.firstName} ${newReporter.lastName}`,
             title: newReporter.title,
+            imageId: `reporter-${Math.floor(Math.random() * 4) + 1}`,
             dob: newReporter.dob,
-            officeLocation: newReporter.officeLocation,
-            profilePictureUrl: newReporter.profilePictureUrl || `https://avatar.vercel.sh/${newReporter.email}.png`,
-            verified: true,
             contact: newReporter.email,
-            joinedDate: new Date().toLocaleDateString('en-CA') // YYYY-MM-DD
+            officeLocation: newReporter.officeLocation,
+            verified: true,
           };
+          // This is a simplified client-side add.
+          // In a real app, you might use a Cloud Function to also create a corresponding user account.
           const docRef = await addDocumentNonBlocking(authorsCollection, reporterData);
           setDocumentNonBlocking(docRef, { id: docRef.id }, { merge: true });
 
            toast({
                 title: "Reporter Created",
-                description: `${newReporter.firstName} ${newReporter.lastName} has been added.`,
+                description: `${newReporter.firstName} ${newReporter.lastName} has been added as an author.`,
             });
             setIsAddReporterDialogOpen(false);
             setNewReporter({
@@ -118,48 +117,24 @@ export default function TeamAdminPage() {
         }
     };
     
+    // This function is disabled because role changes must happen on a secure server,
+    // not from the client, to prevent security vulnerabilities.
     const handleRoleChange = async (userId: string, newRole: string) => {
-        if (!firestore) return;
-        const userDocRef = doc(firestore, 'users', userId);
-        const roleDocRef = doc(firestore, 'roles', userId);
-
-        try {
-            setDocumentNonBlocking(userDocRef, { role: newRole }, { merge: true });
-            setDocumentNonBlocking(roleDocRef, { role: newRole }, { merge: true });
-            toast({
-                title: "Role Updated",
-                description: `User role has been changed to ${newRole}.`,
-            });
-        } catch(error: any) {
-            toast({
-                variant: 'destructive',
-                title: "Error updating role",
-                description: error.message,
-            });
-        }
+      toast({
+        variant: "destructive",
+        title: "Action Disabled",
+        description: "Changing user roles from the client is disabled for security. This should be handled by a secure backend function.",
+      });
     };
 
+    // This function is disabled. Securely deleting a user's auth record and all
+    // their data requires the Admin SDK on a backend server.
     const handleDeleteUser = (userId: string) => {
-       if (!firestore) return;
-        const userDocRef = doc(firestore, 'users', userId);
-        const roleDocRef = doc(firestore, 'roles', userId);
-        const authorDocRef = doc(firestore, 'authors', userId);
-
-        try {
-            deleteDocumentNonBlocking(userDocRef);
-            deleteDocumentNonBlocking(roleDocRef);
-            deleteDocumentNonBlocking(authorDocRef); // Also delete author profile if it exists
-            toast({
-                title: "User Data Deleted",
-                description: "User's data has been removed from Firestore.",
-            });
-        } catch (error: any) {
-             toast({
-                variant: 'destructive',
-                title: "Error Deleting User Data",
-                description: error.message,
-            });
-        }
+        toast({
+            variant: "destructive",
+            title: "Action Disabled",
+            description: "Deleting users from the client is disabled for security. This should be handled by a secure backend function.",
+        });
     };
 
   return (
@@ -181,7 +156,7 @@ export default function TeamAdminPage() {
                     <DialogHeader>
                         <DialogTitle>Add New Reporter</DialogTitle>
                         <DialogDescription>
-                            Fill in the details to create a new reporter and their press card.
+                            Fill in the details to create a new reporter profile.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -226,90 +201,93 @@ export default function TeamAdminPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users?.map((user: any) => {
-                // Find the live user document ID that matches the email from placeholder data
-                // This is a workaround since we can't query the 'users' collection directly.
-                const canChangeRole = adminUser?.uid !== user.id;
-                return (
-                    <TableRow key={user.id}>
-                        <TableCell className="font-medium">
-                            <div className="flex items-center gap-3">
-                                <Avatar>
-                                     <AvatarImage src={user.photoURL || `https://avatar.vercel.sh/${user.email}.png`} />
-                                    <AvatarFallback>{user.firstName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                {user.firstName} {user.lastName}
-                            </div>
-                        </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>
-                             <Badge variant={user.role === 'director' ? 'default' : user.role === 'editor' ? 'secondary' : 'outline'} className="capitalize">{user.role}</Badge>
-                        </TableCell>
-                        <TableCell>
-                            <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger disabled={!canChangeRole}>Change Role</DropdownMenuSubTrigger>
-                                    <DropdownMenuPortal>
-                                        <DropdownMenuSubContent>
-                                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'member')}>Member</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'reporter')}>Reporter</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'editor')}>Editor</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'director')}>Director</DropdownMenuItem>
-                                        </DropdownMenuSubContent>
-                                    </DropdownMenuPortal>
-                                </DropdownMenuSub>
-                                <DropdownMenuSeparator />
-                                 <TooltipProvider>
+        <TooltipProvider>
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>
+                    <span className="sr-only">Actions</span>
+                </TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {users?.map((user: any) => {
+                    const canChangeRole = adminUser?.uid !== user.id;
+                    return (
+                        <TableRow key={user.id}>
+                            <TableCell className="font-medium">
+                                <div className="flex items-center gap-3">
+                                    <Avatar>
+                                        <AvatarImage src={user.photoURL || `https://avatar.vercel.sh/${user.email}.png`} />
+                                        <AvatarFallback>{user.firstName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    {user.firstName} {user.lastName}
+                                </div>
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                                <Badge variant={user.role === 'director' ? 'default' : user.role === 'editor' ? 'secondary' : 'outline'} className="capitalize">{user.role}</Badge>
+                            </TableCell>
+                            <TableCell>
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Toggle menu</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <DropdownMenuItem
-                                                className="text-destructive"
-                                                onSelect={(e) => {
-                                                    e.preventDefault(); // Prevent menu from closing
-                                                    handleDeleteUser(user.id);
-                                                }}
-                                                disabled={!canChangeRole}
-                                            >
-                                                <Trash className="mr-2 h-4 w-4" />
-                                                <span>Delete User Data</span>
-                                            </DropdownMenuItem>
+                                            <div className="w-full">
+                                                <DropdownMenuSub>
+                                                    <DropdownMenuSubTrigger disabled={!canChangeRole}>Change Role</DropdownMenuSubTrigger>
+                                                     <DropdownMenuPortal>
+                                                        <DropdownMenuSubContent>
+                                                            <DropdownMenuItem disabled>Member</DropdownMenuItem>
+                                                            <DropdownMenuItem disabled>Reporter</DropdownMenuItem>
+                                                            <DropdownMenuItem disabled>Editor</DropdownMenuItem>
+                                                            <DropdownMenuItem disabled>Director</DropdownMenuItem>
+                                                        </DropdownMenuSubContent>
+                                                    </DropdownMenuPortal>
+                                                </DropdownMenuSub>
+                                            </div>
                                         </TooltipTrigger>
                                         <TooltipContent side="left">
-                                            <p>This removes user data from Firestore.</p>
-                                            <p>It does not delete the Firebase Auth account.</p>
+                                            <p>Role changes must be done on a secure backend.</p>
                                         </TooltipContent>
                                     </Tooltip>
-                                </TooltipProvider>
-                            </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                )})}
-          </TableBody>
-        </Table>
+                                    <DropdownMenuSeparator />
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="w-full">
+                                                <DropdownMenuItem
+                                                    className="text-destructive"
+                                                    disabled={!canChangeRole}
+                                                    onSelect={(e) => e.preventDefault()}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    <span>Delete User</span>
+                                                </DropdownMenuItem>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="left">
+                                            <p>Secure deletion requires a backend function.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                    )})}
+            </TableBody>
+            </Table>
+        </TooltipProvider>
       </CardContent>
     </Card>
   );
 }
-
-    
