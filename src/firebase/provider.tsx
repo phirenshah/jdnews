@@ -2,11 +2,9 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, doc } from 'firebase/firestore';
+import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
-import { setDocumentNonBlocking } from './non-blocking-updates';
-import type { UserProfile } from '@/lib/definitions';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -78,22 +76,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
     const unsubscribe = onAuthStateChanged(
       auth,
-      async (firebaseUser) => {
-        if (firebaseUser) {
-           const userRef = doc(firestore, 'users', firebaseUser.uid);
-            const userProfile: Partial<UserProfile> = {
-                id: firebaseUser.uid,
-                email: firebaseUser.email || '',
-                firstName: firebaseUser.displayName?.split(' ')[0] || '',
-                lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
-            };
-            
-            // This is a non-blocking write. It will attempt to create/update the user doc.
-            // If it fails due to permissions, the error will be caught and emitted globally.
-            // We use { merge: true } so it only creates if it doesn't exist, or updates if it does,
-            // without overwriting fields that might already be there (like 'role').
-            setDocumentNonBlocking(userRef, userProfile, { merge: true });
-        }
+      (firebaseUser) => {
         setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
       },
       (error) => { 
