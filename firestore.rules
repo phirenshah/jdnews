@@ -14,10 +14,15 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // This is the new, correct way to get a user's role.
+    // If a role document doesn't exist for the user, they are a 'member' by default.
+    // This avoids needing to create a 'member' document for every single user.
     function getUserRole(uid) {
-      // Check for a 'role' field in the /roles/{uid} document.
-      // Use the 'get' function to read a document from a different path.
-      return get(/databases/$(database)/documents/roles/$(uid)).data.role;
+      let userRole = get(/databases/$(database)/documents/roles/$(uid)).data;
+      if (exists(/databases/$(database)/documents/roles/$(uid))) {
+        return userRole.role;
+      }
+      return "member";
     }
 
     function isAdmin() {
@@ -31,12 +36,13 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Admins have full control over all user documents.
-      allow read, write, list: if isAdmin();
+      allow read, write: if isAdmin();
       
       // A user can read their own document.
       allow get: if isOwner(userId);
       
       // A user can update their own document, but they cannot change their role.
+      // The role is now managed exclusively in the /roles collection.
       allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
       
       // A user can create their own document upon signup.
@@ -46,8 +52,14 @@ service cloud.firestore {
     /* ---------------- ROLES ---------------- */
 
     match /roles/{uid} {
-      // Only admins can create, read, and write roles. This is crucial for security.
-      allow read, write: if isAdmin();
+      // An authenticated user can read their own role. Admins can read any role.
+      allow get: if isOwner(uid) || isAdmin();
+      
+      // Only admins can create, update, or delete roles. This is critical for security.
+      allow create, update, delete: if isAdmin();
+      
+      // Disallow listing all roles from the client for security.
+      allow list: if false;
     }
 
     /* ---------------- AUTHORS ---------------- */

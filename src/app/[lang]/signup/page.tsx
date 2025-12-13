@@ -79,10 +79,6 @@ export default function SignupPage() {
             role: role,
         }, { merge: true });
 
-        // Also create the role document
-        const roleDocRef = doc(firestore, 'roles', newUser.uid);
-        setDocumentNonBlocking(roleDocRef, { role: role }, { merge: true });
-
         toast({ title: 'Account Created!', description: 'Welcome to JD News.' });
         router.push(redirectUrl);
     } catch (error: any) {
@@ -165,5 +161,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
-    

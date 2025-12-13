@@ -86,8 +86,6 @@ export default function LoginPage() {
         role: role,
       }, { merge: true });
 
-      setDocumentNonBlocking(doc(firestore, 'roles', result.user.uid), { role: role }, { merge: true });
-      
       toast({ title: 'Signed in with Google' });
       router.push(redirectUrl);
     } catch (error: any) {
