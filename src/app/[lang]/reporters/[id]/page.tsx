@@ -48,8 +48,8 @@ export default function ReporterProfilePage() {
     }, [author]);
     
     useEffect(() => {
-        if (typeof window !== 'undefined' && author) {
-            setClientReporterUrl(`${window.location.origin}/${lang}/reporters/${author.id}`);
+        if (author) {
+            setClientReporterUrl(`https://www.jdnews.in/${lang}/reporters/${author.id}`);
         }
     }, [lang, author]);
     

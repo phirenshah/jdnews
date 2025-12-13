@@ -11,7 +11,7 @@ export function PressCardBack({
   reporter: Reporter;
   lang: string;
 }) {
-  const reporterUrl = `/${lang}/reporters/${reporter.id}`;
+  const reporterUrl = `https://www.jdnews.in/${lang}/reporters/${reporter.id}`;
 
   const t = {
     headOffice: lang === 'en' ? 'Head Office' : 'મુખ્ય કાર્યાલય',
