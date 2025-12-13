@@ -1,4 +1,3 @@
-
 'use client';
 import {
     Card,
@@ -30,7 +29,7 @@ import {
   } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { setDocumentNonBlocking, useCollection, useFirebase, useMemoFirebase } from "@/firebase";
+import { deleteDocumentNonBlocking, setDocumentNonBlocking, useCollection, useFirebase, useMemoFirebase } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import type { UserProfile } from "@/lib/definitions";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +38,16 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type Role = "member" | "reporter" | "editor" | "director";
 const roles: Role[] = ["member", "reporter", "editor", "director"];
@@ -51,6 +60,7 @@ export default function UsersAdminPage() {
     const { data: users, isLoading, forceRefetch } = useCollection<UserProfile>(usersCollection);
 
     const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+    const [deletingUser, setDeletingUser] = useState<UserProfile | null>(null);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
 
@@ -85,6 +95,22 @@ export default function UsersAdminPage() {
         });
         forceRefetch();
         closeEditDialog();
+    };
+
+    const handleDeleteUser = () => {
+        if (!firestore || !deletingUser) return;
+        const userDocRef = doc(firestore, 'users', deletingUser.id);
+        const roleDocRef = doc(firestore, 'roles', deletingUser.id);
+
+        deleteDocumentNonBlocking(userDocRef);
+        deleteDocumentNonBlocking(roleDocRef);
+
+        toast({
+            title: 'User Deleted',
+            description: `The data for ${deletingUser.email} has been deleted. Note: This does not remove them from Firebase Authentication.`,
+        });
+        forceRefetch();
+        setDeletingUser(null);
     };
 
     const handleRoleChange = async (userId: string, newRole: Role) => {
@@ -182,7 +208,7 @@ export default function UsersAdminPage() {
                             </DropdownMenuPortal>
                         </DropdownMenuSub>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem disabled className="text-destructive">
+                        <DropdownMenuItem onSelect={() => setDeletingUser(user)} className="text-destructive">
                           <Trash className="mr-2 h-4 w-4" />
                           <span>Delete</span>
                         </DropdownMenuItem>
@@ -220,6 +246,23 @@ export default function UsersAdminPage() {
             </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deletingUser} onOpenChange={(isOpen) => !isOpen && setDeletingUser(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the user's data from your Firestore database, but it will not remove their authentication record from Firebase Auth.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} className={buttonVariants({ variant: "destructive" })}>
+                Yes, delete user data
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
     </>
     );
 }
