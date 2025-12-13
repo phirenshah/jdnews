@@ -4,7 +4,7 @@ import { Footer } from '@/components/footer';
 import { SectionHeader } from '@/components/section-header';
 import { ArticlesProvider } from '@/contexts/ArticlesContext';
 
-export default async function PublicLayout({
+export default function PublicLayout({
   children,
   params,
 }: {
