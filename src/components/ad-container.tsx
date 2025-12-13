@@ -42,12 +42,14 @@ export function AdContainer({ type, className }: AdContainerProps) {
   useEffect(() => {
     if (!ads || ads.length <= 1) return;
 
+    const rotationInterval = type === 'horizontal' ? 10000 : 15000; // 10s for horizontal, 15s for vertical
+
     const interval = setInterval(() => {
       setCurrentAdIndex((prevIndex) => (prevIndex + 1) % ads.length);
-    }, 10000); // Rotate every 10 seconds
+    }, rotationInterval);
 
     return () => clearInterval(interval);
-  }, [ads]);
+  }, [ads, type]);
 
   const adToDisplay = ads && ads.length > 0 ? ads[currentAdIndex] : null;
 
