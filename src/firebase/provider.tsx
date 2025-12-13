@@ -94,6 +94,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
                 firstName: firstName || '',
                 lastName: lastName || '',
                 role: 'member', // Default role
+                profilePictureUrl: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`
               }, { merge: true });
             }
           } catch (error) {

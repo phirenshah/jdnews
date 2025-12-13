@@ -86,13 +86,9 @@ export default function LoginPage() {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const googleUser = result.user;
-      
-      const userDocRef = doc(firestore, 'users', googleUser.uid);
-      
-      // The provider now handles user creation, so we don't need to do it here
-      // But we can toast a welcome message
+      // We don't need to do anything with the result, 
+      // the onAuthStateChanged listener in FirebaseProvider will handle it.
+      await signInWithPopup(auth, provider);
       toast({ title: 'Login Successful', description: 'Welcome back!' });
     } catch (error: any) {
       toast({

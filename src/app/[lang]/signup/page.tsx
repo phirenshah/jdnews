@@ -23,7 +23,6 @@ import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { doc, setDoc } from 'firebase/firestore';
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
@@ -89,13 +88,8 @@ export default function SignupPage() {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const googleUser = result.user;
-      
-      const userDocRef = doc(firestore, 'users', googleUser.uid);
-      
-      // The provider now handles user creation, so we don't need to do it here
-      // But we can toast a welcome message
+      // The onAuthStateChanged listener in FirebaseProvider will handle user creation.
+      await signInWithPopup(auth, provider);
       toast({ title: 'Account Created', description: 'Welcome to JD News!' });
     } catch (error: any) {
       toast({
@@ -118,9 +112,10 @@ export default function SignupPage() {
       const newUserName = `${firstName} ${lastName}`.trim();
       await updateProfile(userCredential.user, { displayName: newUserName });
       
-      // User profile document is created by the FirebaseProvider now
+      // User profile document is created by the FirebaseProvider now.
+      // onAuthStateChanged in the provider will see the new user and create the doc.
       toast({ title: 'Account Created Successfully' });
-      // onAuthStateChanged will handle redirect
+      // onAuthStateChanged will handle redirect.
     } catch (error: any) {
        toast({
           variant: 'destructive',
