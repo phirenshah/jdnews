@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, Upload, Edit, Trash2, PlusCircle } from "lucide-react";
+import { MoreHorizontal, Upload, Edit, Trash2 } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Article } from "@/lib/definitions";
+import { sections } from "@/lib/categories";
 
 export default function ArticlesAdminPage() {
     const { toast } = useToast();
@@ -61,7 +62,7 @@ export default function ArticlesAdminPage() {
 
     const handleCreateArticle = () => {
         if (!titleEnglish || !author || !category) {
-            toast({ variant: 'destructive', title: 'Missing required fields' });
+            toast({ variant: 'destructive', title: 'Missing required fields', description: 'English Title, Author, and Category are required.' });
             return;
         }
 
@@ -133,7 +134,16 @@ export default function ArticlesAdminPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="category">Category</Label>
-                                <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} />
+                                <Select value={category} onValueChange={setCategory}>
+                                    <SelectTrigger id="category">
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {sections.map(section => (
+                                            <SelectItem key={section.name} value={section.name}>{section.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                          <div className="space-y-2">
