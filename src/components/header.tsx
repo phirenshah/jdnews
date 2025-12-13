@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, User } from 'lucide-react';
+import { Menu, Search, User, UserCog, Newspaper } from 'lucide-react';
 import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,6 @@ import { cn } from '@/lib/utils';
 import { signOut } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { useUserRole } from '@/hooks/use-user-role';
-import { LayoutDashboard } from 'lucide-react';
 
 const navLinks = [
   { name: 'Team', href: '/team' },
@@ -81,17 +80,20 @@ function AuthButton({ lang }: { lang: string }) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <Link href={`/${lang}/profile`}>
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-          </Link>
-          {canAccessDashboard && (
-            <Link href={`/admin/articles`}>
+          {canAccessDashboard ? (
+             <Link href="/admin/articles">
               <DropdownMenuItem>
-                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <Newspaper className="mr-2 h-4 w-4" />
                 Dashboard
               </DropdownMenuItem>
             </Link>
-          )}
+          ) : null}
+           <Link href={`/${lang}/profile`}>
+              <DropdownMenuItem>
+                <UserCog className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+            </Link>
 
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => auth && signOut(auth)}>
