@@ -25,11 +25,10 @@ import {
     DropdownMenuTrigger,
   } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirebase, useMemoFirebase } from "@/firebase";
 import { useState, useRef, useEffect } from "react";
 import { collection, serverTimestamp, doc } from "firebase/firestore";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -43,12 +42,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { sections } from "@/lib/categories";
 
 export default function ArticlesAdminPage() {
-    const firestore = useFirestore();
+    const { firestore } = useFirebase();
     const { user } = useAuth();
     const { toast } = useToast();
     const articlesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'articles'): null, [firestore]);
     const { data: articles, forceRefetch } = useCollection(articlesCollection);
 
+    const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [titleEnglish, setTitleEnglish] = useState('');
     const [titleGujarati, setTitleGujarati] = useState('');
     const [contentEnglish, setContentEnglish] = useState('');
@@ -182,6 +182,7 @@ export default function ArticlesAdminPage() {
         });
 
         resetForm();
+        setIsUploadDialogOpen(false);
         forceRefetch();
     }
     
@@ -195,171 +196,173 @@ export default function ArticlesAdminPage() {
 
 
   return (
-    <Tabs defaultValue="all_articles">
-        <div className="flex items-center">
-            <TabsList>
-                <TabsTrigger value="all_articles">All Articles</TabsTrigger>
-                <TabsTrigger value="new_article">New Article</TabsTrigger>
-            </TabsList>
-            <div className="ml-auto">
-                <Button size="sm">
+    <>
+      <div className="flex items-center mb-4">
+        <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" variant="outline">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Schedule Content
-                </Button>
-            </div>
-        </div>
-        <TabsContent value="all_articles">
-            <Card>
-                <CardHeader>
-                <CardTitle>Manage Articles</CardTitle>
-                <CardDescription>View, edit, or delete published articles.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Author</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Published At</TableHead>
-                        <TableHead>
-                        <span className="sr-only">Actions</span>
-                        </TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {articles?.map((article: any) => (
-                        <TableRow key={article.id}>
-                        <TableCell className="font-medium max-w-xs truncate">{article.titleEnglish}</TableCell>
-                        <TableCell>{article.authorId}</TableCell>
-                        <TableCell>
-                            <Badge variant="outline">{article.category}</Badge>
-                        </TableCell>
-                        <TableCell>{article.publicationDate?.toDate().toLocaleDateString()}</TableCell>
-                        <TableCell>
-                            <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => handleDelete(article.id)} className="text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                        </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
-                </CardContent>
-            </Card>
-        </TabsContent>
-        <TabsContent value="new_article">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Create New Article</CardTitle>
-                    <CardDescription>Fill in the details for the new article in both languages.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="title-en">Title (English)</Label>
-                            <Input id="title-en" placeholder="Enter English title" value={titleEnglish} onChange={(e) => setTitleEnglish(e.target.value)} />
+            </Button>
+             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button size="sm">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Article
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[80vw] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Create New Article</DialogTitle>
+                        <CardDescription>Fill in the details for the new article in both languages.</CardDescription>
+                    </DialogHeader>
+                    <div className="space-y-6 py-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="title-en">Title (English)</Label>
+                                <Input id="title-en" placeholder="Enter English title" value={titleEnglish} onChange={(e) => setTitleEnglish(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="title-gu">Title (Gujarati)</Label>
+                                <Input id="title-gu" placeholder="Enter Gujarati title" value={titleGujarati} onChange={(e) => setTitleGujarati(e.target.value)} />
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="title-gu">Title (Gujarati)</Label>
-                            <Input id="title-gu" placeholder="Enter Gujarati title" value={titleGujarati} onChange={(e) => setTitleGujarati(e.target.value)} />
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="excerpt-en">Excerpt (English)</Label>
+                                <Textarea id="excerpt-en" placeholder="Short summary in English" value={excerptEnglish} onChange={(e) => setExcerptEnglish(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="excerpt-gu">Excerpt (Gujarati)</Label>
+                                <Textarea id="excerpt-gu" placeholder="Short summary in Gujarati" value={excerptGujarati} onChange={(e) => setExcerptGujarati(e.target.value)} />
+                            </div>
                         </div>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="excerpt-en">Excerpt (English)</Label>
-                            <Textarea id="excerpt-en" placeholder="Short summary in English" value={excerptEnglish} onChange={(e) => setExcerptEnglish(e.target.value)} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="content-en">Content (English)</Label>
+                                <Textarea id="content-en" placeholder="Full article content in English" rows={10} value={contentEnglish} onChange={(e) => setContentEnglish(e.target.value)}/>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="content-gu">Content (Gujarati)</Label>
+                                <Textarea id="content-gu" placeholder="Full article content in Gujarati" rows={10} value={contentGujarati} onChange={(e) => setContentGujarati(e.target.value)} />
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="excerpt-gu">Excerpt (Gujarati)</Label>
-                            <Textarea id="excerpt-gu" placeholder="Short summary in Gujarati" value={excerptGujarati} onChange={(e) => setExcerptGujarati(e.target.value)} />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="content-en">Content (English)</Label>
-                            <Textarea id="content-en" placeholder="Full article content in English" rows={10} value={contentEnglish} onChange={(e) => setContentEnglish(e.target.value)}/>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="content-gu">Content (Gujarati)</Label>
-                            <Textarea id="content-gu" placeholder="Full article content in Gujarati" rows={10} value={contentGujarati} onChange={(e) => setContentGujarati(e.target.value)} />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="category">Category</Label>
-                            <Select value={category} onValueChange={setCategory}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {sections.map(section => (
-                                        <SelectItem key={section.name} value={section.name}>{section.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Article Image</Label>
-                            <div className="flex items-center gap-4">
-                                <div className="w-full h-24 bg-muted rounded-md flex items-center justify-center">
-                                    {imagePreview ? (
-                                    <Image src={imagePreview} alt="Article preview" width={200} height={96} className="object-contain h-24" />
-                                    ) : (
-                                    <span className="text-xs text-muted-foreground">Image Preview</span>
-                                    )}
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Upload
-                                    </Button>
-                                    <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
-                                    <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline" size="sm"><Camera className="mr-2 h-4 w-4" />Take</Button>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
-                                                <div className="relative">
-                                                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
-                                                {hasCameraPermission === false && (
-                                                    <Alert variant="destructive" className="mt-4">
-                                                        <AlertTitle>Camera Access Required</AlertTitle>
-                                                        <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
-                                                    </Alert>
-                                                )}
-                                                </div>
-                                                <canvas ref={canvasRef} className="hidden" />
-                                            <DialogFooter>
-                                                <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
-                                            </DialogFooter>
-                                        </DialogContent>
-                                    </Dialog>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="category">Category</Label>
+                                <Select value={category} onValueChange={setCategory}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {sections.map(section => (
+                                            <SelectItem key={section.name} value={section.name}>{section.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Article Image</Label>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-full h-24 bg-muted rounded-md flex items-center justify-center">
+                                        {imagePreview ? (
+                                        <Image src={imagePreview} alt="Article preview" width={200} height={96} className="object-contain h-24" />
+                                        ) : (
+                                        <span className="text-xs text-muted-foreground">Image Preview</span>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Upload
+                                        </Button>
+                                        <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
+                                        <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="sm"><Camera className="mr-2 h-4 w-4" />Take</Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
+                                                    <div className="relative">
+                                                    <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                                                    {hasCameraPermission === false && (
+                                                        <Alert variant="destructive" className="mt-4">
+                                                            <AlertTitle>Camera Access Required</AlertTitle>
+                                                            <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
+                                                        </Alert>
+                                                    )}
+                                                    </div>
+                                                    <canvas ref={canvasRef} className="hidden" />
+                                                <DialogFooter>
+                                                    <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <Button onClick={handlePublish}>Publish Article</Button>
-                </CardContent>
-            </Card>
-        </TabsContent>
-    </Tabs>
+                    <DialogFooter>
+                        <Button onClick={handlePublish}>Publish Article</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
+      </div>
+      <Card>
+          <CardHeader>
+          <CardTitle>Manage Articles</CardTitle>
+          <CardDescription>View, edit, or delete published articles.</CardDescription>
+          </CardHeader>
+          <CardContent>
+          <Table>
+              <TableHeader>
+              <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Author</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Published At</TableHead>
+                  <TableHead>
+                  <span className="sr-only">Actions</span>
+                  </TableHead>
+              </TableRow>
+              </TableHeader>
+              <TableBody>
+              {articles?.map((article: any) => (
+                  <TableRow key={article.id}>
+                  <TableCell className="font-medium max-w-xs truncate">{article.titleEnglish}</TableCell>
+                  <TableCell>{article.authorId}</TableCell>
+                  <TableCell>
+                      <Badge variant="outline">{article.category}</Badge>
+                  </TableCell>
+                  <TableCell>{article.publicationDate?.toDate().toLocaleDateString()}</TableCell>
+                  <TableCell>
+                      <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleDelete(article.id)} className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                          </DropdownMenuItem>
+                      </DropdownMenuContent>
+                      </DropdownMenu>
+                  </TableCell>
+                  </TableRow>
+              ))}
+              </TableBody>
+          </Table>
+          </CardContent>
+      </Card>
+    </>
   );
 }
