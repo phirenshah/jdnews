@@ -51,7 +51,7 @@ export default function ArticlesAdminPage() {
     const [imageUrl, setImageUrl] = useState('');
     
     const handlePublish = () => {
-        if (!user) return;
+        if (!user || !articlesCollection) return;
         
         const articleData = {
             titleEnglish,

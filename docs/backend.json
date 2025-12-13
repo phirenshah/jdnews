@@ -27,6 +27,14 @@
           "type": "string",
           "description": "Content of the article in Gujarati."
         },
+        "excerptEnglish": {
+            "type": "string",
+            "description": "A short summary of the article in English."
+        },
+        "excerptGujarati": {
+            "type": "string",
+            "description": "A short summary of the article in Gujarati."
+        },
         "authorId": {
           "type": "string",
           "description": "Reference to the Author who wrote the article. (Relationship: Author 1:N Article)"
