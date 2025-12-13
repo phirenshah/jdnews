@@ -37,7 +37,7 @@ export default function DonatePayPage() {
                  <p>Scan and pay with any BHIM UPI app</p>
                  <div className="flex justify-center items-center gap-4 mt-4 flex-wrap">
                     <Image src="https://www.labnol.org/_astro/bhim.ADxokklY.svg" alt="BHIM" width={60} height={24} />
-                    <Image src="https://i.ibb.co/N2cMhS6/gpay.png" alt="Google Pay" width={60} height={24} />
+                    <Image src="https://www.labnol.org/_astro/gpay.U0cS9ieh.svg" alt="Google Pay" width={60} height={24} />
                     <Image src="https://www.labnol.org/_astro/phonepe.DFx5MJ55.svg" alt="PhonePe" width={70} height={24} />
                     <Image src="https://www.labnol.org/_astro/paytm.8ubvN9kE.svg" alt="Paytm" width={70} height={24} />
                     <Image src="https://www.labnol.org/_astro/amazon.dU4waQXi.svg" alt="Amazon Pay" width={70} height={24} />
