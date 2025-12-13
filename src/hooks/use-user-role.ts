@@ -36,8 +36,6 @@ export function useUserRole(): UseUserRoleResult {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
   const { data: roleDoc, isLoading: isRoleLoading } = useDoc(roleDocRef);
 
-  // If a role document exists, use its role. Otherwise, default to 'member'.
-  // This check is safe because the security rules now default to 'member' if the doc doesn't exist.
   const role: UserRole = roleDoc ? (roleDoc.role as UserRole) : (user ? 'member' : null);
   
   const isAdmin = role === 'director' || user?.email === 'jdnewsgujarati@gmail.com';

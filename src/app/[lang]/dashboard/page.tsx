@@ -43,10 +43,12 @@ export default function DashboardPage() {
 
     useEffect(() => {
         if (!isLoading) {
-            const canAccess = role && ['reporter', 'editor', 'director'].includes(role);
             if (!user) {
                 router.push(`/${lang}/login?redirect=/${lang}/dashboard`);
-            } else if (!canAccess) {
+                return;
+            }
+            const canAccess = role && ['reporter', 'editor', 'director'].includes(role);
+            if (!canAccess) {
                  toast({
                     variant: "destructive",
                     title: "Access Denied",
@@ -91,7 +93,7 @@ export default function DashboardPage() {
         setImageUrl('');
     }
 
-    if (isLoading || !user || !role || !['reporter', 'editor', 'director'].includes(role)) {
+    if (isLoading || !user || (role && !['reporter', 'editor', 'director'].includes(role))) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
