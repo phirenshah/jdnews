@@ -63,7 +63,7 @@ export default function TeamAdminPage() {
     
     // Fetch all users to populate the "Add Reporter" dialog
     const usersCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'users') : null), [firestore]);
-    const { data: users, isLoading: areUsersLoading } = useCollection<UserProfile>(usersCollection);
+    const { data: users, isLoading: areUsersLoading, forceRefetch: refetchUsers } = useCollection<UserProfile>(usersCollection);
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -136,6 +136,7 @@ export default function TeamAdminPage() {
             });
             resetAddDialog();
             refetchAuthors();
+            refetchUsers();
         }
     };
     
@@ -145,6 +146,7 @@ export default function TeamAdminPage() {
         deleteDocumentNonBlocking(authorDoc);
         toast({ title: 'Reporter Removed' });
         refetchAuthors();
+        refetchUsers();
     };
 
     const resetAddDialog = () => {
