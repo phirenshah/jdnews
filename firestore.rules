@@ -14,19 +14,31 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function getUserRole(uid) {
+      return get(/databases/$(database)/documents/roles/$(uid)).data.role;
+    }
+
     function isAdmin() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      // Hardcode one user as admin for bootstrapping, or rely on roles.
+      return isSignedIn() && (getUserRole(request.auth.uid) == 'director' || request.auth.token.email == 'jdnewsgujarati@gmail.com');
     }
 
     /* ---------------- USERS ---------------- */
 
     match /users/{userId} {
-      // Admin: full control
+      // Admin has full control over all user documents.
       allow read, write: if isAdmin();
       
-      // Normal user: manage own profile (no delete)
-      allow get, create, update: if isOwner(userId);
+      // A user can read and update their own document, but not change their role.
+      allow get, create: if isOwner(userId);
+      allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
+    }
+
+    /* ---------------- ROLES ---------------- */
+
+    match /roles/{uid} {
+      // Only admins can read or write roles.
+      allow read, write: if isAdmin();
     }
 
     /* ---------------- AUTHORS ---------------- */
@@ -52,14 +64,7 @@ service cloud.firestore {
         request.resource.data.userId == request.auth.uid;
       allow update, delete: if isOwner(resource.data.userId);
     }
-
-    /* ---------------- ADMIN ROLES ---------------- */
-    
-    match /roles_admin/{uid} {
-        // Admins need to be able to check if this document exists for themselves.
-        // Nobody else can read it, and nobody can write to it from the client.
-        allow get: if request.auth.uid == uid;
-        allow list, create, update, delete: if false;
-    }
   }
 }
+
+    

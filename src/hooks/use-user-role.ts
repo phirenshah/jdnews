@@ -26,25 +26,27 @@ export function useUserRole(): UseUserRoleResult {
     }
     return null;
   }, [user?.uid, firestore]);
-
-  const adminDocRef = useMemo(() => {
-    if (user?.uid) {
-        return doc(firestore, 'roles_admin', user.uid);
+  
+  const roleDocRef = useMemo(() => {
+    if(user?.uid) {
+        return doc(firestore, 'roles', user.uid);
     }
     return null;
   }, [user?.uid, firestore]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
-  const { data: adminRoleDoc, isLoading: isAdminRoleLoading } = useDoc(adminDocRef);
+  const { data: roleDoc, isLoading: isRoleLoading } = useDoc(roleDocRef);
 
-  const role = userProfile?.role as UserRole;
-  const isAdmin = !!adminRoleDoc || user?.email === 'jdnewsgujarati@gmail.com';
+  const role = roleDoc?.role as UserRole;
+  const isAdmin = role === 'director' || user?.email === 'jdnewsgujarati@gmail.com';
 
   return {
     user,
     userProfile,
-    isLoading: isAuthLoading || isProfileLoading || isAdminRoleLoading,
+    isLoading: isAuthLoading || isProfileLoading || isRoleLoading,
     role,
     isAdmin,
   };
 }
+
+    

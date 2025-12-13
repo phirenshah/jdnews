@@ -209,12 +209,26 @@
         "paymentGateway"
       ]
     },
-     "AdminRole": {
+    "Role": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "AdminRole",
+      "title": "Role",
       "type": "object",
-      "description": "A document that, if it exists for a given UID, grants that user admin privileges. The document itself can be empty.",
-      "properties": {}
+      "description": "A document that stores the role of a user.",
+      "properties": {
+        "role": {
+          "type": "string",
+          "description": "The role of the user.",
+          "enum": [
+            "member",
+            "reporter",
+            "editor",
+            "director"
+          ]
+        }
+      },
+      "required": [
+        "role"
+      ]
     }
   },
   "auth": {
@@ -242,17 +256,17 @@
         }
       },
       {
-        "path": "/roles_admin/{uid}",
+        "path": "/roles/{uid}",
         "definition": {
-          "entityName": "AdminRole",
+          "entityName": "Role",
           "schema": {
-            "$ref": "#/backend/entities/AdminRole"
+            "$ref": "#/backend/entities/Role"
           },
-          "description": "A collection where the existence of a document with a user's UID signifies they are an administrator. This collection is not readable or writable by clients, only checked for existence in security rules.",
+          "description": "A collection where a document with a user's UID stores their role. This collection is checked in security rules to determine permissions.",
           "params": [
             {
               "name": "uid",
-              "description": "The user's UID. If a document with this ID exists, the user is an admin."
+              "description": "The user's UID. The document contains the user's role."
             }
           ]
         }
@@ -306,6 +320,8 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability. User profiles are separate from role data to allow for secure role-based access control without circular dependencies in security rules. The 'roles_admin' collection is used specifically for authorization checks in security rules, while the 'users' collection stores public and private user data."
+    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability. User profiles are separate from role data to allow for secure role-based access control without circular dependencies in security rules. The 'roles' collection is used specifically for authorization checks in security rules, while the 'users' collection stores public and private user data."
   }
 }
+
+    

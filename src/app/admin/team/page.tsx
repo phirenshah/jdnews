@@ -138,7 +138,6 @@ export default function TeamAdminPage() {
             }
         } catch (error: any) {
              const defaultMessage = "An error occurred while searching for the user.";
-             // Firebase often provides a helpful message with a link to create a missing index.
              const errorMessage = error.message ? `${defaultMessage} Firestore error: ${error.message}` : defaultMessage;
              setFindUserError(errorMessage);
         } finally {
@@ -193,8 +192,7 @@ export default function TeamAdminPage() {
             setDocumentNonBlocking(roleDocRef, { role: 'reporter' }, { merge: true });
             
             if (newReporter.title === 'Director') {
-                const adminRoleDocRef = doc(firestore, 'roles_admin', foundUser.id);
-                setDocumentNonBlocking(adminRoleDocRef, {}, { merge: true });
+                setDocumentNonBlocking(roleDocRef, { role: 'director' }, { merge: true });
             }
 
             const docRef = await addDocumentNonBlocking(authorsCollection, authorData);
@@ -226,21 +224,9 @@ export default function TeamAdminPage() {
         setDocumentNonBlocking(roleDocRef, { role: newRole }, { merge: true });
       
         if (newRole === 'director') {
-          const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
-          setDocumentNonBlocking(adminRoleDocRef, {}, { merge: true });
-        } else {
-          // Check if user being demoted is the current admin
-          if (adminUser?.uid === userId) {
-             toast({
-                variant: 'destructive',
-                title: "Action Not Allowed",
-                description: "You cannot demote yourself from the Director role.",
-            });
-            return;
-          }
-          const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
-          deleteDocumentNonBlocking(adminRoleDocRef);
+          setDocumentNonBlocking(roleDocRef, { role: 'director' }, { merge: true });
         }
+        
         toast({
           title: "Role Updated",
           description: `User role has been changed to ${newRole}.`,
@@ -269,7 +255,6 @@ export default function TeamAdminPage() {
   
           deleteDocumentNonBlocking(doc(firestore, 'users', userId));
           deleteDocumentNonBlocking(doc(firestore, 'roles', userId));
-          deleteDocumentNonBlocking(doc(firestore, 'roles_admin', userId));
   
           toast({
               title: "User Data Deleted",
@@ -502,3 +487,5 @@ export default function TeamAdminPage() {
     </>
   );
 }
+
+    
