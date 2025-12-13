@@ -2,7 +2,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { notFound } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Mail, Newspaper, Link as LinkIcon, Download, CreditCard, Loader2 } from 'lucide-react';
@@ -20,8 +19,7 @@ import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, where } from 'firebase/firestore';
 import type { Reporter, Article } from '@/lib/definitions';
 import { useCollection } from '@/firebase';
-
-export const dynamic = 'force-dynamic';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function ReporterProfilePage() {
     const params = useParams<{ lang: 'en' | 'gu', id: string }>();
@@ -64,7 +62,14 @@ export default function ReporterProfilePage() {
     }
     
     if (!author) {
-        notFound();
+        return (
+            <div className="container mx-auto max-w-4xl py-12">
+                <Alert variant="destructive">
+                    <AlertTitle>Reporter Not Found</AlertTitle>
+                    <AlertDescription>The reporter you are looking for does not exist or the link is incorrect.</AlertDescription>
+                </Alert>
+            </div>
+        );
     }
     
     const handleDownload = async () => {
@@ -209,5 +214,3 @@ export default function ReporterProfilePage() {
         </>
     )
 }
-
-    
