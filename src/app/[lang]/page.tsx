@@ -1,4 +1,5 @@
 
+'use client';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -7,10 +8,25 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdContainer } from '@/components/ad-container';
 import { Separator } from '@/components/ui/separator';
+import { useState, useEffect } from 'react';
+import type { Article } from '@/lib/definitions';
 
 export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 'gu' } }) {
-  const heroArticle = placeholderArticles[0];
-  const secondaryArticles = placeholderArticles.slice(1, 5);
+  const [articles, setArticles] = useState<Omit<Article, 'authorId' | 'contentEnglish' | 'contentGujarati'>[]>([]);
+
+  useEffect(() => {
+    const storedArticles = localStorage.getItem('articles');
+    const articlesToDisplay = storedArticles ? JSON.parse(storedArticles) : placeholderArticles;
+    setArticles(articlesToDisplay);
+  }, []);
+
+  if (articles.length === 0) {
+    // Optional: show a loading state
+    return <div>Loading articles...</div>;
+  }
+  
+  const heroArticle = articles[0];
+  const secondaryArticles = articles.slice(1, 5);
 
   return (
     <div className="container mx-auto px-4 py-8">

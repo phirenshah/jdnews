@@ -1,5 +1,6 @@
 
-import { notFound } from 'next/navigation';
+'use client';
+import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -11,28 +12,9 @@ import { AdContainer } from '@/components/ad-container';
 import type { Reporter } from '@/lib/definitions';
 import { placeholderArticles, placeholderReporters } from '@/lib/placeholder-data';
 import { fullPlaceholderArticles } from '@/lib/placeholder-data-full';
+import { useState, useEffect } from 'react';
 
 type Article = (typeof placeholderArticles)[0] & { contentEnglish: string, contentGujarati: string, author: string, publicationDate: string };
-
-async function getArticleBySlug(slug: string): Promise<Article | null> {
-    const articleContent = fullPlaceholderArticles.find(a => a.slug === slug);
-    const articleExcerpt = placeholderArticles.find(a => a.slug === slug);
-
-    if (!articleContent || !articleExcerpt) {
-        return null;
-    }
-
-    return {
-        ...articleExcerpt,
-        ...articleContent,
-    } as Article;
-}
-
-async function getAuthorByName(authorName: string): Promise<Reporter | null> {
-    if (!authorName) return null;
-    const author = placeholderReporters.find(r => r.name === authorName);
-    return author || null;
-}
 
 function AuthorDisplay({ author }: { author: Reporter | null }) {
     if (!author) {
@@ -63,16 +45,47 @@ function AuthorDisplay({ author }: { author: Reporter | null }) {
     );
 }
 
-export default async function ArticlePage({ params }: { params: { lang: 'en' | 'gu', slug: string } }) {
-    const { lang, slug } = params;
+export default function ArticlePage() {
+    const params = useParams();
+    const lang = params.lang as 'en' | 'gu';
+    const slug = params.slug as string;
 
-    const article = await getArticleBySlug(slug);
+    const [article, setArticle] = useState<Article | null | undefined>(undefined);
+    const [author, setAuthor] = useState<Reporter | null>(null);
 
-    if (!article) {
+    useEffect(() => {
+        const storedArticles = localStorage.getItem('articles');
+        const articlesToSearch = storedArticles ? JSON.parse(storedArticles) : placeholderArticles;
+        
+        const articleExcerpt = articlesToSearch.find((a: Article) => a.slug === slug);
+        const articleContent = fullPlaceholderArticles.find(a => a.slug === slug);
+    
+        if (articleExcerpt) {
+            const fullArticle = {
+                ...articleExcerpt,
+                contentEnglish: articleContent?.contentEnglish || '',
+                contentGujarati: articleContent?.contentGujarati || '',
+            };
+            setArticle(fullArticle as Article);
+
+            const foundAuthor = placeholderReporters.find(r => r.name === fullArticle.author);
+            setAuthor(foundAuthor || null);
+        } else {
+            setArticle(null);
+        }
+    }, [slug]);
+
+    if (article === undefined) {
+        return (
+            <div className="flex h-[60vh] items-center justify-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (article === null) {
         notFound();
     }
-    
-    const author = await getAuthorByName(article.author);
 
     const articleTitle = lang === 'en' ? article.titleEnglish : article.titleGujarati;
     const articleExcerpt = lang === 'en' ? article.excerptEnglish : article.excerptGujarati;

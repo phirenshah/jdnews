@@ -26,7 +26,7 @@ import {
   } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { placeholderArticles } from "@/lib/placeholder-data";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,7 @@ import { sections } from "@/lib/categories";
 
 export default function ArticlesAdminPage() {
     const { toast } = useToast();
-    const [articles, setArticles] = useState<Omit<Article, 'authorId' | 'contentEnglish' | 'contentGujarati'>[]>(placeholderArticles);
+    const [articles, setArticles] = useState<Omit<Article, 'authorId' | 'contentEnglish' | 'contentGujarati'>[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     
     // Form state
@@ -49,6 +49,20 @@ export default function ArticlesAdminPage() {
     const [author, setAuthor] = useState('');
     const [category, setCategory] = useState('');
     const [imageUrl, setImageUrl] = useState('');
+
+    useEffect(() => {
+        const storedArticles = localStorage.getItem('articles');
+        if (storedArticles) {
+            setArticles(JSON.parse(storedArticles));
+        } else {
+            setArticles(placeholderArticles);
+        }
+    }, []);
+
+    const updateLocalStorage = (updatedArticles: any[]) => {
+        localStorage.setItem('articles', JSON.stringify(updatedArticles));
+        setArticles(updatedArticles);
+    };
 
     const resetForm = () => {
         setTitleEnglish('');
@@ -61,7 +75,7 @@ export default function ArticlesAdminPage() {
     }
 
     const handleCreateArticle = () => {
-        if (!titleEnglish || !author || !category) {
+        if (!titleEnglish || !category || !author) {
             toast({ variant: 'destructive', title: 'Missing required fields', description: 'English Title, Author, and Category are required.' });
             return;
         }
@@ -79,16 +93,18 @@ export default function ArticlesAdminPage() {
             imageUrl,
         };
 
-        setArticles(prev => [newArticle, ...prev]);
-        toast({ title: 'Article "created" successfully.' , description: "This is a mock action and will only persist for this session." });
+        const updatedArticles = [newArticle, ...articles];
+        updateLocalStorage(updatedArticles);
+        toast({ title: 'Article Created Successfully', description: "The new article is now available on your site for this session." });
         resetForm();
         setIsDialogOpen(false);
     };
 
 
     const handleDelete = (articleId: string) => {
-        setArticles(prev => prev.filter(a => a.id !== articleId));
-        toast({ title: 'Article "deleted".' , description: "This is a mock action. Data is static."});
+        const updatedArticles = articles.filter(a => a.id !== articleId);
+        updateLocalStorage(updatedArticles);
+        toast({ title: 'Article "deleted".' , description: "This is a mock action and will only persist for this session."});
     };
 
   return (

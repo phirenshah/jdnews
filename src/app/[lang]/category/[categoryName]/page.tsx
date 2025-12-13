@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { useParams, notFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { placeholderArticles } from '@/lib/placeholder-data';
 import { useEffect, useState } from 'react';
@@ -23,8 +23,10 @@ export default function CategoryPage() {
 
   useEffect(() => {
     setIsLoading(true);
-    const filteredArticles = placeholderArticles.filter(
-      (article) => article.category === formattedCategory
+    const storedArticles = localStorage.getItem('articles');
+    const articlesToFilter = storedArticles ? JSON.parse(storedArticles) : placeholderArticles;
+    const filteredArticles = articlesToFilter.filter(
+      (article: Article) => article.category === formattedCategory
     );
     setArticles(filteredArticles);
     setIsLoading(false);
