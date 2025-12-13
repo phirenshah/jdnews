@@ -3,8 +3,9 @@
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 type AdContainerProps = {
   type: 'horizontal' | 'vertical';
@@ -15,7 +16,9 @@ type Ad = {
   id: string;
   name: string;
   type: 'image' | 'html';
+  placement: 'vertical' | 'horizontal' | 'auto';
   url?: string;
+  linkUrl?: string;
   htmlCode?: string;
 };
 
@@ -26,9 +29,12 @@ export function AdContainer({ type, className }: AdContainerProps) {
   const adsQuery = useMemoFirebase(
     () =>
       firestore
-        ? query(collection(firestore, 'advertisements'))
+        ? query(
+            collection(firestore, 'advertisements'),
+            where('placement', 'in', [type, 'auto'])
+          )
         : null,
-    [firestore]
+    [firestore, type]
   );
   
   const { data: ads, isLoading } = useCollection<Ad>(adsQuery);
@@ -65,6 +71,36 @@ export function AdContainer({ type, className }: AdContainerProps) {
   const adWidth = type === 'horizontal' ? 728 : 300;
   const adHeight = type === 'horizontal' ? 90 : 600;
 
+  const renderAdContent = () => {
+    if (adToDisplay.type === 'image' && adToDisplay.url) {
+      const imageElement = (
+        <Image
+          src={adToDisplay.url}
+          alt={adToDisplay.name}
+          width={adWidth}
+          height={adHeight}
+          className="object-cover"
+        />
+      );
+      if (adToDisplay.linkUrl) {
+        return (
+          <Link href={adToDisplay.linkUrl} target="_blank" rel="noopener noreferrer">
+            {imageElement}
+          </Link>
+        );
+      }
+      return imageElement;
+    } else if (adToDisplay.type === 'html' && adToDisplay.htmlCode) {
+      return (
+        <div
+          dangerouslySetInnerHTML={{ __html: adToDisplay.htmlCode }}
+          className="w-full h-full"
+        />
+      );
+    }
+    return null;
+  };
+
   return (
     <div
       className={cn(
@@ -75,21 +111,10 @@ export function AdContainer({ type, className }: AdContainerProps) {
     >
       <span className="font-semibold">Advertisement</span>
       <div className="relative" style={{width: `${adWidth}px`, height: `${adHeight}px`}}>
-        {adToDisplay.type === 'image' && adToDisplay.url ? (
-          <Image
-            src={adToDisplay.url}
-            alt={adToDisplay.name}
-            width={adWidth}
-            height={adHeight}
-            className="object-cover"
-          />
-        ) : adToDisplay.type === 'html' && adToDisplay.htmlCode ? (
-          <div
-            dangerouslySetInnerHTML={{ __html: adToDisplay.htmlCode }}
-            className="w-full h-full"
-          />
-        ) : null}
+        {renderAdContent()}
       </div>
     </div>
   );
 }
+
+    

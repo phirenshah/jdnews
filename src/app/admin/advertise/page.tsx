@@ -74,7 +74,9 @@ type Ad = {
   id: string;
   name: string;
   type: 'image' | 'html';
+  placement: 'vertical' | 'horizontal' | 'auto';
   url?: string;
+  linkUrl?: string;
   htmlCode?: string;
 };
 
@@ -91,7 +93,9 @@ export default function AdvertiseAdminPage() {
   const [editingAd, setEditingAd] = useState<Ad | null>(null);
   const [adName, setAdName] = useState('');
   const [adType, setAdType] = useState<'image' | 'html' | ''>('');
+  const [adPlacement, setAdPlacement] = useState<'vertical' | 'horizontal' | 'auto'>('auto');
   const [adUrl, setAdUrl] = useState('');
+  const [adLinkUrl, setAdLinkUrl] = useState('');
   const [adHtmlCode, setAdHtmlCode] = useState('');
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -106,7 +110,9 @@ export default function AdvertiseAdminPage() {
     setEditingAd(null);
     setAdName('');
     setAdType('');
+    setAdPlacement('auto');
     setAdUrl('');
+    setAdLinkUrl('');
     setAdHtmlCode('');
     setImageFile(null);
     setImagePreview(null);
@@ -116,7 +122,9 @@ export default function AdvertiseAdminPage() {
     setEditingAd(ad);
     setAdName(ad.name);
     setAdType(ad.type);
+    setAdPlacement(ad.placement);
     setAdUrl(ad.url || '');
+    setAdLinkUrl(ad.linkUrl || '');
     setAdHtmlCode(ad.htmlCode || '');
     setImagePreview(ad.url || null);
     setImageFile(null);
@@ -194,7 +202,7 @@ export default function AdvertiseAdminPage() {
         toast({
             variant: 'destructive',
             title: 'Missing Fields',
-            description: 'Please fill out all required fields to create or update an ad.',
+            description: 'Please fill out Name and Type to create or update an ad.',
         });
         return;
     }
@@ -205,7 +213,7 @@ export default function AdvertiseAdminPage() {
       if(imageFile) {
         try {
           const formData = new FormData();
-          formData.append('key', "3f5f08b61f4298484f11df25a094c176"); // Replace with your ImgBB API key if you have one
+          formData.append('key', "3f5f08b61f4298484f11df25a094c176");
           formData.append('image', imageFile);
 
           const response = await axios.post('https://api.imgbb.com/1/upload', formData);
@@ -230,10 +238,12 @@ export default function AdvertiseAdminPage() {
         return;
     }
 
-    const adData = {
+    const adData: Omit<Ad, 'id'> = {
         name: adName,
         type: adType,
+        placement: adPlacement,
         url: adType === 'image' ? finalAdUrl : '',
+        linkUrl: adType === 'image' ? adLinkUrl : '',
         htmlCode: adType === 'html' ? adHtmlCode : '',
     };
 
@@ -335,60 +345,81 @@ export default function AdvertiseAdminPage() {
                             <Label htmlFor="ad-name">Ad Name</Label>
                             <Input id="ad-name" placeholder="e.g. Summer Sale Banner" value={adName} onChange={(e) => setAdName(e.target.value)} />
                         </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="ad-type">Type</Label>
-                            <Select value={adType} onValueChange={(value) => setAdType(value as any)}>
-                                <SelectTrigger id="ad-type">
-                                    <SelectValue placeholder="Select ad type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="image">Image</SelectItem>
-                                    <SelectItem value="html">HTML Code</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="ad-type">Type</Label>
+                                <Select value={adType} onValueChange={(value) => setAdType(value as any)}>
+                                    <SelectTrigger id="ad-type">
+                                        <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="image">Image</SelectItem>
+                                        <SelectItem value="html">HTML Code</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="ad-placement">Placement</Label>
+                                <Select value={adPlacement} onValueChange={(value) => setAdPlacement(value as any)}>
+                                    <SelectTrigger id="ad-placement">
+                                        <SelectValue placeholder="Select placement" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="auto">Auto</SelectItem>
+                                        <SelectItem value="horizontal">Horizontal</SelectItem>
+                                        <SelectItem value="vertical">Vertical</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         {adType === 'image' && (
-                            <div className="space-y-2">
-                              <Label>Ad Banner Image</Label>
-                                <div className="flex items-center gap-4">
-                                  <div className="w-full h-24 bg-muted rounded-md flex items-center justify-center">
-                                    {imagePreview ? (
-                                      <Image src={imagePreview} alt="Ad preview" width={200} height={96} className="object-contain h-24" />
-                                    ) : (
-                                      <span className="text-xs text-muted-foreground">Image Preview</span>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-col gap-2">
-                                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                          <Upload className="mr-2 h-4 w-4" />
-                                          Upload
-                                      </Button>
-                                      <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
-                                      <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
-                                          <DialogTrigger asChild>
-                                              <Button variant="outline" size="sm"><Camera className="mr-2 h-4 w-4" />Take</Button>
-                                          </DialogTrigger>
-                                          <DialogContent>
-                                              <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
-                                                <div className="relative">
-                                                  <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
-                                                  {hasCameraPermission === false && (
-                                                      <Alert variant="destructive" className="mt-4">
-                                                          <AlertTitle>Camera Access Required</AlertTitle>
-                                                          <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
-                                                      </Alert>
-                                                  )}
-                                                </div>
-                                                <canvas ref={canvasRef} className="hidden" />
-                                              <DialogFooter>
-                                                  <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
-                                              </DialogFooter>
-                                          </DialogContent>
-                                      </Dialog>
-                                  </div>
+                            <>
+                                <div className="space-y-2">
+                                    <Label>Ad Banner Image</Label>
+                                    <div className="flex items-center gap-4">
+                                    <div className="w-full h-24 bg-muted rounded-md flex items-center justify-center">
+                                        {imagePreview ? (
+                                        <Image src={imagePreview} alt="Ad preview" width={200} height={96} className="object-contain h-24" />
+                                        ) : (
+                                        <span className="text-xs text-muted-foreground">Image Preview</span>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Upload
+                                        </Button>
+                                        <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
+                                        <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="sm"><Camera className="mr-2 h-4 w-4" />Take</Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
+                                                    <div className="relative">
+                                                    <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                                                    {hasCameraPermission === false && (
+                                                        <Alert variant="destructive" className="mt-4">
+                                                            <AlertTitle>Camera Access Required</AlertTitle>
+                                                            <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
+                                                        </Alert>
+                                                    )}
+                                                    </div>
+                                                    <canvas ref={canvasRef} className="hidden" />
+                                                <DialogFooter>
+                                                    <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                    </div>
                                 </div>
-                            </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="ad-link-url">Link URL (Optional)</Label>
+                                    <Input id="ad-link-url" placeholder="https://example.com" value={adLinkUrl} onChange={(e) => setAdLinkUrl(e.target.value)} />
+                                </div>
+                            </>
                         )}
                         {adType === 'html' && (
                             <div className="space-y-2">
@@ -416,6 +447,7 @@ export default function AdvertiseAdminPage() {
                                 <TableRow>
                                     <TableHead>Name</TableHead>
                                     <TableHead>Type</TableHead>
+                                    <TableHead>Placement</TableHead>
                                     <TableHead>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -425,6 +457,9 @@ export default function AdvertiseAdminPage() {
                                         <TableCell className="font-medium">{ad.name}</TableCell>
                                         <TableCell>
                                             <Badge variant="outline">{ad.type}</Badge>
+                                        </TableCell>
+                                         <TableCell>
+                                            <Badge variant="secondary">{ad.placement}</Badge>
                                         </TableCell>
                                         <TableCell className="flex gap-2">
                                             <Button variant="ghost" size="icon" onClick={() => handleEdit(ad)}><Edit className="h-4 w-4" /></Button>
@@ -442,3 +477,5 @@ export default function AdvertiseAdminPage() {
     </Tabs>
   );
 }
+
+    

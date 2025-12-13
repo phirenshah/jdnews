@@ -239,34 +239,55 @@
       ]
     },
     "Advertisement": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "Advertisement",
-        "type": "object",
-        "description": "Represents a single advertisement to be displayed on the site.",
-        "properties": {
-            "id": {
-                "type": "string",
-                "description": "Unique identifier for the Advertisement entity."
-            },
-            "name": {
-                "type": "string",
-                "description": "An internal name for the ad for easy identification."
-            },
-            "type": {
-                "type": "string",
-                "description": "The type of advertisement.",
-                "enum": ["image", "html"]
-            },
-            "url": {
-                "type": "string",
-                "description": "The URL for the ad source (used for image types)."
-            },
-            "htmlCode": {
-                "type": "string",
-                "description": "The raw HTML code for the ad (used for html types)."
-            }
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Advertisement",
+      "type": "object",
+      "description": "Represents a single advertisement to be displayed on the site.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Advertisement entity."
         },
-        "required": ["id", "name", "type"]
+        "name": {
+          "type": "string",
+          "description": "An internal name for the ad for easy identification."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of advertisement.",
+          "enum": [
+            "image",
+            "html"
+          ]
+        },
+        "placement": {
+          "type": "string",
+          "description": "Where the ad should be placed.",
+          "enum": [
+            "vertical",
+            "horizontal",
+            "auto"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL for the ad source (used for image types)."
+        },
+        "linkUrl": {
+          "type": "string",
+          "description": "Optional click-through URL for image ads."
+        },
+        "htmlCode": {
+          "type": "string",
+          "description": "The raw HTML code for the ad (used for html types)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "type",
+        "placement"
+      ]
     }
   },
   "auth": {
@@ -377,3 +398,5 @@
     "reasoning": "The Firestore structure is designed for secure, role-based access. The `/roles` collection is critical for securely identifying admin users ('directors'), which is checked in security rules to grant elevated permissions across other collections like `/users`. This separation of user data and roles is a key security pattern."
   }
 }
+
+    
