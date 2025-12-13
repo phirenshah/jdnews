@@ -40,6 +40,12 @@ const nextConfig: NextConfig = {
         hostname: 'static.gujaratsamachar.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatar.vercel.sh',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
