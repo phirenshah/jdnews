@@ -1,15 +1,26 @@
 
+'use client';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { placeholderReporters } from '@/lib/placeholder-data';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Award, Target, Users, Newspaper } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Award, Target, Users, Newspaper, Loader2 } from 'lucide-react';
 import * as React from 'react';
+import type { Reporter } from '@/lib/definitions';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import Link from 'next/link';
 
-export default function AboutPage({ params }: { params: Promise<{ lang: 'en' | 'gu' }> }) {
-  const { lang } = React.use(params);
+export default function AboutPage({ params }: { params: { lang: 'en' | 'gu' } }) {
+  const { lang } = params;
+  const { firestore } = useFirebase();
+
+  const authorsCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'authors') : null),
+    [firestore]
+  );
+  const { data: authors, isLoading: areAuthorsLoading } = useCollection<Reporter>(authorsCollection);
+
   const translations = {
     en: {
       title: 'About JD News',
@@ -25,6 +36,7 @@ export default function AboutPage({ params }: { params: Promise<{ lang: 'en' | '
       ],
       teamTitle: 'Meet the Team',
       teamText: 'The dedicated individuals bringing you the news, day in and day out.',
+      viewProfile: 'View Profile',
     },
     gu: {
       title: 'જેડી ન્યૂઝ વિશે',
@@ -40,6 +52,7 @@ export default function AboutPage({ params }: { params: Promise<{ lang: 'en' | '
       ],
       teamTitle: 'ટીમને મળો',
       teamText: 'જેઓ દિવસ-રાત તમારા સુધી સમાચાર પહોંચાડે છે તે સમર્પિત વ્યક્તિઓ.',
+      viewProfile: 'પ્રોફાઇલ જુઓ',
     },
   };
 
@@ -120,33 +133,39 @@ export default function AboutPage({ params }: { params: Promise<{ lang: 'en' | '
             <h2 className="font-headline text-4xl font-bold">{t.teamTitle}</h2>
             <p className="text-lg text-muted-foreground mt-2">{t.teamText}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            {placeholderReporters.map((reporter) => {
-              const reporterImage = PlaceHolderImages.find((img) => img.id === reporter.imageId);
-              return (
-                <Card key={reporter.id} className="text-center border-0 shadow-none">
-                  <CardHeader className="p-0">
-                    <div className="w-32 h-32 mx-auto rounded-full overflow-hidden">
-                      {reporterImage && (
-                        <Image
-                          src={reporterImage.imageUrl}
-                          alt={reporter.name}
-                          width={128}
-                          height={128}
-                          className="object-cover"
-                          data-ai-hint={reporterImage.imageHint}
-                        />
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="mt-4">
-                    <h3 className="text-lg font-bold font-headline">{reporter.name}</h3>
-                    <p className="text-primary text-sm font-medium">{reporter.title}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          {areAuthorsLoading ? (
+            <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-12">
+                {authors?.filter(author => author.verified).map((reporter) => (
+                    <Link key={reporter.id} href={`/${lang}/reporters/${reporter.id}`} className="group">
+                        <Card className="text-center border-0 shadow-none bg-transparent">
+                        <CardHeader className="p-0">
+                            <div className="w-32 h-32 mx-auto rounded-full overflow-hidden relative border-2 border-primary/50">
+                            {reporter.profilePictureUrl ? (
+                                <Image
+                                src={reporter.profilePictureUrl}
+                                alt={reporter.name}
+                                fill
+                                className="object-cover transition-transform duration-300 group-hover:scale-110"
+                                sizes="128px"
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-muted flex items-center justify-center text-4xl font-bold text-muted-foreground">
+                                {reporter.name.charAt(0)}
+                                </div>
+                            )}
+                            </div>
+                        </CardHeader>
+                        <CardContent className="mt-4">
+                            <h3 className="text-lg font-bold font-headline group-hover:text-primary">{reporter.name}</h3>
+                            <p className="text-primary text-sm font-medium">{reporter.title}</p>
+                        </CardContent>
+                        </Card>
+                    </Link>
+                ))}
+            </div>
+          )}
         </section>
       </div>
     </div>
