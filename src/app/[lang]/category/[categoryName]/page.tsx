@@ -28,8 +28,9 @@ export default function CategoryPage() {
 
   const { firestore } = useFirebase();
 
-  // Capitalize first letter for query
-  const formattedCategory = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
+  // Capitalize first letter for query, handles both 'politics' and 'Politics'
+  const formattedCategory = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase();
+
 
   const articlesCollectionRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'articles') : null),
