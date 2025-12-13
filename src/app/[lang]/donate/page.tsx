@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Heart, IndianRupee } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import * as React from 'react';
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
-export default function DonatePage({ params }: { params: { lang: string } }) {
+export default function DonatePage({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = React.use(params);
   const router = useRouter();
   const [amount, setAmount] = useState<number | string>(500);
   const [isCustom, setIsCustom] = useState(false);
@@ -37,7 +39,7 @@ export default function DonatePage({ params }: { params: { lang: string } }) {
   const handleDonateClick = () => {
     const finalAmount = Number(amount);
     if(finalAmount > 0) {
-      router.push(`/${params.lang}/donate/pay?amount=${finalAmount}`);
+      router.push(`/${lang}/donate/pay?amount=${finalAmount}`);
     }
   }
 
