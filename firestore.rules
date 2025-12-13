@@ -10,7 +10,7 @@ service cloud.firestore {
     }
 
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     function getUserRole(uid) {
@@ -21,53 +21,47 @@ service cloud.firestore {
       return isSignedIn() && getUserRole(request.auth.uid) == 'director';
     }
 
-    function isExistingDocument() {
-      return resource != null;
-    }
-
-    function isCreatingOwnDocument(fieldName) {
-      return request.resource.data[fieldName] == request.auth.uid;
-    }
-
-    function isOwnershipImmutable(fieldName) {
-      return request.resource.data[fieldName] == resource.data[fieldName];
-    }
-    
     // Rules for collections
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin(); // Allow admins to list users
-      allow create: if isOwner(userId);
-      // An admin can update anything. A regular user can update their own profile, but cannot change their role.
-      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
-      allow delete: if isAdmin(); // Allow admins to delete user profiles
+      // Admins have full control over user documents.
+      allow get, list, create, update, delete: if isAdmin();
+      
+      // Regular users can get, create, and update their own document,
+      // but they cannot change their role.
+      allow get, create: if isOwner(userId);
+      allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
     }
     
     match /roles/{userId} {
-      allow get: if isAdmin();
-      allow create, update: if isAdmin();
-      allow list: if false; // Deny list for security
-      allow delete: if isAdmin(); // Allow admins to delete role documents
+      // Only admins can interact with role documents.
+      allow get, create, update, delete: if isAdmin();
+      // Listing roles is denied for security.
+      allow list: if false; 
     }
 
     match /authors/{authorId} {
+      // Anyone can read author profiles.
       allow get, list: if true;
+      // Only admins can create, update, or delete authors.
       allow create, update, delete: if isAdmin();
     }
 
     match /articles/{articleId} {
+      // Anyone can read articles.
       allow get, list: if true;
+      // Only admins can create, update, or delete articles.
       allow create, update, delete: if isAdmin();
     }
     
     match /donations/{donationId} {
-      allow get: if isOwner(resource.data.userId) || isAdmin();
+      // Admins can get any donation, users can only get their own.
+      allow get: if isAdmin() || isOwner(resource.data.userId);
+      // Only admins can list all donations.
       allow list: if isAdmin();
-      allow create: if isSignedIn() && isCreatingOwnDocument('userId');
-      allow update: if isOwner(resource.data.userId) && isExistingDocument() && isOwnershipImmutable('userId');
-      allow delete: if isOwner(resource.data.userId) && isExistingDocument();
+      // An authenticated user can create a donation for themselves.
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Users can update or delete their own donations.
+      allow update, delete: if isOwner(resource.data.userId);
     }
   }
 }
-
-    

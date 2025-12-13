@@ -60,7 +60,7 @@ export default function TeamAdminPage() {
         profilePictureUrl: '',
     });
     
-    const authorsCollection = firestore ? collection(firestore, 'authors') : null;
+    const authorsCollection = useMemoFirebase(() => firestore ? collection(firestore, 'authors') : null, [firestore]);
 
     const handleAddReporter = async () => {
         if(!newReporter.email || !authorsCollection) return;
@@ -117,7 +117,7 @@ export default function TeamAdminPage() {
       });
     };
 
-    const handleDeleteUser = (userId: string, authorId?: string) => {
+    const handleDeleteUser = (userId: string, email?: string) => {
         if (!firestore || !userId) return;
         
         const userDocRef = doc(firestore, 'users', userId);
@@ -125,15 +125,10 @@ export default function TeamAdminPage() {
 
         deleteDocumentNonBlocking(userDocRef);
         deleteDocumentNonBlocking(roleDocRef);
-
-        if (authorId) {
-            const authorDocRef = doc(firestore, 'authors', authorId);
-            deleteDocumentNonBlocking(authorDocRef);
-        }
-
+        
         toast({
             title: "User Data Deleted",
-            description: "User's data has been removed from the database.",
+            description: `User ${email} has been removed from the database. Note: Their auth account still exists.`,
         });
     };
 
@@ -258,7 +253,7 @@ export default function TeamAdminPage() {
                                     <DropdownMenuItem
                                         className="text-destructive"
                                         disabled={!canChangeRole}
-                                        onSelect={() => handleDeleteUser(user.id)}
+                                        onSelect={() => handleDeleteUser(user.id, user.email)}
                                     >
                                         <Trash className="mr-2 h-4 w-4" />
                                         <span>Delete User</span>
@@ -275,4 +270,3 @@ export default function TeamAdminPage() {
   );
 }
 
-    
