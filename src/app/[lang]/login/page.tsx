@@ -16,7 +16,8 @@ import Image from 'next/image';
 import { useState, useEffect, FormEvent } from 'react';
 import {
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
@@ -58,45 +59,61 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
 
   useEffect(() => {
+    // Combine auth loading with component-level loading
+    setIsLoading(isUserLoading);
+
     if (!isUserLoading && user) {
       router.push(redirectUrl);
     }
   }, [user, isUserLoading, router, redirectUrl]);
 
-  const handleGoogleSignIn = async () => {
+  useEffect(() => {
     if (!auth || !firestore) return;
-    const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      
-      const userDocRef = doc(firestore, 'users', result.user.uid);
-      // The role is now managed in the /roles collection by an admin
-      // and defaults to 'member' in security rules if not present.
-      // We set the default role on the user object for client-side convenience.
-      const role = 'member'; 
+    
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          const userDocRef = doc(firestore, 'users', result.user.uid);
+          const role = 'member';
 
-      setDocumentNonBlocking(userDocRef, {
-        id: result.user.uid,
-        email: result.user.email,
-        firstName: result.user.displayName?.split(' ')[0] || '',
-        lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
-        phoneNumber: result.user.phoneNumber,
-        role: role,
-      }, { merge: true });
+          setDocumentNonBlocking(userDocRef, {
+            id: result.user.uid,
+            email: result.user.email,
+            firstName: result.user.displayName?.split(' ')[0] || '',
+            lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
+            phoneNumber: result.user.phoneNumber,
+            role: role,
+          }, { merge: true });
 
-      toast({ title: 'Signed in with Google' });
-      router.push(redirectUrl);
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Google Sign-In Failed',
-        description: error.message,
+          toast({ title: 'Signed in with Google' });
+          router.push(redirectUrl);
+        } else {
+           // No redirect result, so we are done loading
+           setIsLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Google Sign-In Redirect Error:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Google Sign-In Failed',
+          description: error.message,
+        });
+        setIsLoading(false);
       });
-    }
+  }, [auth, firestore, toast, router, redirectUrl]);
+
+  const handleGoogleSignIn = async () => {
+    if (!auth) return;
+    setIsLoading(true);
+    const provider = new GoogleAuthProvider();
+    // We don't await this. The useEffect hook will handle the result.
+    signInWithRedirect(auth, provider);
   };
 
   const handleEmailSignIn = async (e: FormEvent) => {
@@ -137,7 +154,7 @@ export default function LoginPage() {
   };
 
 
-  if (isUserLoading) {
+  if (isLoading) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
