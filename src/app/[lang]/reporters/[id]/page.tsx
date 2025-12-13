@@ -18,7 +18,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, where } from 'firebase/firestore';
-import { Reporter } from '@/lib/definitions';
+import type { Reporter, Article } from '@/lib/definitions';
 import { useCollection } from '@/firebase';
 
 
@@ -42,17 +42,17 @@ export default function ReporterProfilePage() {
     );
 
     const authorArticlesQuery = useMemoFirebase(
-      () => (articlesCollectionRef && author?.id ? query(articlesCollectionRef, where('authorId', '==', author.id)) : null),
-      [articlesCollectionRef, author?.id]
+      () => (articlesCollectionRef && id ? query(articlesCollectionRef, where('authorId', '==', id)) : null),
+      [articlesCollectionRef, id]
     );
     
-    const { data: authorArticles, isLoading: areArticlesLoading } = useCollection(authorArticlesQuery);
+    const { data: authorArticles, isLoading: areArticlesLoading } = useCollection<Article>(authorArticlesQuery);
     
     useEffect(() => {
         if (typeof window !== 'undefined' && author) {
-            setClientReporterUrl(`${window.location.origin}/${lang}/reporters/${author.id}`);
+            setClientReporterUrl(`${window.location.origin}/${lang}/reporters/${id}`);
         }
-    }, [lang, author]);
+    }, [lang, author, id]);
     
     if (isAuthorLoading) {
         return (
@@ -164,8 +164,10 @@ export default function ReporterProfilePage() {
                                 {!areArticlesLoading && authorArticles && authorArticles.length > 0 ? (
                                     authorArticles.map(article => (
                                         <Link key={article.id} href={`/${lang}/article/${article.slug}`} className="block hover:bg-muted/50 p-3 rounded-md">
-                                            <h3 className="font-bold">{article.titleEnglish}</h3>
-                                            <p className="text-sm text-muted-foreground">{article.publicationDate?.toDate().toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                            <h3 className="font-bold">{lang === 'en' ? article.titleEnglish : article.titleGujarati}</h3>
+                                            {article.publicationDate && (
+                                                <p className="text-sm text-muted-foreground">{new Date(article.publicationDate.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                            )}
                                         </Link>
                                     ))
                                 ) : (

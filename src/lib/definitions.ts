@@ -13,9 +13,12 @@ gu: string;
     en: string;
     gu: string;
   };
+  titleEnglish: string;
+  titleGujarati: string;
+  authorId: string;
   author: string;
   category: string;
-  publishedAt: string;
+  publicationDate: any;
   imageId: string;
 };
 
@@ -56,3 +59,5 @@ export type UserProfile = {
     role: 'member' | 'reporter' | 'editor' | 'director';
     profilePictureUrl?: string;
 };
+
+    
