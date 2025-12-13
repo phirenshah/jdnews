@@ -24,7 +24,7 @@ export function FeaturedStory({ article }: { article: RssArticle }) {
       href={article.link}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block relative aspect-video w-full overflow-hidden rounded-lg bg-muted shadow-lg"
+      className="group block relative h-full min-h-[400px] overflow-hidden rounded-md shadow-sm"
     >
         {article.imageUrl ? (
             <Image
@@ -40,8 +40,9 @@ export function FeaturedStory({ article }: { article: RssArticle }) {
                 <span className="text-6xl font-black opacity-20">NEWS</span>
             </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 p-4 md:p-6 w-full text-white">
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 p-6 w-full text-white">
+            <span className="inline-block px-2 py-1 bg-red-600 text-xs font-bold uppercase mb-2">Top Story</span>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-headline leading-tight mb-3 group-hover:text-red-100 transition-colors">
             {article.title}
             </h1>
