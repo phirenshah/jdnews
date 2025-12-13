@@ -55,7 +55,7 @@ export function AdContainer({ type, className }: AdContainerProps) {
     return (
         <div className={cn(
             'flex flex-col items-center justify-center bg-muted/50 border border-dashed rounded-lg p-4 space-y-2 text-muted-foreground text-xs animate-pulse',
-            type === 'vertical' ? 'h-[600px] w-[300px]' : 'h-[90px] w-[728px]',
+            type === 'vertical' ? 'h-[600px] w-full' : 'h-[90px] w-full',
             className
           )}>
             <span className="font-semibold">Advertisement</span>
@@ -68,9 +68,6 @@ export function AdContainer({ type, className }: AdContainerProps) {
     return null;
   }
 
-  const adWidth = type === 'horizontal' ? 728 : 300;
-  const adHeight = type === 'horizontal' ? 90 : 600;
-
   const renderAdContent = () => {
     if (adToDisplay.type === 'image' && adToDisplay.url) {
       const imageElement = (
@@ -81,14 +78,22 @@ export function AdContainer({ type, className }: AdContainerProps) {
           className="object-contain"
         />
       );
+
       if (adToDisplay.linkUrl) {
+        let externalUrl = adToDisplay.linkUrl;
+        if (!/^https?:\/\//i.test(externalUrl)) {
+          externalUrl = `https://${externalUrl}`;
+        }
         return (
-          <Link href={adToDisplay.linkUrl} target="_blank" rel="noopener noreferrer">
-            {imageElement}
+          <Link href={externalUrl} target="_blank" rel="noopener noreferrer">
+            <div className="relative w-full h-full">
+              {imageElement}
+            </div>
           </Link>
         );
       }
-      return imageElement;
+      return <div className="relative w-full h-full">{imageElement}</div>;
+
     } else if (adToDisplay.type === 'html' && adToDisplay.htmlCode) {
       return (
         <div
@@ -100,16 +105,19 @@ export function AdContainer({ type, className }: AdContainerProps) {
     return null;
   };
 
+  const adWidth = type === 'horizontal' ? '728px' : '300px';
+  const adHeight = type === 'horizontal' ? '90px' : '600px';
+
   return (
     <div
       className={cn(
         'flex flex-col items-center justify-center bg-muted/50 border border-dashed rounded-lg p-4 space-y-2 text-muted-foreground text-xs',
         className
       )}
-      style={{width: `${adWidth + 32}px`, height: `${adHeight + 40}px`}}
+      style={{width: 'auto', height: 'auto'}}
     >
       <span className="font-semibold">Advertisement</span>
-      <div className="relative overflow-hidden" style={{width: `${adWidth}px`, height: `${adHeight}px`}}>
+      <div className="relative overflow-hidden" style={{width: adWidth, height: adHeight}}>
         {renderAdContent()}
       </div>
     </div>
