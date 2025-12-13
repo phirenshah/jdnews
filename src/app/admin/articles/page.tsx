@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Upload, Camera } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Upload, Camera, Trash2, Edit } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,8 +31,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { useState, useRef, useEffect } from "react";
-import { collection, serverTimestamp } from "firebase/firestore";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { collection, serverTimestamp, doc } from "firebase/firestore";
+import { addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useAuth } from "@/firebase/auth/use-user";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
@@ -184,6 +184,15 @@ export default function ArticlesAdminPage() {
         resetForm();
         forceRefetch();
     }
+    
+    const handleDelete = (articleId: string) => {
+        if (!firestore) return;
+        const articleDocRef = doc(firestore, 'articles', articleId);
+        deleteDocumentNonBlocking(articleDocRef);
+        toast({ title: 'Article deleted.' });
+        forceRefetch();
+    };
+
 
   return (
     <Tabs defaultValue="all_articles">
@@ -237,8 +246,14 @@ export default function ArticlesAdminPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem>Delete</DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => handleDelete(article.id)} className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
