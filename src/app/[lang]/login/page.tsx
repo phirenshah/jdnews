@@ -19,6 +19,7 @@ import {
   signInWithPhoneNumber,
   ConfirmationResult,
   RecaptchaVerifier,
+  User,
 } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -27,6 +28,8 @@ import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc } from 'firebase/firestore';
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
@@ -51,7 +54,7 @@ const GoogleIcon = () => (
 
 export default function LoginPage({ params }: { params: { lang: string } }) {
   const { lang } = params;
-  const { auth } = useFirebase();
+  const { auth, firestore } = useFirebase();
   const { user, isUserLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -67,6 +70,19 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
 
   const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
 
+  const createUserProfile = (newUser: User) => {
+    if (!firestore) return;
+    const userDocRef = doc(firestore, 'users', newUser.uid);
+    const profileData = {
+      id: newUser.uid,
+      email: newUser.email,
+      firstName: newUser.displayName?.split(' ')[0] || '',
+      lastName: newUser.displayName?.split(' ').slice(1).join(' ') || '',
+      phoneNumber: newUser.phoneNumber,
+    };
+    setDocumentNonBlocking(userDocRef, profileData, { merge: true });
+  }
+
   useEffect(() => {
     if (!isUserLoading && user) {
       router.push(redirectUrl);
@@ -77,7 +93,8 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
     if (!auth) return;
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      createUserProfile(result.user);
       toast({ title: 'Signed in with Google' });
       router.push(redirectUrl);
     } catch (error: any) {
@@ -91,17 +108,17 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
 
   const handlePhoneSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) return;
-
-    if (!recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible'
-      });
-    }
-    
-    const verifier = recaptchaVerifierRef.current;
+    if (!auth || !phoneNumber) return;
     
     try {
+      // Initialize verifier only when needed and only once.
+      if (!recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'invisible'
+        });
+      }
+      
+      const verifier = recaptchaVerifierRef.current;
       const result = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       setConfirmationResult(result);
       setOtpSent(true);
@@ -112,6 +129,11 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
         title: 'Phone Sign-In Failed',
         description: error.message,
       });
+      // Reset reCAPTCHA if it fails
+      if (recaptchaVerifierRef.current) {
+          recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null;
+      }
     }
   };
 
@@ -123,7 +145,8 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
     }
 
     try {
-      await confirmationResult.confirm(otp);
+      const result = await confirmationResult.confirm(otp);
+      createUserProfile(result.user);
       toast({ title: 'Login Successful' });
       router.push(redirectUrl);
     } catch (error: any) {
@@ -213,7 +236,13 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
                 <Button type="submit" className="w-full">
                   Verify OTP & Login
                 </Button>
-                <Button variant="link" size="sm" onClick={() => setOtpSent(false)}>
+                <Button variant="link" size="sm" onClick={() => {
+                  setOtpSent(false);
+                  if (recaptchaVerifierRef.current) {
+                    recaptchaVerifierRef.current.clear();
+                    recaptchaVerifierRef.current = null;
+                  }
+                }}>
                   Back to phone number entry
                 </Button>
               </form>
