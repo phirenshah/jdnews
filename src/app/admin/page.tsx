@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -17,14 +18,14 @@ import {
 } from "@/components/ui/table";
 import { placeholderDonations } from "@/lib/placeholder-data";
 import { Badge } from "@/components/ui/badge";
-import { useCollection, useFirestore } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { useMemo } from "react";
 import { collection } from "firebase/firestore";
 
 export default function AdminDashboard() {
   const recentDonations = placeholderDonations.slice(0, 5);
   const firestore = useFirestore();
-  const articlesCollection = useMemo(() => collection(firestore, 'articles'), [firestore]);
+  const articlesCollection = useMemoFirebase(() => collection(firestore, 'articles'), [firestore]);
   const { data: articles } = useCollection(articlesCollection);
   const recentArticles = articles?.slice(0,5) || [];
 
@@ -127,7 +128,7 @@ export default function AdminDashboard() {
                   <TableRow key={article.id}>
                     <TableCell className="font-medium">{article.titleEnglish}</TableCell>
                     <TableCell>{article.authorId}</TableCell>
-                    <TableCell>{new Date(article.publicationDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{article.publicationDate?.toDate().toLocaleDateString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
