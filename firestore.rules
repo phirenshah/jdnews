@@ -32,16 +32,13 @@ service cloud.firestore {
     function isOwnershipImmutable(fieldName) {
       return request.resource.data[fieldName] == resource.data[fieldName];
     }
-
-    function isRoleUnchanged() {
-        return request.resource.data.role == resource.data.role;
-    }
     
     // Rules for collections
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
-      allow update: if (isOwner(userId) && isRoleUnchanged()) || isAdmin();
+      // An admin can update anything. A regular user can update their own profile, but cannot change their role.
+      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
       allow list: if false; // Deny list for security
       allow delete: if isAdmin(); // Allow admins to delete user profiles
     }
@@ -72,5 +69,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
