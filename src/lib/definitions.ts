@@ -23,7 +23,7 @@ export type Reporter = {
   id: string;
   name: string;
   title: string;
-  imageId: string;
+  imageId?: string; // Made optional as it might not always be there
   dob: string;
   contact: string;
   officeLocation: string;
@@ -46,4 +46,13 @@ export type ImagePlaceholder = {
     description: string;
     imageUrl: string;
     imageHint: string;
+};
+
+export type UserProfile = {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: 'member' | 'reporter' | 'editor' | 'director';
+    profilePictureUrl?: string;
 };
