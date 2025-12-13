@@ -7,8 +7,7 @@ import {
 import { PlusCircle, Download } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
-import { useMemo } from "react";
-import { useCollection, useFirestore } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection } from "firebase/firestore";
 
 const QrCodeSvg = () => (
@@ -53,7 +52,7 @@ const QrCodeSvg = () => (
 export default function PressCardsAdminPage() {
     const firestore = useFirestore();
 
-    const authorsCollection = useMemo(
+    const authorsCollection = useMemoFirebase(
         () => collection(firestore, 'authors'),
         [firestore]
     );
