@@ -77,6 +77,33 @@ export default function HomePage({
     </div>
   );
 
+  const renderCategorySection = (title: string, articles: any[]) => {
+    if (loading && !articles.length) {
+      return (
+        <section id={title.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}>
+          <SectionTitle title={title} id={title.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')} />
+          <div className="bg-card p-4 rounded-md shadow-sm border border-border/60">
+            <Skeleton className="h-48" />
+          </div>
+        </section>
+      )
+    }
+    if (!articles || articles.length === 0) return null;
+    return (
+      <section id={title.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}>
+        <SectionTitle title={title} id={title.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')} />
+        <div className="bg-card p-4 rounded-md shadow-sm border border-border/60">
+            <div className="mb-4 border-b border-border pb-4">
+              {articles[0] && <ArticleCard article={articles[0]} layout="vertical" />}
+            </div>
+            <div className="space-y-1">
+              {articles.slice(1, 4).map((item, idx) => <ArticleCard key={idx} article={item} layout="compact" />)}
+            </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <div className="container mx-auto max-w-7xl px-4 py-6">
       {loading && !allHeadlines.length ? <Skeleton className="h-10 w-full mb-4" /> : <BreakingNewsTicker articles={allHeadlines} />}
@@ -108,38 +135,29 @@ export default function HomePage({
         <AdContainer type="horizontal" className="w-full justify-center my-8" />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-          <section id="national">
-            <SectionTitle title="National News" id="national" />
-            <div className="bg-card p-4 rounded-md shadow-sm border border-border/60">
-              {loading && !national.length ? <Skeleton className="h-48" /> : (
-                <>
-                  <div className="mb-4 border-b border-border pb-4">
-                    {national[0] && <ArticleCard article={national[0]} layout="vertical" />}
-                  </div>
-                  <div className="space-y-1">
-                    {national.slice(1, 4).map((item, idx) => <ArticleCard key={idx} article={item} layout="compact" />)}
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
-
-          <section id="international">
-            <SectionTitle title="International" id="international"/>
-            <div className="bg-card p-4 rounded-md shadow-sm border border-border/60">
-              {loading && !international.length ? <Skeleton className="h-48" /> : (
-                <>
-                  <div className="mb-4 border-b border-border pb-4">
-                    {international[0] && <ArticleCard article={international[0]} layout="vertical" />}
-                  </div>
-                  <div className="space-y-1">
-                    {international.slice(1, 4).map((item, idx) => <ArticleCard key={idx} article={item} layout="compact" />)}
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
+          {renderCategorySection("National", national)}
+          {renderCategorySection("International", international)}
         </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          {renderCategorySection("Business", business)}
+          {renderCategorySection("Sports", sports)}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+           {renderCategorySection("Entertainment", entertainment)}
+           {renderCategorySection("Health", health)}
+        </div>
+
+        <section id="science-technology">
+          <SectionTitle title="Science & Technology" id="science-technology" />
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {loading && !tech.length ? Array.from({length:4}).map((_, i) => <Skeleton key={i} className="h-64" />) : (
+            tech.slice(0, 4).map((item, idx) => <ArticleCard key={idx} article={item} layout="vertical" />)
+          )}
+          </div>
+        </section>
+
       </main>
     </div>
   );

@@ -25,10 +25,11 @@ export function Footer({ lang }: { lang: string }) {
           <div className="sm:col-start-2 md:col-start-auto">
             <h3 className="font-semibold text-foreground mb-4">Sections</h3>
             <ul className="space-y-2">
-              <li><Link href="#" className="hover:text-primary">Politics</Link></li>
-              <li><Link href="#" className="hover:text-primary">Business</Link></li>
-              <li><Link href="#" className="hover:text-primary">Technology</Link></li>
-              <li><Link href="#" className="hover:text-primary">Sports</Link></li>
+              <li><Link href={`/${lang}/#national`} className="hover:text-primary">National</Link></li>
+              <li><Link href={`/${lang}/#international`} className="hover:text-primary">International</Link></li>
+              <li><Link href={`/${lang}/#business`} className="hover:text-primary">Business</Link></li>
+              <li><Link href={`/${lang}/#sports`} className="hover:text-primary">Sports</Link></li>
+              <li><Link href={`/${lang}/#entertainment`} className="hover:text-primary">Entertainment</Link></li>
             </ul>
           </div>
           <div>

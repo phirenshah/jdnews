@@ -13,23 +13,45 @@ export function SectionHeader({ lang }: { lang: string }) {
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
   useEffect(() => {
-    // Logic to determine active section from pathname
-    const currentPath = pathname.split('/')[3]; // e.g. /en/category/politics -> politics
+    const hash = window.location.hash;
+    const sectionFromHash = hash.replace('#', '');
     const section = sections.find(
-      (s) => s.href.split('/')[2] === currentPath
+      (s) => s.href.split('#')[1] === sectionFromHash
     );
+
     if (section) {
       setActiveSection(section.name);
+    } else if (pathname === `/${lang}`) {
+        setActiveSection('Top Stories');
     } else {
-        // Default to null if no match
         setActiveSection(null);
     }
-  }, [pathname]);
+
+    const handleHashChange = () => {
+        const hash = window.location.hash;
+        const sectionFromHash = hash.replace('#', '');
+        const section = sections.find(
+          (s) => s.href.split('#')[1] === sectionFromHash
+        );
+        if (section) {
+          setActiveSection(section.name);
+        } else {
+          setActiveSection(null);
+        }
+    }
+
+    window.addEventListener('hashchange', handleHashChange, false);
+
+    return () => {
+        window.removeEventListener('hashchange', handleHashChange, false);
+    }
+
+  }, [pathname, lang]);
 
   const displaySection = hoveredSection || activeSection;
 
   return (
-    <nav className="border-b bg-background/80 backdrop-blur-sm sticky top-14 z-40">
+    <nav className="border-b bg-background/80 backdrop-blur-sm sticky top-16 z-40">
       <div className="container mx-auto px-4">
         <div className="relative flex items-center justify-center h-12">
           <ul 
@@ -39,7 +61,7 @@ export function SectionHeader({ lang }: { lang: string }) {
             {sections.map((section) => (
               <li key={section.name}>
                 <Link
-                  href={`/${lang}${section.href}`}
+                  href={`/${lang}/${section.href}`}
                   className={cn(
                     'relative whitespace-nowrap px-1 py-2 text-sm font-medium transition-colors duration-200 ease-in-out',
                     displaySection === section.name
