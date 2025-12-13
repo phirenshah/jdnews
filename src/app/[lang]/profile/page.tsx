@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
   Card,
@@ -23,11 +23,9 @@ import { useUserRole } from '@/hooks/use-user-role';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Badge } from '@/components/ui/badge';
 
-export default function ProfilePage({
-  params: { lang },
-}: {
-  params: { lang: string };
-}) {
+export default function ProfilePage() {
+  const params = useParams();
+  const lang = params.lang as string;
   const { user, userProfile, isLoading, role } = useUserRole();
   const { auth, firestore } = useFirebase();
   const router = useRouter();
