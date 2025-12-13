@@ -28,6 +28,7 @@ export type Reporter = {
   contact: string;
   officeLocation: string;
   verified: boolean;
+  profilePictureUrl?: string;
 };
 
 export type Donation = {
@@ -38,4 +39,11 @@ export type Donation = {
   date: string;
   type: 'One-time' | 'Recurring';
   status: 'Completed' | 'Pending' | 'Failed';
+};
+
+export type ImagePlaceholder = {
+    id: string;
+    description: string;
+    imageUrl: string;
+    imageHint: string;
 };
