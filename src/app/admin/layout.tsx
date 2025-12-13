@@ -13,7 +13,7 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Users, DollarSign, CreditCard, LayoutDashboard, ExternalLink, User, Megaphone } from "lucide-react";
+import { Users, DollarSign, LayoutDashboard, ExternalLink, User, Megaphone } from "lucide-react";
 import Link from 'next/link';
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,6 @@ const navItems = [
     { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/admin/articles', icon: Newspaper, label: 'Articles' },
     { href: '/admin/team', icon: Users, label: 'Team' },
-    { href: '/admin/press-cards', icon: CreditCard, label: 'Press Cards' },
     { href: '/admin/donations', icon: DollarSign, label: 'Donations' },
     { href: '/admin/advertise', icon: Megaphone, label: 'Advertise' },
 ];
