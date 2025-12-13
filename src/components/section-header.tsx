@@ -5,17 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-
-const sections = [
-  { name: 'Politics', href: '/category/politics' },
-  { name: 'Business', href: '/category/business' },
-  { name: 'Technology', href: '/category/technology' },
-  { name: 'Sports', href: '/category/sports' },
-  { name: 'World', href: '/category/world' },
-  { name: 'Entertainment', href: '/category/entertainment' },
-  { name: 'Health', href: '/category/health' },
-  { name: 'Science', href: '/category/science' },
-];
+import { sections } from '@/lib/categories';
 
 export function SectionHeader({ lang }: { lang: string }) {
   const pathname = usePathname();
@@ -71,5 +61,3 @@ export function SectionHeader({ lang }: { lang: string }) {
     </nav>
   );
 }
-
-    

@@ -39,12 +39,14 @@ import Image from "next/image";
 import axios from "axios";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { sections } from "@/lib/categories";
 
 export default function ArticlesAdminPage() {
     const firestore = useFirestore();
     const { user } = useAuth();
     const { toast } = useToast();
-    const articlesCollection = useMemoFirebase(() => collection(firestore, 'articles'), [firestore]);
+    const articlesCollection = useMemoFirebase(() => firestore ? collection(firestore, 'articles'): null, [firestore]);
     const { data: articles, forceRefetch } = useCollection(articlesCollection);
 
     const [titleEnglish, setTitleEnglish] = useState('');
@@ -287,7 +289,16 @@ export default function ArticlesAdminPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="category">Category</Label>
-                            <Input id="category" placeholder="e.g. Politics" value={category} onChange={(e) => setCategory(e.target.value)} />
+                            <Select value={category} onValueChange={setCategory}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {sections.map(section => (
+                                        <SelectItem key={section.name} value={section.name}>{section.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label>Article Image</Label>
@@ -337,5 +348,3 @@ export default function ArticlesAdminPage() {
     </Tabs>
   );
 }
-
-    
