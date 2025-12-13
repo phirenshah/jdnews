@@ -67,7 +67,7 @@ export default function ReportersPage() {
             <div className="text-center">Loading team...</div>
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {authors?.map((reporter) => {
+            {authors?.filter(author => author.title !== 'member').map((reporter) => {
                 return (
                 <Link key={reporter.id} href={`/${lang}/reporters/${reporter.id}`} className="group">
                     <Card
