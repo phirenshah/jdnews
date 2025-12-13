@@ -16,10 +16,10 @@ service cloud.firestore {
 
     // Safely get a user's role. Defaults to 'member' if a role document doesn't exist.
     function getUserRole(uid) {
-      if (exists(/databases/$(database)/documents/roles/$(uid))) {
-        return get(/databases/$(database)/documents/roles/$(uid)).data.role;
-      }
-      return "member";
+        if (exists(/databases/$(database)/documents/roles/$(uid))) {
+            return get(/databases/$(database)/documents/roles/$(uid)).data.role;
+        }
+        return "member";
     }
 
     // An admin is a 'director' or the hardcoded super admin email.
@@ -27,13 +27,19 @@ service cloud.firestore {
       return isSignedIn() && 
              (getUserRole(request.auth.uid) == 'director' || request.auth.token.email == 'jdnewsgujarati@gmail.com');
     }
+
+    // A content creator has an elevated role.
+    function isContentCreator() {
+        let role = getUserRole(request.auth.uid);
+        return isSignedIn() && (role == 'reporter' || role == 'editor' || role == 'director');
+    }
     
     // Checks if the user is only trying to update allowed fields.
     function isUpdatingAllowedFields() {
-        let allowedFields = ['firstName', 'lastName', 'phoneNumber', 'address', 'profilePictureUrl'];
+        let allowedFields = ['firstName', 'lastName', 'phoneNumber', 'address'];
         let incomingKeys = request.resource.data.keys();
         // This ensures the update request ONLY contains keys from the allowedFields list.
-        return incomingKeys.hasAll(allowedFields) && incomingKeys.size() <= allowedFields.size();
+        return incomingKeys.size() <= allowedFields.size() && incomingKeys.hasAll(allowedFields);
     }
 
     /* ---------------- USERS ---------------- */
@@ -48,9 +54,7 @@ service cloud.firestore {
       
       // A user can update their own document, but ONLY specific fields.
       // They can NEVER change their own role.
-      allow update: if isOwner(userId) && 
-                       request.resource.data.role == resource.data.role &&
-                       isUpdatingAllowedFields();
+      allow update: if isOwner(userId) && isUpdatingAllowedFields();
       
       // A user can create their own document upon signup.
       allow create: if isOwner(userId);
@@ -83,8 +87,10 @@ service cloud.firestore {
     match /articles/{articleId} {
       // Anyone can read articles.
       allow get, list: if true;
-      // Only admins can manage articles.
-      allow create, update, delete: if isAdmin();
+      // Content creators can create articles.
+      allow create: if isContentCreator();
+      // Only admins can update or delete articles.
+      allow update, delete: if isAdmin();
     }
 
     /* ---------------- DONATIONS ---------------- */
