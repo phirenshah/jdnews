@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ArticlesProvider } from "@/contexts/ArticlesContext";
 
 const navItems = [
     { href: '/admin/articles', icon: Newspaper, label: 'Articles' },
@@ -57,92 +58,94 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
-        <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
-            <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-                <Link href="/en" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-                    <Image src="/logo.png" alt="JD News Logo" width={100} height={0} style={{height: 'auto'}} />
-                    <span className="sr-only">JD News</span>
-                </Link>
-                {navItems.map(item => (
-                    <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                            "transition-colors hover:text-foreground",
-                            pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
-                        )}
-                    >
-                    {item.label}
+    <ArticlesProvider>
+        <div className="flex min-h-screen w-full flex-col bg-muted/40">
+            <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
+                <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+                    <Link href="/en" className="flex items-center gap-2 text-lg font-semibold md:text-base">
+                        <Image src="/logo.png" alt="JD News Logo" width={100} height={0} style={{height: 'auto'}} />
+                        <span className="sr-only">JD News</span>
                     </Link>
-                ))}
-            </nav>
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetTrigger asChild>
-                    <Button
-                    variant="outline"
-                    size="icon"
-                    className="shrink-0 md:hidden"
-                    >
-                        <Menu className="h-5 w-5" />
-                        <span className="sr-only">Toggle navigation menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left">
-                    <nav className="grid gap-6 text-lg font-medium">
-                        <Link href="/en" className="flex items-center gap-2 text-lg font-semibold" onClick={() => setIsSheetOpen(false)}>
-                             <Image src="/logo.png" alt="JD News Logo" width={100} height={0} style={{height: 'auto'}} />
-                            <span className="sr-only">JD News</span>
+                    {navItems.map(item => (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={cn(
+                                "transition-colors hover:text-foreground",
+                                pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
+                            )}
+                        >
+                        {item.label}
                         </Link>
-                        {navItems.map(item => (
-                             <Link
-                                key={item.href}
-                                href={item.href}
-                                onClick={() => setIsSheetOpen(false)}
-                                className={cn(
-                                    "transition-colors hover:text-foreground",
-                                    pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
-                                )}
-                            >
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
-                </SheetContent>
-            </Sheet>
-            <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-                 <div className="ml-auto flex-1 sm:flex-initial">
-                    <h1 className="text-xl font-semibold font-headline tracking-wider">{activeLabel}</h1>
-                 </div>
-                <Button variant="outline" size="sm" asChild>
-                    <Link href="/en">
-                        <ExternalLink className="mr-2 h-4 w-4"/>
-                        View Site
-                    </Link>
-                </Button>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="rounded-full">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={user.photoURL || `https://avatar.vercel.sh/${user.email}.png`} alt={user.displayName || 'Admin'} />
-                                <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <span className="sr-only">Toggle user menu</span>
+                    ))}
+                </nav>
+                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                    <SheetTrigger asChild>
+                        <Button
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0 md:hidden"
+                        >
+                            <Menu className="h-5 w-5" />
+                            <span className="sr-only">Toggle navigation menu</span>
                         </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>{user.displayName || user.email}</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild><Link href="/en/profile">Profile</Link></DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-        </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-          {children}
-        </main>
-    </div>
+                    </SheetTrigger>
+                    <SheetContent side="left">
+                        <nav className="grid gap-6 text-lg font-medium">
+                            <Link href="/en" className="flex items-center gap-2 text-lg font-semibold" onClick={() => setIsSheetOpen(false)}>
+                                <Image src="/logo.png" alt="JD News Logo" width={100} height={0} style={{height: 'auto'}} />
+                                <span className="sr-only">JD News</span>
+                            </Link>
+                            {navItems.map(item => (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={() => setIsSheetOpen(false)}
+                                    className={cn(
+                                        "transition-colors hover:text-foreground",
+                                        pathname.startsWith(item.href) ? "text-foreground" : "text-muted-foreground"
+                                    )}
+                                >
+                                    {item.label}
+                                </Link>
+                            ))}
+                        </nav>
+                    </SheetContent>
+                </Sheet>
+                <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+                    <div className="ml-auto flex-1 sm:flex-initial">
+                        <h1 className="text-xl font-semibold font-headline tracking-wider">{activeLabel}</h1>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/en">
+                            <ExternalLink className="mr-2 h-4 w-4"/>
+                            View Site
+                        </Link>
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="secondary" size="icon" className="rounded-full">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={user.photoURL || `https://avatar.vercel.sh/${user.email}.png`} alt={user.displayName || 'Admin'} />
+                                    <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <span className="sr-only">Toggle user menu</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>{user.displayName || user.email}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild><Link href="/en/profile">Profile</Link></DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </header>
+            <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+            {children}
+            </main>
+        </div>
+    </ArticlesProvider>
   );
 }
