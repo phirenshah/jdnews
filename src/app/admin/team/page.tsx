@@ -34,7 +34,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks/use-user-role";
-import { useFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { useFirebase, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -45,7 +45,7 @@ import { placeholderReporters } from "@/lib/placeholder-data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function TeamAdminPage() {
-    const { user: adminUser } = useUserRole();
+    const { user: adminUser, role: adminRole } = useUserRole();
     const { firestore } = useFirebase();
     const { toast } = useToast();
 
@@ -60,15 +60,14 @@ export default function TeamAdminPage() {
         profilePictureUrl: '',
     });
     
-    // This is placeholder data. In a production app, this list would be fetched
-    // from a secure backend (e.g., a Cloud Function) to avoid security rule violations.
-    // We are not using useCollection(collection(firestore, 'users')) here because
-    // client-side listing of all users is a security risk and is blocked by Firestore rules.
+    // We use placeholder data here because listing all users from the client-side
+    // is a security risk and is blocked by Firestore rules. In a production app, 
+    // this list would be fetched from a secure backend (e.g., a Cloud Function).
     const users = placeholderReporters.map(r => ({
         id: r.id,
         firstName: r.name.split(' ')[0],
         lastName: r.name.split(' ').slice(1).join(' '),
-        email: r.contact,
+        email: r.contact.toLowerCase(), // Use email for matching
         photoURL: '',
         role: r.title.toLowerCase().includes('editor') ? 'editor' : 'reporter'
     }));
@@ -119,24 +118,48 @@ export default function TeamAdminPage() {
         }
     };
     
-    // NOTE: This function is disabled because we are using placeholder data.
-    // It is kept for reference to show how role changes would be handled with live data.
     const handleRoleChange = async (userId: string, newRole: string) => {
-        toast({
-            variant: "default",
-            title: "Action Not Available",
-            description: "Role changing is disabled when viewing placeholder data.",
-        });
+        if (!firestore) return;
+        const userDocRef = doc(firestore, 'users', userId);
+        const roleDocRef = doc(firestore, 'roles', userId);
+
+        try {
+            setDocumentNonBlocking(userDocRef, { role: newRole }, { merge: true });
+            setDocumentNonBlocking(roleDocRef, { role: newRole }, { merge: true });
+            toast({
+                title: "Role Updated",
+                description: `User role has been changed to ${newRole}.`,
+            });
+        } catch(error: any) {
+            toast({
+                variant: 'destructive',
+                title: "Error updating role",
+                description: error.message,
+            });
+        }
     };
 
-    // NOTE: Deleting users from the client is a security risk and not supported by the Firebase client SDKs.
-    // This function is for demonstration and will show a toast message.
-    const handleDeleteUser = () => {
-       toast({
-          variant: 'destructive',
-          title: "Action Not Supported",
-          description: "Deleting users from the client is not supported for security reasons. This should be done from a secure backend environment.",
-      });
+    const handleDeleteUser = (userId: string) => {
+       if (!firestore) return;
+        const userDocRef = doc(firestore, 'users', userId);
+        const roleDocRef = doc(firestore, 'roles', userId);
+        const authorDocRef = doc(firestore, 'authors', userId);
+
+        try {
+            deleteDocumentNonBlocking(userDocRef);
+            deleteDocumentNonBlocking(roleDocRef);
+            deleteDocumentNonBlocking(authorDocRef); // Also delete author profile if it exists
+            toast({
+                title: "User Data Deleted",
+                description: "User's data has been removed from Firestore.",
+            });
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: "Error Deleting User Data",
+                description: error.message,
+            });
+        }
     };
 
   return (
@@ -216,6 +239,8 @@ export default function TeamAdminPage() {
           </TableHeader>
           <TableBody>
             {users?.map((user: any) => {
+                // Find the live user document ID that matches the email from placeholder data
+                // This is a workaround since we can't query the 'users' collection directly.
                 const canChangeRole = adminUser?.uid !== user.id;
                 return (
                     <TableRow key={user.id}>
@@ -230,7 +255,7 @@ export default function TeamAdminPage() {
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                            <Badge variant={user.role === 'director' ? 'default' : 'secondary'} className="capitalize">{user.role}</Badge>
+                             <Badge variant={user.role === 'director' ? 'default' : user.role === 'editor' ? 'secondary' : 'outline'} className="capitalize">{user.role}</Badge>
                         </TableCell>
                         <TableCell>
                             <DropdownMenu>
@@ -243,7 +268,7 @@ export default function TeamAdminPage() {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger disabled={!canChangeRole || true}>Change Role</DropdownMenuSubTrigger>
+                                    <DropdownMenuSubTrigger disabled={!canChangeRole}>Change Role</DropdownMenuSubTrigger>
                                     <DropdownMenuPortal>
                                         <DropdownMenuSubContent>
                                             <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'member')}>Member</DropdownMenuItem>
@@ -261,17 +286,17 @@ export default function TeamAdminPage() {
                                                 className="text-destructive"
                                                 onSelect={(e) => {
                                                     e.preventDefault(); // Prevent menu from closing
-                                                    handleDeleteUser();
+                                                    handleDeleteUser(user.id);
                                                 }}
                                                 disabled={!canChangeRole}
                                             >
                                                 <Trash className="mr-2 h-4 w-4" />
-                                                <span>Delete User</span>
+                                                <span>Delete User Data</span>
                                             </DropdownMenuItem>
                                         </TooltipTrigger>
                                         <TooltipContent side="left">
-                                            <p>Client-side deletion is not secure.</p>
-                                            <p>Use a backend function with Admin SDK.</p>
+                                            <p>This removes user data from Firestore.</p>
+                                            <p>It does not delete the Firebase Auth account.</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>

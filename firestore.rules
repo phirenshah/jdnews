@@ -42,14 +42,15 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
       allow update: if (isOwner(userId) && isRoleUnchanged()) || isAdmin();
-      allow list: if isAdmin();
-      allow delete: if isAdmin();
+      allow list: if false; // Deny list for security
+      allow delete: if isAdmin(); // Allow admins to delete user profiles
     }
     
     match /roles/{userId} {
       allow get: if isAdmin();
       allow create, update: if isAdmin();
-      allow list, delete: if false; // List and delete should be restricted
+      allow list: if false; // Deny list for security
+      allow delete: if isAdmin(); // Allow admins to delete role documents
     }
 
     match /authors/{authorId} {
