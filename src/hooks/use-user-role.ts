@@ -37,7 +37,9 @@ export function useUserRole(): UseUserRoleResult {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
   const { data: roleDoc, isLoading: isRoleLoading } = useDoc(roleDocRef);
 
-  const role = roleDoc?.role as UserRole;
+  // If a role document exists, use its role. Otherwise, default to 'member'.
+  const role: UserRole = roleDoc ? (roleDoc.role as UserRole) : 'member';
+  
   const isAdmin = role === 'director' || user?.email === 'jdnewsgujarati@gmail.com';
 
   return {
@@ -48,5 +50,3 @@ export function useUserRole(): UseUserRoleResult {
     isAdmin,
   };
 }
-
-    

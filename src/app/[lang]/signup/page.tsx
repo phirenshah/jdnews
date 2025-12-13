@@ -56,7 +56,7 @@ export default function SignupPage() {
 
   const handleEmailSignUp = async (e: FormEvent) => {
     e.preventDefault();
-    if (!auth || !email || !password || !firstName) {
+    if (!auth || !firestore || !email || !password || !firstName) {
         toast({ variant: 'destructive', title: 'Missing fields', description: 'Please fill out all required fields.' });
         return;
     };
@@ -66,11 +66,14 @@ export default function SignupPage() {
         const newUser = userCredential.user;
 
         // Update profile display name
-        await updateProfile(newUser, { displayName: `${firstName} ${lastName}` });
+        await updateProfile(newUser, { displayName: `${firstName} ${lastName}`.trim() });
 
         // Create user document in Firestore
         const userDocRef = doc(firestore, 'users', newUser.uid);
-        const role = 'member'; // Assign default role
+        // The role is now managed in the /roles collection by an admin
+        // and defaults to 'member' in security rules if not present.
+        // We set the default role on the user object for client-side convenience.
+        const role = 'member'; 
         setDocumentNonBlocking(userDocRef, {
             id: newUser.uid,
             email: newUser.email,

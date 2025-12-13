@@ -18,7 +18,6 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
-  fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
@@ -75,7 +74,10 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       
       const userDocRef = doc(firestore, 'users', result.user.uid);
-      const role = 'member'; // Default role
+      // The role is now managed in the /roles collection by an admin
+      // and defaults to 'member' in security rules if not present.
+      // We set the default role on the user object for client-side convenience.
+      const role = 'member'; 
 
       setDocumentNonBlocking(userDocRef, {
         id: result.user.uid,
@@ -115,12 +117,12 @@ export default function LoginPage() {
             });
             router.push(`/${lang}/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectUrl)}`);
         } 
-        // This error code means the password was wrong.
+        // This error code means the password was wrong or user doesn't exist
         else if (error.code === 'auth/invalid-credential') {
              toast({
                 variant: 'destructive',
                 title: 'Login Failed',
-                description: 'Incorrect password. Please try again.',
+                description: 'Incorrect email or password. Please try again.',
             });
         } 
         // Handle other potential errors.
