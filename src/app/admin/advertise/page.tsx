@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, Trash2, Edit } from 'lucide-react';
+import { Phone, Trash2, Edit, Camera, Upload, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,10 +36,15 @@ import {
   setDocumentNonBlocking,
   deleteDocumentNonBlocking
 } from '@/firebase';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import Image from 'next/image';
+import axios from 'axios';
+
 
 // This would come from a database in a real application
 const placeholderAdRequests = [
@@ -91,6 +96,14 @@ export default function AdvertiseAdminPage() {
   const [adHtmlCode, setAdHtmlCode] = useState('');
   const [adPlacement, setAdPlacement] = useState<'horizontal' | 'vertical' | ''>('');
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+
   const resetForm = () => {
     setEditingAd(null);
     setAdName('');
@@ -98,6 +111,8 @@ export default function AdvertiseAdminPage() {
     setAdUrl('');
     setAdHtmlCode('');
     setAdPlacement('');
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const handleEdit = (ad: Ad) => {
@@ -107,6 +122,8 @@ export default function AdvertiseAdminPage() {
     setAdUrl(ad.url || '');
     setAdHtmlCode(ad.htmlCode || '');
     setAdPlacement(ad.placement);
+    setImagePreview(ad.url || null);
+    setImageFile(null);
   };
 
   const handleDelete = (adId: string) => {
@@ -117,7 +134,66 @@ export default function AdvertiseAdminPage() {
     forceRefetch();
   };
 
-  const handleSubmit = () => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        setImageFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCameraCapture = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (video && canvas) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d')?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+        canvas.toBlob(blob => {
+            if (blob) {
+                const file = new File([blob], "capture.png", { type: "image/png" });
+                setImageFile(file);
+                setImagePreview(canvas.toDataURL('image/png'));
+            }
+        }, 'image/png');
+        setIsCameraDialogOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isCameraDialogOpen) {
+        const getCameraPermission = async () => {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({video: true});
+            setHasCameraPermission(true);
+    
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+            }
+          } catch (error) {
+            console.error('Error accessing camera:', error);
+            setHasCameraPermission(false);
+            toast({
+              variant: 'destructive',
+              title: 'Camera Access Denied',
+              description: 'Please enable camera permissions in your browser settings.',
+            });
+          }
+        };
+        getCameraPermission();
+    } else {
+        if (videoRef.current?.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+        }
+    }
+}, [isCameraDialogOpen, toast]);
+
+  const handleSubmit = async () => {
     if (!firestore || !adName || !adType || !adPlacement) {
         toast({
             variant: 'destructive',
@@ -127,9 +203,30 @@ export default function AdvertiseAdminPage() {
         return;
     }
     
-    if (adType === 'image' && !adUrl) {
-      toast({ variant: 'destructive', title: 'Missing URL', description: 'Please provide an image URL.' });
-      return;
+    let finalAdUrl = editingAd?.url || '';
+
+    if (adType === 'image') {
+      if(imageFile) {
+        try {
+          const formData = new FormData();
+          formData.append('key', "3f5f08b61f4298484f11df25a094c176"); // Replace with your ImgBB API key if you have one
+          formData.append('image', imageFile);
+
+          const response = await axios.post('https://api.imgbb.com/1/upload', formData);
+          finalAdUrl = response.data.data.url;
+        } catch (error) {
+            console.error("Image upload failed:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Image Upload Failed',
+                description: 'Could not upload the ad image. Please try again.',
+            });
+            return;
+        }
+      } else if (!finalAdUrl) {
+        toast({ variant: 'destructive', title: 'Missing Image', description: 'Please provide an image for the ad.' });
+        return;
+      }
     }
 
     if (adType === 'html' && !adHtmlCode) {
@@ -137,12 +234,12 @@ export default function AdvertiseAdminPage() {
         return;
     }
 
-    const adData: Omit<Ad, 'id'> = {
+    const adData = {
         name: adName,
         type: adType,
         placement: adPlacement,
-        ...(adType === 'image' && { url: adUrl }),
-        ...(adType === 'html' && { htmlCode: adHtmlCode }),
+        url: adType === 'image' ? finalAdUrl : '',
+        htmlCode: adType === 'html' ? adHtmlCode : '',
     };
 
     if (editingAd) {
@@ -270,8 +367,44 @@ export default function AdvertiseAdminPage() {
 
                         {adType === 'image' && (
                             <div className="space-y-2">
-                                <Label htmlFor="ad-url">Image URL</Label>
-                                <Input id="ad-url" placeholder="https://..." value={adUrl} onChange={(e) => setAdUrl(e.target.value)} />
+                              <Label>Ad Banner Image</Label>
+                                <div className="flex items-center gap-4">
+                                  <div className="w-full h-24 bg-muted rounded-md flex items-center justify-center">
+                                    {imagePreview ? (
+                                      <Image src={imagePreview} alt="Ad preview" width={200} height={96} className="object-contain h-24" />
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">Image Preview</span>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col gap-2">
+                                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                          <Upload className="mr-2 h-4 w-4" />
+                                          Upload
+                                      </Button>
+                                      <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
+                                      <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
+                                          <DialogTrigger asChild>
+                                              <Button variant="outline" size="sm"><Camera className="mr-2 h-4 w-4" />Take</Button>
+                                          </DialogTrigger>
+                                          <DialogContent>
+                                              <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
+                                                <div className="relative">
+                                                  <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                                                  {hasCameraPermission === false && (
+                                                      <Alert variant="destructive" className="mt-4">
+                                                          <AlertTitle>Camera Access Required</AlertTitle>
+                                                          <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
+                                                      </Alert>
+                                                  )}
+                                                </div>
+                                                <canvas ref={canvasRef} className="hidden" />
+                                              <DialogFooter>
+                                                  <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
+                                              </DialogFooter>
+                                          </DialogContent>
+                                      </Dialog>
+                                  </div>
+                                </div>
                             </div>
                         )}
                         {adType === 'html' && (
@@ -281,7 +414,7 @@ export default function AdvertiseAdminPage() {
                             </div>
                         )}
                         
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 pt-2">
                             <Button onClick={handleSubmit} className="w-full">{editingAd ? 'Update Ad' : 'Create Ad'}</Button>
                             {editingAd && <Button variant="outline" onClick={resetForm} className="w-full">Cancel</Button>}
                         </div>
@@ -328,3 +461,5 @@ export default function AdvertiseAdminPage() {
     </Tabs>
   );
 }
+
+    
