@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -11,13 +12,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Image from 'next/image';
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import {
+  GoogleAuthProvider,
+  signInWithPopup,
   signInWithEmailAndPassword,
-  fetchSignInMethodsForEmail
+  fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { useFirebase, useUser } from '@/firebase';
-import { useRouter, useSearchParams, useParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -39,10 +42,9 @@ const formatErrorMessage = (code: string) => {
 export default function LoginPage() {
   const params = useParams();
   const lang = params.lang as string;
-  const { auth, firestore } = useFirebase();
+  const { auth } = useFirebase();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const [step, setStep] = useState<'email' | 'password'>('email');
@@ -50,15 +52,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
+  const redirectUrl = `/${lang}/profile`;
 
   useEffect(() => {
     if (!isUserLoading && user) {
       router.replace(redirectUrl);
     }
   }, [user, isUserLoading, router, redirectUrl]);
-  
+
   const handleEmailCheck = async (e: FormEvent) => {
     e.preventDefault();
     if (!auth) return;
@@ -74,18 +75,11 @@ export default function LoginPage() {
             router.push(`/${lang}/signup?email=${encodeURIComponent(email)}`);
         }
     } catch (error: any) {
-        // A common error is auth/invalid-email, which we want to show to the user.
-        // Other errors can be treated as if the user doesn't exist, for a smoother flow.
-        if (error.code === 'auth/invalid-email') {
-             toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: formatErrorMessage(error.code),
-            });
-        } else {
-            // For other errors, assume user doesn't exist to allow signup.
-            router.push(`/${lang}/signup?email=${encodeURIComponent(email)}`);
-        }
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: formatErrorMessage(error.code),
+        });
     } finally {
         setIsLoading(false);
     }
@@ -100,6 +94,7 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: 'Login Successful' });
+      // The useEffect will handle the redirect
     } catch (error: any) {
        toast({
           variant: 'destructive',
@@ -110,6 +105,27 @@ export default function LoginPage() {
         setIsLoading(false);
     }
   };
+  
+    const handleGoogleLogin = async () => {
+    if (!auth) return;
+    setIsLoading(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      toast({ title: 'Login successful' });
+      // The useEffect will handle the redirect
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Google Sign-In Failed',
+        description: formatErrorMessage(err.code),
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   if (isUserLoading || user) {
     return (
@@ -139,16 +155,37 @@ export default function LoginPage() {
             Sign in to continue to JD News
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+            <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+            >
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Continue with Google
+            </Button>
+
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                        Or continue with
+                    </span>
+                </div>
+            </div>
+
             {step === 'email' ? (
                 <form onSubmit={handleEmailCheck} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                     </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
+                    <Button type="submit" className="w-full" disabled={isLoading || !email}>
                       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Continue
+                      Continue with Email
                     </Button>
                 </form>
             ) : (
@@ -177,7 +214,7 @@ export default function LoginPage() {
                     </Button>
                 </form>
             )}
-            <div className="mt-6 text-center text-sm text-muted-foreground">
+            <div className="mt-4 text-center text-sm text-muted-foreground">
                 Don't have an account?{' '}
                 <Link href={`/${lang}/signup`} className="underline hover:text-primary">
                     Sign up

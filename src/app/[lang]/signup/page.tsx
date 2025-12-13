@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -52,7 +53,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
+  const redirectUrl = `/${lang}/profile`;
   const emailFromQuery = searchParams.get('email');
 
   useEffect(() => {
