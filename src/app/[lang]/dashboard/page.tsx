@@ -27,7 +27,10 @@ export default function DashboardPage() {
     const lang = params.lang as string;
     const { toast } = useToast();
     
-    const articlesCollection = useMemoFirebase(() => collection(firestore, 'articles'), [firestore]);
+    const articlesCollection = useMemoFirebase(() => {
+      if (!firestore) return null;
+      return collection(firestore, 'articles');
+    }, [firestore]);
 
     const [titleEnglish, setTitleEnglish] = useState('');
     const [titleGujarati, setTitleGujarati] = useState('');
