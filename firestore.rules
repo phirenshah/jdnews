@@ -1,141 +1,50 @@
-/**
- * Core Philosophy: This ruleset implements a dual-access model. Standard users have strict ownership
- * over their personal data (profiles, donations), while a privileged 'admin' role has full
- * control over public content like articles and author profiles. Public content is readable
- * by anyone, but can only be managed by admins.
- *
- * Data Structure:
- * - /users/{userId}: Private user profiles, owned by the user.
- * - /authors/{authorId}: Public author profiles, managed by admins.
- * - /articles/{articleId}: Public articles, managed by admins.
- * - /donations/{donationId}: Private donation records, owned by the user but readable by admins.
- * - /roles_admin/{uid}: A lookup collection to grant admin privileges.
- *
- * Key Security Decisions:
- * - Admin Role Management: The existence of a document in `/roles_admin/{uid}` grants a user
- *   admin privileges. This collection is intentionally locked down from all client access
- *   and must be managed manually via the Firebase Console or a trusted server.
- * - User Data Privacy: User profiles and donations are strictly user-owned. Broad listing of the
- *   `/donations` collection is disabled for non-admins to prevent data leaks.
- * - Public Content: Articles and author profiles are publicly readable to support the app's
- *   primary function as a news hub.
- *
- * Denormalization for Authorization:
- * - The `/donations/{donationId}` documents contain a `userId` field. This allows rules to
- *   securely check donation ownership directly from the document without needing extra lookups.
- *
- * Structural Segregation:
- * - The separation of private data (`/users`, `/donations`) from public data (`/articles`, `/authors`)
- *   into distinct top-level collections creates a clear, secure, and performant security model.
- */
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    //-------------------------------------------------------------------------
     // Helper Functions
-    //-------------------------------------------------------------------------
-
-    /**
-     * Checks if the user is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the request UID matches the provided userId, ensuring the user is authenticated.
-     * Used for path-based ownership rules.
-     */
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    /**
-     * Checks if a user has admin privileges by looking for their UID
-     * in the /roles_admin collection. Ensures the user is authenticated first.
-     */
     function isAdmin() {
       return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    /**
-     * Verifies that a document being updated or deleted actually exists.
-     * This prevents unintended side effects on non-existent data.
-     */
     function isExistingDocument() {
       return resource != null;
     }
 
-    /**
-     * On create, validates that a user is setting their own UID as the owner.
-     */
     function isCreatingOwnDocument(fieldName) {
       return request.resource.data[fieldName] == request.auth.uid;
     }
 
-    /**
-     * On update, ensures an ownership field cannot be changed.
-     */
     function isOwnershipImmutable(fieldName) {
       return request.resource.data[fieldName] == resource.data[fieldName];
     }
-
-
-    /**
-     * @description   Stores user profile information. A user can create their own profile
-     *                and has full control over it. No other user can view or edit it.
-     * @path          /users/{userId}
-     * @allow         (create) A new user signing up: `create /users/abc-123` with auth.uid=`abc-123`.
-     * @deny          (update) A user trying to edit another user's profile: `update /users/xyz-456` with auth.uid=`abc-123`.
-     * @principle     Restricts access to a user's own data tree.
-     */
+    
+    // Rules for collections
     match /users/{userId} {
-      allow get, update, create: if isOwner(userId);
+      allow create, get, update: if isOwner(userId);
       allow list, delete: if false;
     }
 
-
-    /**
-     * @description   Stores public author/reporter profiles. Anyone can read these profiles,
-     *                but only admins can create, modify, or delete them.
-     * @path          /authors/{authorId}
-     * @allow         (get) Any anonymous user reading an author profile: `get /authors/jane-doe`.
-     * @deny          (create) A non-admin user trying to add a new author: `create /authors/john-doe` with auth.uid=`abc-123`.
-     * @principle     Public read access with privileged (admin-only) writes.
-     */
     match /authors/{authorId} {
       allow get, list: if true;
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin() && isExistingDocument();
+      allow create, update, delete: if isAdmin();
     }
 
-
-    /**
-     * @description   Stores news articles. Articles are public and can be read by anyone.
-     *                Only admins are permitted to create, update, or delete articles.
-     * @path          /articles/{articleId}
-     * @allow         (list) Any anonymous user fetching the list of articles: `list /articles`.
-     * @deny          (update) A non-admin user trying to edit an article: `update /articles/latest-news` with auth.uid=`abc-123`.
-     * @principle     Public read access with privileged (admin-only) writes.
-     */
     match /articles/{articleId} {
       allow get, list: if true;
-      allow create: if isAdmin() && request.resource.data.authorId is string;
-      allow update: if isAdmin() && isExistingDocument() && isOwnershipImmutable('authorId');
-      allow delete: if isAdmin() && isExistingDocument();
+      allow create, update, delete: if isAdmin();
     }
-
-
-    /**
-     * @description   Stores private donation records. A user can create and manage their own
-     *                donations. Admins can read all donation records for auditing but cannot modify them.
-     * @path          /donations/{donationId}
-     * @allow         (create) A logged-in user making a donation for themselves: `create /donations/tx-123` with `data.userId`=`auth.uid`.
-     * @deny          (list) A regular user trying to list all donations in the system.
-     * @principle     Enforces document ownership via a `userId` field and grants read-only access to admins.
-     */
+    
     match /donations/{donationId} {
       allow get: if isOwner(resource.data.userId) || isAdmin();
       allow list: if isAdmin();
@@ -143,18 +52,9 @@ service cloud.firestore {
       allow update: if isOwner(resource.data.userId) && isExistingDocument() && isOwnershipImmutable('userId');
       allow delete: if isOwner(resource.data.userId) && isExistingDocument();
     }
-
-
-    /**
-     * @description   Lookup collection for admin roles. This collection MUST NOT be readable
-     *                or writable by any client. It is managed out-of-band (e.g., Firebase Console).
-     * @path          /roles_admin/{uid}
-     * @allow         No operations are allowed from the client.
-     * @deny          Any client attempting a read or write operation.
-     * @principle     Secures administrative role data from client access.
-     */
+    
     match /roles_admin/{uid} {
-      allow read, write: if false;
+        allow read, write: if false;
     }
   }
 }

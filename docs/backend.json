@@ -200,7 +200,7 @@
   "auth": {
     "providers": [
       "google",
-      "phone"
+      "password"
     ]
   },
   "firestore": {

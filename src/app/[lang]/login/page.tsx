@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -12,24 +13,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase/auth/use-user';
 import Image from 'next/image';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import {
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithPhoneNumber,
-  ConfirmationResult,
-  RecaptchaVerifier,
-  User,
+  signInWithEmailAndPassword,
+  fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { Separator } from '@/components/ui/separator';
-import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
@@ -60,41 +56,31 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [otp, setOtp] = useState('');
-  const [confirmationResult, setConfirmationResult] =
-    useState<ConfirmationResult | null>(null);
-  const [otpSent, setOtpSent] = useState(false);
-  
-  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
-
-  const createUserProfile = (newUser: User) => {
-    if (!firestore) return;
-    const userDocRef = doc(firestore, 'users', newUser.uid);
-    const profileData = {
-      id: newUser.uid,
-      email: newUser.email,
-      firstName: newUser.displayName?.split(' ')[0] || '',
-      lastName: newUser.displayName?.split(' ').slice(1).join(' ') || '',
-      phoneNumber: newUser.phoneNumber,
-    };
-    setDocumentNonBlocking(userDocRef, profileData, { merge: true });
-  }
 
   useEffect(() => {
     if (!isUserLoading && user) {
       router.push(redirectUrl);
     }
   }, [user, isUserLoading, router, redirectUrl]);
-  
+
   const handleGoogleSignIn = async () => {
     if (!auth) return;
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      createUserProfile(result.user);
+      // Create user profile if it doesn't exist, merging data
+      const userDocRef = doc(firestore, 'users', result.user.uid);
+      setDocumentNonBlocking(userDocRef, {
+        id: result.user.uid,
+        email: result.user.email,
+        firstName: result.user.displayName?.split(' ')[0] || '',
+        lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
+        phoneNumber: result.user.phoneNumber,
+      }, { merge: true });
       toast({ title: 'Signed in with Google' });
       router.push(redirectUrl);
     } catch (error: any) {
@@ -106,55 +92,27 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
     }
   };
 
-  const handlePhoneSignIn = async (e: React.FormEvent) => {
+  const handleEmailSignIn = async (e: FormEvent) => {
     e.preventDefault();
-    if (!auth || !phoneNumber) return;
-    
+    if (!auth || !email) return;
+
     try {
-      // Initialize verifier only when needed and only once.
-      if (!recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'invisible'
+        const methods = await fetchSignInMethodsForEmail(auth, email);
+        if (methods.length === 0) {
+            // No account exists, redirect to signup
+            router.push(`/${lang}/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectUrl)}`);
+        } else {
+            // Account exists, proceed with sign-in
+            await signInWithEmailAndPassword(auth, email, password);
+            toast({ title: 'Login Successful' });
+            router.push(redirectUrl);
+        }
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Login Failed',
+            description: error.message,
         });
-      }
-      
-      const verifier = recaptchaVerifierRef.current;
-      const result = await signInWithPhoneNumber(auth, phoneNumber, verifier);
-      setConfirmationResult(result);
-      setOtpSent(true);
-      toast({ title: 'OTP Sent Successfully' });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Phone Sign-In Failed',
-        description: error.message,
-      });
-      // Reset reCAPTCHA if it fails
-      if (recaptchaVerifierRef.current) {
-          recaptchaVerifierRef.current.clear();
-          recaptchaVerifierRef.current = null;
-      }
-    }
-  };
-
-  const handleOtpVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!confirmationResult) {
-      toast({ variant: 'destructive', title: 'No confirmation to verify' });
-      return;
-    }
-
-    try {
-      const result = await confirmationResult.confirm(otp);
-      createUserProfile(result.user);
-      toast({ title: 'Login Successful' });
-      router.push(redirectUrl);
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'OTP Verification Failed',
-        description: error.message,
-      });
     }
   };
 
@@ -202,51 +160,25 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
               </div>
             </div>
             
-            {!otpSent ? (
-              <form onSubmit={handlePhoneSignIn} className="space-y-4">
+            <form onSubmit={handleEmailSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <PhoneInput
-                    id="phone"
-                    international
-                    defaultCountry="IN"
-                    value={phoneNumber}
-                    onChange={(value) => setPhoneNumber(value || '')}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                  />
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
-                <div id="recaptcha-container"></div>
-                <Button type="submit" className="w-full">
-                  Send OTP
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={handleOtpVerify} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="otp">Enter OTP</Label>
-                  <Input
-                    id="otp"
-                    type="text"
-                    placeholder="6-digit code"
-                    required
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                  />
+                 <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
                 <Button type="submit" className="w-full">
-                  Verify OTP & Login
+                  Sign In
                 </Button>
-                <Button variant="link" size="sm" onClick={() => {
-                  setOtpSent(false);
-                  if (recaptchaVerifierRef.current) {
-                    recaptchaVerifierRef.current.clear();
-                    recaptchaVerifierRef.current = null;
-                  }
-                }}>
-                  Back to phone number entry
-                </Button>
-              </form>
-            )}
+            </form>
+            <div className="text-center text-sm text-muted-foreground">
+                Don't have an account?{' '}
+                <Link href={`/${lang}/signup`} className="underline hover:text-primary">
+                    Sign up
+                </Link>
+            </div>
           </div>
         </CardContent>
       </Card>
