@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, Upload, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, Upload, Edit, Trash2, Send } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -32,7 +32,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Article } from "@/lib/definitions";
 import { sections } from "@/lib/categories";
 import { useArticles } from '@/contexts/ArticlesContext';
 
@@ -80,7 +79,7 @@ export default function ArticlesAdminPage() {
         };
 
         addArticle(newArticle);
-        toast({ title: 'Article Created Successfully', description: "The new article is now available on your site for this session." });
+        toast({ title: 'Article Created Successfully', description: "The new article has been added to the list." });
         resetForm();
         setIsDialogOpen(false);
     };
@@ -89,6 +88,13 @@ export default function ArticlesAdminPage() {
         // This is a mock action as we are not using a persistent backend
         toast({ title: 'Delete action is disabled.' , description: "This is a mock action and doesn't persist."});
     };
+    
+    const handleSubmitArticle = () => {
+        toast({
+            title: "Article Submitted (Simulated)",
+            description: "In a real app, this would trigger a publish workflow.",
+        });
+    }
 
   return (
     <>
@@ -96,7 +102,7 @@ export default function ArticlesAdminPage() {
         <div className="ml-auto flex items-center gap-2">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button size="sm">
+                    <Button size="sm" variant="outline">
                         <Upload className="h-4 w-4 mr-2" />
                         Upload Article
                     </Button>
@@ -155,6 +161,10 @@ export default function ArticlesAdminPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <Button size="sm" onClick={handleSubmitArticle}>
+                <Send className="h-4 w-4 mr-2" />
+                Submit Article
+            </Button>
         </div>
       </div>
       <Card>
