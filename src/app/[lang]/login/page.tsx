@@ -18,8 +18,9 @@ import {
   signInWithPopup,
   signInWithPhoneNumber,
   ConfirmationResult,
+  RecaptchaVerifier,
 } from 'firebase/auth';
-import { useFirebase, getRecaptchaVerifier } from '@/firebase';
+import { useFirebase } from '@/firebase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -62,9 +63,7 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
     useState<ConfirmationResult | null>(null);
   const [otpSent, setOtpSent] = useState(false);
   
-  const recaptchaVerifierRef = useRef<any>(null);
-  const recaptchaWrapperRef = useRef<HTMLDivElement>(null);
-
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
 
@@ -74,13 +73,8 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
     }
   }, [user, isUserLoading, router, redirectUrl]);
   
-  useEffect(() => {
-    if (auth && recaptchaWrapperRef.current) {
-        recaptchaVerifierRef.current = getRecaptchaVerifier(auth, recaptchaWrapperRef.current);
-    }
-  }, [auth]);
-
   const handleGoogleSignIn = async () => {
+    if (!auth) return;
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -97,13 +91,18 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
 
   const handlePhoneSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
+
     if (!recaptchaVerifierRef.current) {
-      toast({ variant: 'destructive', title: 'reCAPTCHA not initialized' });
-      return;
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible'
+      });
     }
     
+    const verifier = recaptchaVerifierRef.current;
+    
     try {
-      const result = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifierRef.current);
+      const result = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       setConfirmationResult(result);
       setOtpSent(true);
       toast({ title: 'OTP Sent Successfully' });
@@ -193,7 +192,7 @@ export default function LoginPage({ params }: { params: { lang: string } }) {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                   />
                 </div>
-                <div ref={recaptchaWrapperRef} id="recaptcha-container"></div>
+                <div id="recaptcha-container"></div>
                 <Button type="submit" className="w-full">
                   Send OTP
                 </Button>
