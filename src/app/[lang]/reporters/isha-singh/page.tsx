@@ -19,7 +19,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 export default function ReporterProfilePage() {
-    const params = useParams<{ lang: 'en' | 'gu', id: string }>();
+    const params = useParams<{ lang: 'en' | 'gu' }>();
     const { lang } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
     const [clientReporterUrl, setClientReporterUrl] = useState('');
@@ -162,12 +162,12 @@ export default function ReporterProfilePage() {
                 </div>
             </div>
             <Dialog open={isCardOpen} onOpenChange={setIsCardOpen}>
-                <DialogContent className="bg-transparent border-none shadow-none max-w-md p-0 data-[state=open]:sm:max-w-4xl">
+                <DialogContent className="bg-transparent border-none shadow-none p-0 flex flex-col h-full max-h-[90vh] sm:max-w-4xl">
                     <VisuallyHidden>
                         <DialogTitle>Reporter Press Card</DialogTitle>
                     </VisuallyHidden>
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="flex flex-wrap justify-center gap-4">
+                    <div className="flex-grow overflow-y-auto">
+                        <div className="flex flex-wrap justify-center items-center gap-8 p-4">
                             <div ref={frontCardRef}>
                                 <PressCardFront reporter={author} lang={lang} />
                             </div>
@@ -175,12 +175,12 @@ export default function ReporterProfilePage() {
                                 <PressCardBack reporter={author} lang={lang} />
                             </div>
                         </div>
-                        <div className="flex justify-center mt-4">
-                            <Button onClick={handleDownload}>
-                                <Download className="mr-2 h-4 w-4" />
-                                Download Cards
-                            </Button>
-                        </div>
+                    </div>
+                    <div className="flex-shrink-0 p-4 bg-transparent text-center">
+                        <Button onClick={handleDownload}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Download Cards
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
