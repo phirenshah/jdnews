@@ -92,9 +92,9 @@ service cloud.firestore {
      * @principle     Restricts access to a user's own data tree.
      */
     match /users/{userId} {
-      allow get, list, update: if isOwner(userId);
+      allow get, update: if isOwner(userId);
       allow create: if isOwner(userId) && isCreatingOwnDocument('id');
-      allow delete: if false;
+      allow list, delete: if false;
     }
 
 
