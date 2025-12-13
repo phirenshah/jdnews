@@ -53,16 +53,29 @@ export function AdContainer({ type, className }: AdContainerProps) {
 
   const adToDisplay = ads && ads.length > 0 ? ads[currentAdIndex] : null;
   
-  const adWidth = type === 'horizontal' ? '728px' : '300px';
-  const adHeight = type === 'horizontal' ? '90px' : '600px';
+  const adStyles = {
+    horizontal: {
+      container: 'w-full max-w-[728px]',
+      inner: 'aspect-[728/90]',
+      placeholderHeight: 'h-[90px]',
+    },
+    vertical: {
+      container: 'w-full max-w-[300px]',
+      inner: 'aspect-[300/600]',
+      placeholderHeight: 'h-[600px]',
+    }
+  }
+
+  const styles = adStyles[type];
 
   if (isLoading) {
     return (
         <div className={cn(
             'flex flex-col items-center justify-center bg-muted/50 border border-dashed rounded-lg p-4 space-y-2 text-muted-foreground text-xs animate-pulse',
+            styles.container,
+            styles.placeholderHeight,
             className
           )}
-          style={{ width: adWidth, height: adHeight }}
           >
             <span className="font-semibold">Advertisement</span>
         </div>
@@ -74,9 +87,10 @@ export function AdContainer({ type, className }: AdContainerProps) {
     return (
         <div className={cn(
             'flex flex-col items-center justify-center bg-muted/50 border border-dashed rounded-lg p-4 space-y-2 text-muted-foreground text-xs',
+            styles.container,
+            styles.placeholderHeight,
             className
           )}
-          style={{ width: adWidth, height: adHeight }}
           >
             <span className="font-semibold">Advertisement</span>
         </div>
@@ -123,15 +137,12 @@ export function AdContainer({ type, className }: AdContainerProps) {
     <div
       className={cn(
         'flex flex-col items-center justify-center bg-muted/50 border border-dashed rounded-lg p-4 space-y-2 text-muted-foreground text-xs',
+        styles.container,
         className
       )}
-      style={{
-          width: adWidth,
-          height: 'auto' // Let height be determined by content + padding
-      }}
     >
       <span className="font-semibold">Advertisement</span>
-      <div className="relative overflow-hidden bg-background w-full" style={{height: adHeight}}>
+      <div className={cn("relative overflow-hidden bg-background w-full", styles.inner)}>
         {renderAdContent()}
       </div>
     </div>
