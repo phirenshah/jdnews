@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Users, DollarSign, ExternalLink, User, Megaphone, Menu, Newspaper, UserCog } from "lucide-react";
@@ -17,6 +18,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 const navItems = [
     { href: '/admin/articles', icon: Newspaper, label: 'Articles' },
     { href: '/admin/team', icon: Users, label: 'Team' },
+    { href: '/admin/users', icon: UserCog, label: 'Users' },
     { href: '/admin/donations', icon: DollarSign, label: 'Donations' },
     { href: '/admin/advertise', icon: Megaphone, label: 'Advertise' },
 ];
