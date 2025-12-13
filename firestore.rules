@@ -87,5 +87,13 @@ service cloud.firestore {
       // A donation record should be immutable by the user.
       allow update, delete: if false;
     }
+
+    /* ---------------- ADVERTISEMENTS ---------------- */
+    match /advertisements/{adId} {
+        // Ads are public content.
+        allow get, list: if true;
+        // Only admins can manage ads.
+        allow create, update, delete: if isAdmin();
+    }
   }
 }

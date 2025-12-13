@@ -237,6 +237,37 @@
       "required": [
         "role"
       ]
+    },
+    "Advertisement": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Advertisement",
+        "type": "object",
+        "description": "Represents a single advertisement to be displayed on the site.",
+        "properties": {
+            "id": {
+                "type": "string",
+                "description": "Unique identifier for the Advertisement entity."
+            },
+            "name": {
+                "type": "string",
+                "description": "An internal name for the ad for easy identification."
+            },
+            "type": {
+                "type": "string",
+                "description": "The type of advertisement.",
+                "enum": ["image", "iframe"]
+            },
+            "url": {
+                "type": "string",
+                "description": "The URL for the ad source (image link or iframe page)."
+            },
+            "placement": {
+                "type": "string",
+                "description": "Where the ad should be displayed on the website.",
+                "enum": ["horizontal", "vertical"]
+            }
+        },
+        "required": ["id", "name", "type", "url", "placement"]
     }
   },
   "auth": {
@@ -323,6 +354,22 @@
             {
               "name": "donationId",
               "description": "The unique identifier for the donation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/advertisements/{advertisementId}",
+        "definition": {
+          "entityName": "Advertisement",
+          "schema": {
+            "$ref": "#/backend/entities/Advertisement"
+          },
+          "description": "Stores advertisement configuration. Publicly readable, admin-only write access.",
+          "params": [
+            {
+              "name": "advertisementId",
+              "description": "The unique identifier for the advertisement."
             }
           ]
         }
