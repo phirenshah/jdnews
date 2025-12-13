@@ -42,13 +42,16 @@ export default function DashboardPage() {
     const [imageUrl, setImageUrl] = useState('');
 
     useEffect(() => {
-        if (isLoading) return; // Wait until loading is complete
+        // Only run logic once loading is fully complete
+        if (isLoading) return;
 
+        // If loading is done and there's no user, redirect to login.
         if (!user) {
             router.push(`/${lang}/login?redirect=/${lang}/dashboard`);
             return;
         }
 
+        // If loading is done and a user exists, check their role.
         const canAccess = role && ['reporter', 'editor', 'director'].includes(role);
         if (!canAccess) {
              toast({
@@ -94,7 +97,9 @@ export default function DashboardPage() {
         setImageUrl('');
     }
 
-    if (isLoading || !user || (role && !['reporter', 'editor', 'director'].includes(role))) {
+    // While loading, or if the user is not yet defined, or if they don't have the right role (and the effect is about to redirect)
+    // show a loading spinner. This prevents the form from flashing before the redirect happens.
+    if (isLoading || !user || !role || !['reporter', 'editor', 'director'].includes(role)) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
