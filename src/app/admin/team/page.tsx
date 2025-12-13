@@ -33,7 +33,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -72,6 +72,12 @@ export default function TeamAdminPage() {
     const [reporterOffice, setReporterOffice] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
+
+    const availableUsers = useMemo(() => {
+        if (!users || !authors) return users;
+        const authorEmails = new Set(authors.map(author => author.contact.toLowerCase()));
+        return users.filter(user => !authorEmails.has(user.email.toLowerCase()));
+    }, [users, authors]);
 
     useEffect(() => {
         if (selectedUser) {
@@ -189,7 +195,7 @@ export default function TeamAdminPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                                    {users?.map(user => (
+                                    {availableUsers?.map(user => (
                                         <DropdownMenuItem key={user.id} onSelect={() => setSelectedUser(user)}>
                                             {user.firstName} {user.lastName} ({user.email})
                                         </DropdownMenuItem>
