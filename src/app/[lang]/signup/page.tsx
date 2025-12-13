@@ -75,6 +75,7 @@ export default function SignupPage() {
             email: newUser.email,
             firstName: firstName,
             lastName: lastName,
+            role: 'member', // Assign default role
         }, { merge: true });
 
         toast({ title: 'Account Created!', description: 'Welcome to JD News.' });
@@ -159,3 +160,4 @@ export default function SignupPage() {
     </div>
   );
 }
+

@@ -28,11 +28,17 @@ service cloud.firestore {
     function isOwnershipImmutable(fieldName) {
       return request.resource.data[fieldName] == resource.data[fieldName];
     }
+
+    function isRoleUnchanged() {
+        return request.resource.data.role == resource.data.role;
+    }
     
     // Rules for collections
     match /users/{userId} {
-      allow create, get, update: if isOwner(userId);
-      allow list, delete: if false;
+      allow get: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if (isOwner(userId) && isRoleUnchanged()) || isAdmin();
+      allow list, delete: if isAdmin();
     }
 
     match /authors/{authorId} {
@@ -58,3 +64,4 @@ service cloud.firestore {
     }
   }
 }
+

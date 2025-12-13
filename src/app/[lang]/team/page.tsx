@@ -1,4 +1,6 @@
 
+'use client';
+
 import Image from 'next/image';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,9 +8,16 @@ import { CheckCircle } from 'lucide-react';
 import { placeholderReporters } from '@/lib/placeholder-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useUserRole } from '@/hooks/use-user-role';
+import { PressCardFront } from '@/components/press-card-front';
+import { Reporter } from '@/lib/definitions';
+import { Separator } from '@/components/ui/separator';
 
-export default async function ReportersPage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const { lang } = await params;
+export default function ReportersPage() {
+  const params = useParams();
+  const lang = params.lang as 'en' | 'gu';
+  const { userProfile, user, role } = useUserRole();
 
   const title = lang === 'en' ? 'Our Team' : 'અમારી ટીમ';
   const subtitle =
@@ -16,9 +25,27 @@ export default async function ReportersPage({ params }: { params: { lang: 'en' |
       ? 'Meet the team behind the news'
       : 'સમાચાર પાછળની ટીમને મળો';
 
+  const privilegedRoles = ['reporter', 'director', 'editor'];
+  const canViewOwnCard = role && privilegedRoles.includes(role);
+
+  // Find the reporter data that matches the logged-in user
+  const selfReporterData = placeholderReporters.find(
+    (r) => r.contact.toLowerCase() === user?.email?.toLowerCase()
+  );
+
   return (
     <>
       <div className="container mx-auto px-4 py-12">
+        {canViewOwnCard && selfReporterData && userProfile && (
+          <section className="mb-16">
+            <h2 className="font-headline text-3xl md:text-4xl font-bold text-center mb-8">My Press Card</h2>
+            <div className="flex justify-center">
+               <PressCardFront reporter={selfReporterData as Reporter} lang={lang} />
+            </div>
+             <Separator className="my-16" />
+          </section>
+        )}
+
         <div className="text-center mb-12">
           <h1 className="font-headline text-4xl md:text-5xl font-bold">
             {title}

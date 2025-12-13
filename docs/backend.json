@@ -142,13 +142,25 @@
         "themePreference": {
           "type": "string",
           "description": "User's preferred theme (light, dark, system default)."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role in the system.",
+          "enum": [
+            "member",
+            "reporter",
+            "director",
+            "editor"
+          ],
+          "default": "member"
         }
       },
       "required": [
         "id",
         "firstName",
         "lastName",
-        "email"
+        "email",
+        "role"
       ]
     },
     "Donation": {
@@ -286,6 +298,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It leverages denormalization and structural segregation to simplify security rules and enable secure list operations.\n\n*   **Users (User Profiles):** User profiles are stored under `/users/{userId}`. This path-based ownership ensures that only the authenticated user can access and modify their profile. The `userId` is obtained from `request.auth.uid`.\n*   **Authors (Reporters):** Author profiles are stored in `/authors/{authorId}`. The owner will have admin rights to create and edit authors. A boolean `verified` field indicates authenticity.\n*   **Articles:** Articles are stored in `/articles/{articleId}`. Each article contains an `authorId` field, creating a relationship between the article and the author. The owner can create, read, update, and delete articles. Users can read articles.\n*   **Donations:** Donations are stored in `/donations/{donationId}`. Each donation includes the `userId` of the donating user. This structure simplifies the security rules, ensuring only the user can read or write their donation information. The owner can read all donations.\n*   **Admin Roles:** The existence of a document in `/roles_admin/{uid}` grants admin privileges. This is preferred over custom claims for simplicity and debuggability.\n\n**Authorization Independence:** Achieved through path-based ownership for user profiles and authors, and denormalization of the author's ID within the article document. This eliminates the need for `get()` calls in security rules.\n\n**QAPs (Rules are not Filters):** Segregation of data into separate collections based on access requirements ensures that list operations are secure and efficient. Only the owner has access to articles and authors. Users can read articles."
+    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. It leverages denormalization and structural segregation to simplify security rules and enable secure list operations.\n\n*   **Users (User Profiles):** User profiles are stored under `/users/{userId}`. This path-based ownership ensures that only the authenticated user can access and modify their profile. The `userId` is obtained from `request.auth.uid`. A new 'role' field is added to manage user permissions.\n*   **Authors (Reporters):** Author profiles are stored in `/authors/{authorId}`. The owner will have admin rights to create and edit authors. A boolean `verified` field indicates authenticity.\n*   **Articles:** Articles are stored in `/articles/{articleId}`. Each article contains an `authorId` field, creating a relationship between the article and the author. The owner can create, read, update, and delete articles. Users can read articles.\n*   **Donations:** Donations are stored in `/donations/{donationId}`. Each donation includes the `userId` of the donating user. This structure simplifies the security rules, ensuring only the user can read or write their donation information. The owner can read all donations.\n*   **Admin Roles:** The existence of a document in `/roles_admin/{uid}` grants admin privileges. This is preferred over custom claims for simplicity and debuggability.\n\n**Authorization Independence:** Achieved through path-based ownership for user profiles and authors, and denormalization of the author's ID within the article document. This eliminates the need for `get()` calls in security rules.\n\n**QAPs (Rules are not Filters):** Segregation of data into separate collections based on access requirements ensures that list operations are secure and efficient. Only the owner has access to articles and authors. Users can read articles."
   }
 }
