@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, UserX } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,18 +28,21 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuSubContent,
     DropdownMenuPortal,
-    DropdownMenuSeparator
+    DropdownMenuSeparator,
+    DropdownMenuGroup
   } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks/use-user-role";
-import { useCollection, useFirebase, useMemoFirebase, setDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
+import { useFirebase, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { placeholderReporters } from "@/lib/placeholder-data";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function TeamAdminPage() {
     const { user: adminUser } = useUserRole();
@@ -56,48 +59,22 @@ export default function TeamAdminPage() {
         officeLocation: '',
         profilePictureUrl: '',
     });
-
-    const usersCollection = useMemoFirebase(
-      () => collection(firestore, 'users'),
-      [firestore]
-    );
-
-    const authorsCollection = useMemoFirebase(
-      () => collection(firestore, 'authors'),
-      [firestore]
-    );
-
-    const { data: users, isLoading: usersIsLoading } = useCollection(usersCollection);
-
-    const handleRoleChange = async (userId: string, newRole: string) => {
-        if (!firestore) return;
-        try {
-            const userRef = doc(firestore, 'users', userId);
-            const roleRef = doc(firestore, 'roles', userId);
-
-            setDocumentNonBlocking(userRef, { role: newRole }, { merge: true });
-            setDocumentNonBlocking(roleRef, { role: newRole }, { merge: true });
-
-            toast({
-                title: "Role Updated",
-                description: `User role has been successfully changed to ${newRole}.`,
-            });
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: "Error updating role",
-                description: error.message,
-            });
-        }
-    };
     
-    const handleDeleteUser = async (userId: string) => {
-       toast({
-          variant: 'destructive',
-          title: "Action Not Supported",
-          description: "Deleting users from the client is not supported for security reasons. This should be done from a secure backend environment.",
-      });
-    };
+    // This is placeholder data. In a production app, this list would be fetched
+    // from a secure backend (e.g., a Cloud Function) to avoid security rule violations.
+    // We are not using useCollection(collection(firestore, 'users')) here because
+    // client-side listing of all users is a security risk and is blocked by Firestore rules.
+    const users = placeholderReporters.map(r => ({
+        id: r.id,
+        firstName: r.name.split(' ')[0],
+        lastName: r.name.split(' ').slice(1).join(' '),
+        email: r.contact,
+        photoURL: '',
+        role: r.title.toLowerCase().includes('editor') ? 'editor' : 'reporter'
+    }));
+
+    const authorsCollection = collection(firestore, 'authors');
+
 
     const handleAddReporter = async () => {
         if(!newReporter.email || !authorsCollection) return;
@@ -113,6 +90,7 @@ export default function TeamAdminPage() {
             officeLocation: newReporter.officeLocation,
             profilePictureUrl: newReporter.profilePictureUrl || `https://avatar.vercel.sh/${newReporter.email}.png`,
             verified: true,
+            contact: newReporter.email,
             joinedDate: new Date().toLocaleDateString('en-CA') // YYYY-MM-DD
           };
           const docRef = await addDocumentNonBlocking(authorsCollection, reporterData);
@@ -141,6 +119,25 @@ export default function TeamAdminPage() {
         }
     };
     
+    // NOTE: This function is disabled because we are using placeholder data.
+    // It is kept for reference to show how role changes would be handled with live data.
+    const handleRoleChange = async (userId: string, newRole: string) => {
+        toast({
+            variant: "default",
+            title: "Action Not Available",
+            description: "Role changing is disabled when viewing placeholder data.",
+        });
+    };
+
+    // NOTE: Deleting users from the client is a security risk and not supported by the Firebase client SDKs.
+    // This function is for demonstration and will show a toast message.
+    const handleDeleteUser = () => {
+       toast({
+          variant: 'destructive',
+          title: "Action Not Supported",
+          description: "Deleting users from the client is not supported for security reasons. This should be done from a secure backend environment.",
+      });
+    };
 
   return (
     <Card>
@@ -161,7 +158,7 @@ export default function TeamAdminPage() {
                     <DialogHeader>
                         <DialogTitle>Add New Reporter</DialogTitle>
                         <DialogDescription>
-                            Fill in the details to create a new reporter and their press card. An invitation email will be sent to them to set up their account.
+                            Fill in the details to create a new reporter and their press card.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -246,7 +243,7 @@ export default function TeamAdminPage() {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                 <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger disabled={!canChangeRole}>Change Role</DropdownMenuSubTrigger>
+                                    <DropdownMenuSubTrigger disabled={!canChangeRole || true}>Change Role</DropdownMenuSubTrigger>
                                     <DropdownMenuPortal>
                                         <DropdownMenuSubContent>
                                             <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'member')}>Member</DropdownMenuItem>
@@ -257,7 +254,27 @@ export default function TeamAdminPage() {
                                     </DropdownMenuPortal>
                                 </DropdownMenuSub>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteUser(user.id)} disabled={!canChangeRole}>Delete (Not Supported)</DropdownMenuItem>
+                                 <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <DropdownMenuItem
+                                                className="text-destructive"
+                                                onSelect={(e) => {
+                                                    e.preventDefault(); // Prevent menu from closing
+                                                    handleDeleteUser();
+                                                }}
+                                                disabled={!canChangeRole}
+                                            >
+                                                <Trash className="mr-2 h-4 w-4" />
+                                                <span>Delete User</span>
+                                            </DropdownMenuItem>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="left">
+                                            <p>Client-side deletion is not secure.</p>
+                                            <p>Use a backend function with Admin SDK.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
@@ -269,3 +286,5 @@ export default function TeamAdminPage() {
     </Card>
   );
 }
+
+    
