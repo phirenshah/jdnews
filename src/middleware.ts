@@ -25,28 +25,12 @@ function getLocale(request: NextRequest): string {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-  const publicPaths = ['/login'];
 
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 
-  if (pathnameHasLocale) {
-     if(publicPaths.some(p => pathname.endsWith(p))) {
-        return;
-     }
-    return;
-  }
-  
-  if (publicPaths.some(p => pathname.endsWith(p))) {
-    const locale = getLocale(request);
-    const url = new URL(`/${locale}${pathname}`, request.url);
-    if(request.nextUrl.search) {
-      url.search = request.nextUrl.search;
-    }
-    return NextResponse.rewrite(url);
-  }
+  if (pathnameHasLocale) return;
 
   const locale = getLocale(request);
   request.nextUrl.pathname = `/${locale}${pathname}`;
@@ -56,6 +40,9 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|assets|favicon.ico|sw.js|admin).*)',
+    // Skip all internal paths (_next)
+    '/((?!_next|api|assets|favicon.ico|sw.js|admin).*)',
+    // Optional: only run on root (/) URL
+    // '/'
   ],
 };
