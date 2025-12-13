@@ -87,10 +87,8 @@ export function AdContainer({ type, className }: AdContainerProps) {
           externalUrl = `https://${externalUrl}`;
         }
         return (
-          <Link href={externalUrl} target="_blank" rel="noopener noreferrer">
-            <div className="relative w-full h-full">
-              {imageElement}
-            </div>
+          <Link href={externalUrl} target="_blank" rel="noopener noreferrer" className="block relative w-full h-full">
+            {imageElement}
           </Link>
         );
       }
