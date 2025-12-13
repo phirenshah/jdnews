@@ -30,25 +30,47 @@ import {
     DropdownMenuPortal
   } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { updateDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc } from "firebase/firestore";
+import { placeholderReporters } from "@/lib/placeholder-data";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks/use-user-role";
 
+// MOCK USER DATA TO AVOID INSECURE 'LIST' OPERATION ON CLIENT
+const mockUsers = [
+  ...placeholderReporters.map(r => ({ 
+    id: r.id, 
+    firstName: r.name.split(' ')[0], 
+    lastName: r.name.split(' ')[1] || '',
+    email: r.contact, 
+    role: 'reporter',
+    imageId: r.imageId
+  })),
+  {
+    id: 'user-member-1',
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@example.com',
+    role: 'member',
+    imageId: 'reporter-1' 
+  },
+   {
+    id: 'user-director-1',
+    firstName: 'Jane',
+    lastName: 'Smith',
+    email: 'jdnewsgujarati@gmail.com',
+    role: 'director',
+    imageId: 'reporter-2'
+  }
+];
+
+
 export default function TeamAdminPage() {
-    const firestore = useFirestore();
     const { user: adminUser } = useUserRole();
-    const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
-    const { data: users } = useCollection(usersCollection);
 
     const handleRoleChange = (userId: string, newRole: string) => {
-        if (!firestore) return;
-        const userDocRef = doc(firestore, 'users', userId);
-        updateDocumentNonBlocking(userDocRef, { role: newRole });
-
-        const roleDocRef = doc(firestore, 'roles', userId);
-        setDocumentNonBlocking(roleDocRef, { role: newRole }, { merge: true });
+        // This is disabled when using mock data.
+        // In a real app, this would trigger a secure Cloud Function.
+        console.log(`Request to change user ${userId} to role ${newRole}.`);
     };
 
   return (
@@ -72,14 +94,15 @@ export default function TeamAdminPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users?.map((user: any) => {
+            {mockUsers.map((user: any) => {
                 const canChangeRole = adminUser?.uid !== user.id;
+                const userImage = PlaceHolderImages.find(img => img.id === user.imageId);
                 return (
                     <TableRow key={user.id}>
                         <TableCell className="font-medium">
                             <div className="flex items-center gap-3">
                                 <Avatar>
-                                     <AvatarImage src={user.photoURL || `https://avatar.vercel.sh/${user.email}.png`} />
+                                     <AvatarImage src={userImage?.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} />
                                     <AvatarFallback>{user.firstName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 {user.firstName} {user.lastName}
@@ -123,4 +146,3 @@ export default function TeamAdminPage() {
   );
 }
 
-    
