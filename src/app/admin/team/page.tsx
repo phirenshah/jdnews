@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Trash, Camera, Upload, Loader2, Edit } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, Camera, Upload, Loader2, Edit, RefreshCw } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -62,6 +62,7 @@ export default function TeamAdminPage() {
     const [isAddReporterDialogOpen, setIsAddReporterDialogOpen] = useState(false);
     const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
     const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
+    const [isUpdatingCredits, setIsUpdatingCredits] = useState(false);
 
     const [findUserEmail, setFindUserEmail] = useState('');
     const [isFindingUser, setIsFindingUser] = useState(false);
@@ -254,9 +255,7 @@ export default function TeamAdminPage() {
     
     const handleRoleChange = async (user: any, newRole: string) => {
         if (!firestore || !user.id || !user.email) return;
-    
-        const oldRole = user.role;
-    
+
         try {
             const batch = writeBatch(firestore);
     
@@ -265,50 +264,14 @@ export default function TeamAdminPage() {
     
             batch.set(userDocRef, { role: newRole }, { merge: true });
             batch.set(roleDocRef, { role: newRole }, { merge: true });
-    
-            const wasContentCreator = contentCreatorRoles.includes(oldRole);
-            const isContentCreator = contentCreatorRoles.includes(newRole);
-    
-            if (!wasContentCreator && isContentCreator) {
-                // Promoted to content creator: Add to authors
-                const authorsQuery = query(collection(firestore, 'authors'), where('contact', '==', user.email));
-                const existingAuthor = await getDocs(authorsQuery);
-                if (existingAuthor.empty) {
-                    const newAuthorRef = doc(collection(firestore, 'authors'));
-                    batch.set(newAuthorRef, {
-                        id: newAuthorRef.id,
-                        name: `${user.firstName || ''} ${user.lastName || ''}`,
-                        title: newRole.charAt(0).toUpperCase() + newRole.slice(1), // Capitalize role
-                        contact: user.email,
-                        verified: true,
-                        profilePictureUrl: user.profilePictureUrl || '',
-                        dob: '', // You might want to add a form to get this data
-                        officeLocation: '', // and this
-                    });
-                }
-            } else if (wasContentCreator && !isContentCreator) {
-                // Demoted from content creator: Remove from authors
-                const authorsQuery = query(collection(firestore, 'authors'), where('contact', '==', user.email));
-                const authorsSnapshot = await getDocs(authorsQuery);
-                authorsSnapshot.forEach(authorDoc => {
-                    batch.delete(authorDoc.ref);
-                });
-            } else if (wasContentCreator && isContentCreator) {
-                // Role changed between creator types, update title
-                const authorsQuery = query(collection(firestore, 'authors'), where('contact', '==', user.email));
-                const authorsSnapshot = await getDocs(authorsQuery);
-                authorsSnapshot.forEach(authorDoc => {
-                    batch.update(authorDoc.ref, { title: newRole.charAt(0).toUpperCase() + newRole.slice(1) });
-                });
-            }
-    
+            
             await batch.commit();
     
             toast({
                 title: "Role Updated",
-                description: `${user.firstName}'s role has been changed to ${newRole}.`,
+                description: `${user.firstName}'s role has been changed to ${newRole}. Click 'Update Credits' to sync with the team page.`,
             });
-            forceRefetch(); // Refresh user list to show new role
+            forceRefetch();
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -347,6 +310,64 @@ export default function TeamAdminPage() {
           });
           forceRefetch();
       };
+      
+    const handleUpdateCredits = async () => {
+        if (!firestore || !users) return;
+
+        setIsUpdatingCredits(true);
+        const batch = writeBatch(firestore);
+        const authorsQuery = query(collection(firestore, 'authors'));
+        const allAuthorsSnapshot = await getDocs(authorsQuery);
+        const existingAuthorsByEmail = new Map(allAuthorsSnapshot.docs.map(d => [d.data().contact, {id: d.id, ...d.data()}]));
+
+        for (const user of users) {
+            const isContentCreator = contentCreatorRoles.includes(user.role);
+            const existingAuthor = existingAuthorsByEmail.get(user.email);
+
+            if (isContentCreator && !existingAuthor) {
+                // Add to authors
+                const newAuthorRef = doc(collection(firestore, 'authors'));
+                batch.set(newAuthorRef, {
+                    id: newAuthorRef.id,
+                    name: `${user.firstName || ''} ${user.lastName || ''}`,
+                    title: user.role.charAt(0).toUpperCase() + user.role.slice(1),
+                    contact: user.email,
+                    verified: true,
+                    profilePictureUrl: user.profilePictureUrl || '',
+                    dob: '', // Defaults
+                    officeLocation: '', // Defaults
+                });
+            } else if (!isContentCreator && existingAuthor) {
+                // Remove from authors
+                const authorDocRef = doc(firestore, 'authors', existingAuthor.id);
+                batch.delete(authorDocRef);
+            } else if (isContentCreator && existingAuthor) {
+                // Ensure author data is up-to-date
+                 const authorDocRef = doc(firestore, 'authors', existingAuthor.id);
+                 batch.update(authorDocRef, {
+                     name: `${user.firstName || ''} ${user.lastName || ''}`,
+                     title: user.role.charAt(0).toUpperCase() + user.role.slice(1),
+                     profilePictureUrl: user.profilePictureUrl || '',
+                 });
+            }
+        }
+        
+        try {
+            await batch.commit();
+            toast({
+                title: "Credits Updated",
+                description: "The public team page has been synchronized with the latest user roles.",
+            });
+        } catch (error: any) {
+             toast({
+                variant: 'destructive',
+                title: "Failed to Update Credits",
+                description: error.message,
+            });
+        } finally {
+            setIsUpdatingCredits(false);
+        }
+    };
 
     useEffect(() => {
         if (isCameraDialogOpen) {
@@ -388,6 +409,10 @@ export default function TeamAdminPage() {
             <CardDescription>Manage your team of reporters and their credentials.</CardDescription>
         </div>
          <div className="ml-auto flex items-center gap-2">
+            <Button onClick={handleUpdateCredits} disabled={isUpdatingCredits}>
+                {isUpdatingCredits ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+                Update Credits
+            </Button>
             <Dialog open={isAddReporterDialogOpen} onOpenChange={(isOpen) => { setIsAddReporterDialogOpen(isOpen); if (!isOpen) resetForm(); }}>
                 <DialogTrigger asChild>
                     <Button disabled={!isAdmin}>
@@ -618,3 +643,5 @@ export default function TeamAdminPage() {
     </>
   );
 }
+
+    
