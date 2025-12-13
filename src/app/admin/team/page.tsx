@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,25 +30,16 @@ import {
     DropdownMenuPortal
   } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-  } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useCollection, useFirestore } from "@/firebase";
-import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
+import { useUserRole } from "@/hooks/use-user-role";
 
 export default function TeamAdminPage() {
     const firestore = useFirestore();
+    const { user: adminUser } = useUserRole();
     const usersCollection = useMemo(() => collection(firestore, 'users'), [firestore]);
     const { data: users } = useCollection(usersCollection);
 
@@ -80,6 +71,7 @@ export default function TeamAdminPage() {
           </TableHeader>
           <TableBody>
             {users?.map((user: any) => {
+                const canChangeRole = adminUser?.uid !== user.id;
                 return (
                     <TableRow key={user.id}>
                         <TableCell className="font-medium">
@@ -93,12 +85,12 @@ export default function TeamAdminPage() {
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="capitalize">{user.role}</Badge>
+                            <Badge variant={user.role === 'director' ? 'default' : 'secondary'} className="capitalize">{user.role}</Badge>
                         </TableCell>
                         <TableCell>
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <Button aria-haspopup="true" size="icon" variant="ghost" disabled={!canChangeRole}>
                                 <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">Toggle menu</span>
                                 </Button>
