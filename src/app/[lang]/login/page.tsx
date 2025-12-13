@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/firebase/auth/use-user';
 import Image from 'next/image';
 import { useState, useEffect, FormEvent } from 'react';
 import {
@@ -20,7 +19,7 @@ import {
   getRedirectResult,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -52,38 +51,34 @@ export default function LoginPage() {
   const params = useParams();
   const lang = params.lang as string;
   const { auth, firestore } = useFirebase();
-  const { user, isUserLoading } = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(true); // Start loading immediately
+  const [isLoading, setIsLoading] = useState(true);
 
   const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
 
   useEffect(() => {
-    // This effect only handles redirecting an already logged-in user.
-    // It depends on the result of the `useAuth` hook.
     if (!isUserLoading && user) {
-      router.push(redirectUrl);
+      router.replace(redirectUrl);
     }
   }, [user, isUserLoading, router, redirectUrl]);
 
 
   useEffect(() => {
-    // This effect handles the result of a Google Sign-In redirect.
-    // It runs once on component mount.
     if (!auth || !firestore) {
-        // If firebase services aren't ready, don't stop loading.
         return;
     };
     
+    // This hook processes the redirect result from Google
     getRedirectResult(auth)
       .then((result) => {
         if (result && result.user) {
-          // User has successfully signed in via redirect.
+          // This means the user has just signed in via redirect.
           const userDocRef = doc(firestore, 'users', result.user.uid);
           
           setDocumentNonBlocking(userDocRef, {
@@ -92,15 +87,14 @@ export default function LoginPage() {
             firstName: result.user.displayName?.split(' ')[0] || '',
             lastName: result.user.displayName?.split(' ').slice(1).join(' ') || '',
             phoneNumber: result.user.phoneNumber || '',
-            role: 'member', // Default role on creation
+            role: 'member',
           }, { merge: true });
 
           toast({ title: 'Signed in with Google' });
-          // The user state will update via `onAuthStateChanged`, triggering the other useEffect.
-          // No need to redirect here, let the other effect handle it.
+          // The `user` state will update via `onAuthStateChanged`, triggering the other useEffect for redirection.
         } else {
            // No redirect result means the user is visiting the page normally.
-           // If there is no user from useAuth either, we can stop loading.
+           // If there is no user from useUser either, we can stop loading.
            if(!user) {
                setIsLoading(false);
            }
@@ -113,16 +107,18 @@ export default function LoginPage() {
           title: 'Google Sign-In Failed',
           description: error.message,
         });
-        setIsLoading(false); // Stop loading on error
+        setIsLoading(false);
       });
-  }, [auth, firestore, toast, user]); // Added 'user' to dependency array
+  }, [auth, firestore, toast, user, redirectUrl]);
 
 
   const handleGoogleSignIn = async () => {
     if (!auth) return;
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
-    // Start the redirect flow. The result is handled by the useEffect hook.
+    provider.setCustomParameters({
+        prompt: 'select_account'
+    });
     signInWithRedirect(auth, provider);
   };
 
