@@ -1,3 +1,4 @@
+
 'use client';
 import { Button } from "@/components/ui/button";
 import {
@@ -28,8 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useCollection, useFirestore } from "@/firebase";
-import { useMemo, useState } from "react";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useState } from "react";
 import { collection, serverTimestamp } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { useAuth } from "@/firebase/auth/use-user";
@@ -37,7 +38,7 @@ import { useAuth } from "@/firebase/auth/use-user";
 export default function ArticlesAdminPage() {
     const firestore = useFirestore();
     const { user } = useAuth();
-    const articlesCollection = useMemo(() => collection(firestore, 'articles'), [firestore]);
+    const articlesCollection = useMemoFirebase(() => collection(firestore, 'articles'), [firestore]);
     const { data: articles } = useCollection(articlesCollection);
 
     const [titleEnglish, setTitleEnglish] = useState('');
