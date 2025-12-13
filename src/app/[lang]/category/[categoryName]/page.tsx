@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useParams, notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { useRssFeed } from '@/hooks/use-rss-feed';
 import { getFeedUrl, sections } from '@/lib/categories';
 import { ArticleCard } from '@/components/article-card';
@@ -13,7 +13,9 @@ export default function CategoryPage({
 }: {
   params: Promise<{ lang: 'en' | 'gu'; categoryName: string }>;
 }) {
-  const { lang, categoryName } = React.use(params);
+  const resolvedParams = React.use(params);
+  const { lang, categoryName } = resolvedParams;
+  
   const categoryInfo = sections.find(
     (s) => s.href === `/category/${categoryName}`
   );
@@ -52,12 +54,14 @@ export default function CategoryPage({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      {!isLoading && !error && (
+      {!isLoading && !error && articles && articles.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {articles.map((article) => (
             <ArticleCard key={article.link} article={article} layout="vertical" />
           ))}
         </div>
+      ) : (
+        !isLoading && !error && <p>No articles found for this category.</p>
       )}
     </div>
   );

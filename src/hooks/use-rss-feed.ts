@@ -12,17 +12,21 @@ export function useRssFeed(feedUrl: string | null) {
     setError(null);
 
     const cacheKey = `rss_${url}`;
-    const cachedData = sessionStorage.getItem(cacheKey);
-
-    if (cachedData) {
-      const { data, timestamp } = JSON.parse(cachedData);
-      const isCacheFresh = (Date.now() - timestamp) < 10 * 60 * 1000; // 10 minutes
-      if (isCacheFresh) {
-        setArticles(data);
-        setIsLoading(false);
-        return;
+    try {
+      const cachedData = sessionStorage.getItem(cacheKey);
+      if (cachedData) {
+        const { data, timestamp } = JSON.parse(cachedData);
+        const isCacheFresh = (Date.now() - timestamp) < 10 * 60 * 1000; // 10 minutes
+        if (isCacheFresh) {
+          setArticles(data);
+          setIsLoading(false);
+          return;
+        }
       }
+    } catch (e) {
+        console.error("Failed to read from session storage", e);
     }
+
 
     try {
       const fetchedArticles = await fetchAndParseRss(url);
@@ -30,6 +34,7 @@ export function useRssFeed(feedUrl: string | null) {
       sessionStorage.setItem(cacheKey, JSON.stringify({ data: fetchedArticles, timestamp: Date.now() }));
     } catch (e: any) {
       setError(e.message || 'Failed to fetch RSS feed.');
+      console.error(`Failed to fetch or parse RSS feed from ${url}`, e);
     } finally {
       setIsLoading(false);
     }
