@@ -11,8 +11,8 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import Link from 'next/link';
 
-export default function AboutPage({ params }: { params: { lang: 'en' | 'gu' } }) {
-  const { lang } = params;
+export default function AboutPage({ params }: { params: Promise<{ lang: 'en' | 'gu' }> }) {
+  const { lang } = React.use(params);
   const { firestore } = useFirebase();
 
   const authorsCollection = useMemoFirebase(
