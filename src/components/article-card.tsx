@@ -1,28 +1,24 @@
+
 'use client';
-import { RssArticle } from '@/lib/rss';
+import { RssArticle, formatDate } from '@/lib/rss';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
-import { gu } from 'date-fns/locale';
 import Image from 'next/image';
 import { ChevronRight, Clock } from 'lucide-react';
 
 interface ArticleCardProps {
   article: RssArticle;
-  layout?: 'horizontal' | 'vertical' | 'compact';
-  showImage?: boolean;
+  layout?: 'vertical' | 'compact';
   className?: string;
 }
 
 export function ArticleCard({
   article,
   layout = 'vertical',
-  showImage = true,
   className,
 }: ArticleCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(article.pubDate), {
-    addSuffix: true,
-    locale: gu,
-  });
+  if (!article) return null;
+
+  const timeAgo = article.pubDate ? formatDate(article.pubDate) : '';
 
   if (layout === 'compact') {
     return (
@@ -43,7 +39,7 @@ export function ArticleCard({
             <Clock size={10} /> {timeAgo}
           </div>
         </div>
-        {showImage && article.imageUrl && (
+        {article.imageUrl && (
           <div className="w-20 h-16 flex-shrink-0 bg-gray-100 rounded-sm overflow-hidden relative">
             <Image
               src={article.imageUrl}
@@ -58,61 +54,41 @@ export function ArticleCard({
     );
   }
 
+  // Vertical layout (default)
   return (
     <a
       href={article.link}
       target="_blank"
       rel="noopener noreferrer"
-      className={cn(
-        'group block bg-card h-full flex flex-col',
-        layout === 'horizontal' ? 'flex-row items-center gap-3 p-3 rounded-md hover:bg-muted/50' : 'p-3 rounded-md shadow-sm border border-border/60 hover:shadow-lg transition-shadow',
-        className
-      )}
+      className={cn('group block bg-card h-full flex flex-col', className)}
     >
-      {showImage && article.imageUrl && (
-        <div
-          className={cn(
-            'relative overflow-hidden bg-muted rounded-sm',
-            layout === 'horizontal'
-              ? 'w-24 h-16 flex-shrink-0'
-              : 'w-full aspect-video'
-          )}
-        >
+      <div className="relative aspect-video overflow-hidden rounded-sm bg-gray-100">
+        {article.imageUrl ? (
           <Image
             src={article.imageUrl}
             alt={article.title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-           {layout === 'vertical' && (
-             <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
-                {timeAgo}
-            </div>
-           )}
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
+            <span className="font-bold text-xl">GS</span>
+          </div>
+        )}
+        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+           {timeAgo}
         </div>
-      )}
-      <div className={cn("flex-1 flex flex-col", layout === 'vertical' ? 'pt-3' : '')}>
-        <h3
-          className={cn(
-            'font-bold group-hover:text-primary transition-colors',
-            layout === 'horizontal'
-              ? 'text-sm line-clamp-3'
-              : 'text-base font-headline leading-snug mb-2 line-clamp-3'
-          )}
-        >
+      </div>
+      <div className="pt-3 flex-1 flex flex-col">
+        <h3 className="font-bold text-gray-900 text-base leading-snug group-hover:text-primary mb-2 line-clamp-3">
           {article.title}
         </h3>
-        {layout === 'horizontal' && <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>}
-        {layout === 'vertical' && (
-            <>
-                <p className="text-muted-foreground text-xs line-clamp-2 mb-3 flex-1" dangerouslySetInnerHTML={{ __html: article.description }}/>
-                <div className="flex items-center justify-between mt-auto border-t border-gray-50 pt-2">
-                    <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Read Full Story</span>
-                    <ChevronRight size={14} className="text-primary" />
-                </div>
-            </>
-        )}
+        <p className="text-gray-500 text-xs line-clamp-2 mb-3 flex-1">{article.description}</p>
+        <div className="flex items-center justify-between mt-auto border-t border-gray-50 pt-2">
+           <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Read Full Story</span>
+           <ChevronRight size={14} className="text-primary" />
+        </div>
       </div>
     </a>
   );

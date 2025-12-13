@@ -1,3 +1,4 @@
+
 'use client';
 import { RssArticle } from '@/lib/rss';
 
@@ -12,7 +13,7 @@ export function BreakingNewsTicker({ articles }: { articles: RssArticle[] }) {
       href={article.link}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-block mx-6 text-sm whitespace-nowrap hover:underline"
+      className="inline-flex items-center mx-6 text-sm whitespace-nowrap hover:underline"
     >
       <span className="w-1.5 h-1.5 bg-white rounded-full inline-block mr-2 align-middle"></span>
       {article.title}
@@ -24,7 +25,7 @@ export function BreakingNewsTicker({ articles }: { articles: RssArticle[] }) {
       <div className="bg-red-800 px-4 h-full flex items-center font-black uppercase tracking-wider text-xs whitespace-nowrap shadow-[4px_0_10px_rgba(0,0,0,0.2)] z-20">
         Breaking News
       </div>
-      <div className="ticker-wrap flex-grow h-full flex items-center">
+      <div className="flex-1 ticker-wrap">
         <div className="ticker">
           {tickerContent}
           {tickerContent} 

@@ -1,37 +1,22 @@
+
 export const sections = [
-  { name: 'Top Stories', href: '/' },
-  { name: 'International', href: '/category/international' },
-  { name: 'National', href: '/category/national' },
-  { name: 'Business', href: '/category/business' },
-  { name: 'Sports', href: '/category/sports' },
-  { name: 'Entertainment', href: '/category/entertainment' },
-  { name: 'Health', href: '/category/health' },
-  { name: 'Science-Technology', href: '/category/science-technology' },
+  { name: 'Top Stories', href: '#topStories' },
+  { name: 'International', href: '#international' },
+  { name: 'National', href: '#national' },
+  { name: 'Business', href: '#business' },
+  { name: 'Sports', href: '#sports' },
+  { name: 'Entertainment', href: '#entertainment' },
+  { name: 'Health', href: '#health' },
+  { name: 'Science-Technology', href: '#science-technology' },
 ];
 
-const feedMap: Record<string, string> = {
-    'Top Stories': 'top-stories',
-    'International': 'international',
-    'National': 'national',
-    'Business': 'business',
-    'Sports': 'sports',
-    'Entertainment': 'entertainment',
-    'Health': 'health',
-    'Science-Technology': 'science-technology'
+export const CATEGORY_LABELS: Record<string, string> = {
+  topStories: 'Top Stories',
+  national: 'National',
+  international: 'International',
+  business: 'Business',
+  sports: 'Sports',
+  entertainment: 'Entertainment',
+  health: 'Health',
+  tech: 'Science & Tech'
 };
-
-export function getFeedUrl(category: string, lang: 'en' | 'gu'): string | null {
-    const categorySlug = feedMap[category];
-    if (!categorySlug) return null;
-
-    if (lang === 'gu') {
-        const baseUrl = 'https://www.gujaratsamachar.com/rss';
-        if (category === 'Top Stories') {
-            return `${baseUrl}/top-stories`;
-        }
-        return `${baseUrl}/category/${categorySlug}`;
-    }
-    
-    // English feeds can be added here in the future
-    return null;
-}

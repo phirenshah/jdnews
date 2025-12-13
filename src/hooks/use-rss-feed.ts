@@ -1,54 +1,72 @@
+
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback }from 'react';
 import { fetchAndParseRss, RssArticle } from '@/lib/rss';
 
-export function useRssFeed(feedUrl: string | null) {
-  const [articles, setArticles] = useState<RssArticle[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const CACHE_KEY = 'gujarat_samachar_cache';
+const CACHE_DURATION = 1000 * 60 * 15; // 15 minutes
 
-  const fetchFeed = useCallback(async (url: string) => {
-    setIsLoading(true);
+export const RSS_FEEDS: Record<string, string> = {
+  topStories: 'https://www.gujaratsamachar.com/rss/top-stories',
+  international: 'https://www.gujaratsamachar.com/rss/category/international',
+  business: 'https://www.gujaratsamachar.com/rss/category/business',
+  sports: 'https://www.gujaratsamachar.com/rss/category/sports',
+  entertainment: 'https://www.gujaratsamachar.com/rss/category/entertainment',
+  health: 'https://www.gujaratsamachar.com/rss/category/health',
+  tech: 'https://www.gujaratsamachar.com/rss/category/science-technology',
+  national: 'https://www.gujaratsamachar.com/rss/category/national'
+};
+
+export const useNewsAggregator = () => {
+  const [news, setNews] = useState<Record<string, RssArticle[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+
+  const loadAllNews = useCallback(async (forceRefresh = false) => {
+    setLoading(true);
     setError(null);
 
-    const cacheKey = `rss_${url}`;
-    try {
-      const cachedData = sessionStorage.getItem(cacheKey);
-      if (cachedData) {
-        const { data, timestamp } = JSON.parse(cachedData);
-        const isCacheFresh = (Date.now() - timestamp) < 10 * 60 * 1000; // 10 minutes
-        if (isCacheFresh) {
-          setArticles(data);
-          setIsLoading(false);
+    // Check Cache
+    if (!forceRefresh) {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { timestamp, data } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          setNews(data);
+          setLastUpdated(timestamp);
+          setLoading(false);
           return;
         }
       }
-    } catch (e) {
-        console.error("Failed to read from session storage", e);
     }
 
-
     try {
-      const fetchedArticles = await fetchAndParseRss(url);
-      setArticles(fetchedArticles);
-      sessionStorage.setItem(cacheKey, JSON.stringify({ data: fetchedArticles, timestamp: Date.now() }));
-    } catch (e: any) {
-      setError(e.message || 'Failed to fetch RSS feed.');
-      console.error(`Failed to fetch or parse RSS feed from ${url}`, e);
+      const promises = Object.entries(RSS_FEEDS).map(async ([key, url]) => {
+        const items = await fetchAndParseRss(url);
+        return [key, items];
+      });
+
+      const results = await Promise.all(promises);
+      const newsData = Object.fromEntries(results);
+
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+        timestamp: Date.now(),
+        data: newsData
+      }));
+
+      setNews(newsData);
+      setLastUpdated(Date.now());
+    } catch (err: any) {
+      setError(err.message || 'Failed to load news feeds. Please check your connection.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (feedUrl) {
-      fetchFeed(feedUrl);
-    } else {
-      setArticles([]);
-      setIsLoading(false);
-      setError(null);
-    }
-  }, [feedUrl, fetchFeed]);
+    loadAllNews();
+  }, [loadAllNews]);
 
-  return { articles, isLoading, error };
-}
+  return { news, loading, error, refresh: () => loadAllNews(true), lastUpdated };
+};

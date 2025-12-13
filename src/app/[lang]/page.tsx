@@ -1,118 +1,146 @@
 
 'use client';
 import * as React from 'react';
-import { useRssFeed } from '@/hooks/use-rss-feed';
-import { getFeedUrl } from '@/lib/categories';
+import { useNewsAggregator } from '@/hooks/use-rss-feed';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BreakingNewsTicker } from '@/components/breaking-news-ticker';
 import { FeaturedStory } from '@/components/featured-story';
 import { ArticleCard } from '@/components/article-card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Frown, Newspaper } from 'lucide-react';
+import { AlertCircle, ChevronRight, Newspaper } from 'lucide-react';
 import { AdContainer } from '@/components/ad-container';
+
+const SectionTitle = ({ title, id }: { title: string, id: string }) => (
+  <div id={id} className="flex items-center justify-between border-l-4 border-primary pl-3 mb-4 mt-8">
+    <h2 className="text-xl font-bold text-gray-800 uppercase tracking-tight flex items-center gap-2">
+      <Newspaper size={20} className="text-primary" />
+      {title}
+    </h2>
+    <a href="#" className="text-xs font-semibold text-gray-500 hover:text-primary flex items-center">
+      VIEW ALL <ChevronRight size={14} />
+    </a>
+  </div>
+);
 
 export default function HomePage({
   params,
 }: {
   params: Promise<{ lang: 'en' | 'gu' }>;
 }) {
-  const { lang } = React.use(params);
-  const feedUrl = getFeedUrl('Top Stories', lang);
-  const {
-    articles,
-    isLoading,
-    error,
-  } = useRssFeed(feedUrl);
+  React.use(params);
+  const { news, loading, error, refresh } = useNewsAggregator();
 
-  const heroArticle = articles.length > 0 ? articles[0] : null;
-  const topSubArticles = articles.slice(1, 8);
-  const secondaryArticles = articles.slice(8, 16);
-  const breakingNews = articles.slice(0, 10);
+  const topStories = news.topStories || [];
+  const national = news.national || [];
+  const international = news.international || [];
+  const business = news.business || [];
+  const sports = news.sports || [];
+  const entertainment = news.entertainment || [];
+  const health = news.health || [];
+  const tech = news.tech || [];
+
+  const allHeadlines = React.useMemo(() => {
+    return [...topStories, ...national].slice(0, 10);
+  }, [topStories, national]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Alert variant="destructive" className="max-w-md text-center">
+          <AlertCircle size={48} className="mx-auto mb-4" />
+          <AlertTitle className="text-xl font-bold mb-2">Unable to load news</AlertTitle>
+          <AlertDescription className="mb-6">{error}</AlertDescription>
+          <button onClick={() => refresh()} className="bg-primary text-primary-foreground px-6 py-2 rounded-full font-semibold hover:bg-primary/90 transition">
+            Try Again
+          </button>
+        </Alert>
+      </div>
+    );
+  }
 
   const renderSkeleton = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="lg:col-span-8">
         <Skeleton className="h-[400px] w-full rounded-lg" />
-        <div className="mt-4 space-y-2">
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-        </div>
       </div>
-      <div className="space-y-4 bg-card p-4 rounded-md border">
-        {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex gap-3 py-2 border-b last:border-0">
-                <div className='flex-1 space-y-2'>
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-4/5" />
-                    <Skeleton className="h-3 w-1/4" />
-                </div>
-                 <Skeleton className="h-16 w-20" />
+      <div className="lg:col-span-4 space-y-2 bg-card p-4 rounded-md border">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div key={i} className="flex gap-3 py-2 border-b last:border-0">
+            <div className='flex-1 space-y-2'>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-4/5" />
             </div>
+            <Skeleton className="h-16 w-20 rounded-sm" />
+          </div>
         ))}
       </div>
     </div>
   );
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-6">
-      {isLoading && <Skeleton className="h-10 w-full mb-4" />}
-      {!isLoading && !error && breakingNews.length > 0 && (
-        <BreakingNewsTicker articles={breakingNews} />
-      )}
-
+    <div className="container mx-auto max-w-7xl px-4 py-6">
+      {loading && !allHeadlines.length ? <Skeleton className="h-10 w-full mb-4" /> : <BreakingNewsTicker articles={allHeadlines} />}
+      
       <main className="mt-6">
-        {isLoading && renderSkeleton()}
-        {error && (
-          <Alert variant="destructive">
-            <Frown className="h-4 w-4" />
-            <AlertTitle>Error Fetching Top Stories</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        {!isLoading && !error && heroArticle && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-8">
-              <FeaturedStory article={heroArticle} />
-            </div>
-            <div className="lg:col-span-4 flex flex-col h-full bg-card rounded-md shadow-sm border border-border/60 overflow-hidden">
+        <section id="topStories" className="mb-10">
+          {loading && !topStories.length ? renderSkeleton() : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-8">
+                {topStories[0] && <FeaturedStory article={topStories[0]} />}
+              </div>
+              <div className="lg:col-span-4 flex flex-col h-full bg-card rounded-md shadow-sm border border-border/60 overflow-hidden">
                 <div className="bg-muted px-4 py-2 border-b font-bold text-sm text-primary uppercase flex items-center gap-2">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                    Latest Updates
-               </div>
-               <div className="overflow-y-auto">
-                 {topSubArticles.map((article) => (
-                    <div key={article.link} className="px-4 hover:bg-muted/50 transition-colors">
-                        <ArticleCard
-                        article={article}
-                        layout="compact"
-                        showImage={true}
-                        />
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                  Latest Updates
+                </div>
+                <div className="overflow-y-auto">
+                  {topStories.slice(1, 8).map((article, idx) => (
+                    <div key={idx} className="px-4 hover:bg-muted/50 transition-colors">
+                      <ArticleCard article={article} layout="compact" />
                     </div>
-                ))}
-               </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-      </main>
-
-       <div className="my-8 flex w-full justify-center">
-        <AdContainer type="horizontal" className="w-full justify-center" />
-      </div>
-
-      {!isLoading && !error && secondaryArticles.length > 0 && (
-        <section className="mt-8">
-           <h2 className="text-2xl font-bold font-headline mb-4 border-b-2 border-primary pb-2 flex items-center gap-2">
-            <Newspaper />
-            More News
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {secondaryArticles.map((article) => (
-               <ArticleCard key={article.link} article={article} layout="vertical" />
-            ))}
-          </div>
+          )}
         </section>
-      )}
+
+        <AdContainer type="horizontal" className="w-full justify-center my-8" />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          <section id="national">
+            <SectionTitle title="National News" id="national" />
+            <div className="bg-card p-4 rounded-md shadow-sm border border-border/60">
+              {loading && !national.length ? <Skeleton className="h-48" /> : (
+                <>
+                  <div className="mb-4 border-b border-border pb-4">
+                    {national[0] && <ArticleCard article={national[0]} layout="vertical" />}
+                  </div>
+                  <div className="space-y-1">
+                    {national.slice(1, 4).map((item, idx) => <ArticleCard key={idx} article={item} layout="compact" />)}
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+
+          <section id="international">
+            <SectionTitle title="International" id="international"/>
+            <div className="bg-card p-4 rounded-md shadow-sm border border-border/60">
+              {loading && !international.length ? <Skeleton className="h-48" /> : (
+                <>
+                  <div className="mb-4 border-b border-border pb-4">
+                    {international[0] && <ArticleCard article={international[0]} layout="vertical" />}
+                  </div>
+                  <div className="space-y-1">
+                    {international.slice(1, 4).map((item, idx) => <ArticleCard key={idx} article={item} layout="compact" />)}
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+        </div>
+      </main>
     </div>
   );
 }

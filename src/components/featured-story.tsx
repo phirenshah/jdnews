@@ -1,16 +1,12 @@
+
 'use client';
-import { RssArticle } from '@/lib/rss';
+import { RssArticle, formatDate } from '@/lib/rss';
 import Image from 'next/image';
-import { formatDistanceToNow } from 'date-fns';
-import { gu } from 'date-fns/locale';
 import { Clock, Share2 } from 'lucide-react';
 
 export function FeaturedStory({ article }: { article: RssArticle }) {
     
-  const timeAgo = formatDistanceToNow(new Date(article.pubDate), {
-    addSuffix: true,
-    locale: gu
-  });
+  const timeAgo = article.pubDate ? formatDate(article.pubDate) : '';
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
