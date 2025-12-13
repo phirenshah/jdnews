@@ -33,11 +33,28 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { sections } from "@/lib/categories";
-import { useArticles } from '@/contexts/ArticlesContext';
+
+// Placeholder data since context is removed
+const placeholderArticles = [
+    {
+        id: '1',
+        titleEnglish: 'Sample Article 1',
+        author: 'Admin',
+        category: 'Technology',
+        publicationDate: new Date().toISOString(),
+    },
+    {
+        id: '2',
+        titleEnglish: 'Sample Article 2',
+        author: 'Admin',
+        category: 'Business',
+        publicationDate: new Date().toISOString(),
+    }
+];
 
 export default function ArticlesAdminPage() {
     const { toast } = useToast();
-    const { articles, addArticle } = useArticles();
+    const [articles, setArticles] = useState(placeholderArticles);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     
     // Form state
@@ -67,26 +84,22 @@ export default function ArticlesAdminPage() {
 
         const newArticle = {
             id: `new-${Date.now()}`,
-            slug: titleEnglish.toLowerCase().replace(/\s+/g, '-').slice(0, 50),
             titleEnglish,
-            titleGujarati,
-            excerptEnglish,
-            excerptGujarati,
             author,
             category,
             publicationDate: new Date().toISOString(),
-            imageUrl,
         };
 
-        addArticle(newArticle);
+        // @ts-ignore
+        setArticles(prev => [newArticle, ...prev]);
         toast({ title: 'Article Created Successfully', description: "The new article has been added to the list." });
         resetForm();
         setIsDialogOpen(false);
     };
 
     const handleDelete = (articleId: string) => {
-        // This is a mock action as we are not using a persistent backend
-        toast({ title: 'Delete action is disabled.' , description: "This is a mock action and doesn't persist."});
+        setArticles(prev => prev.filter(a => a.id !== articleId));
+        toast({ title: 'Article Deleted' , description: "This is a mock action and doesn't persist."});
     };
     
   return (
@@ -159,7 +172,7 @@ export default function ArticlesAdminPage() {
       <Card>
           <CardHeader>
           <CardTitle>Manage Articles</CardTitle>
-          <CardDescription>View, edit, or delete published articles from the static placeholder data.</CardDescription>
+          <CardDescription>View, edit, or delete articles.</CardDescription>
           </CardHeader>
           <CardContent>
           <Table>
