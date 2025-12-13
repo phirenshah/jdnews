@@ -81,11 +81,18 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* CSS for forcing light theme during export */
+  #press-card-export-container {
+    background: #ffffff !important;
+    color: #000000 !important;
+    color-scheme: light !important;
+  }
 }
 
 @layer components {
     .halo-effect {
-        @apply shadow-[0_0_20px_theme(colors.primary/0.2),0_0_40px_theme(colors.primary/0.1)];
+        @apply shadow-halo;
     }
 
     /* Flip Card Styles */
@@ -112,5 +119,12 @@
     }
     .flip-card-back {
         transform: rotateY(180deg);
+    }
+    
+    .export-mode * {
+      transform: none !important;
+      backface-visibility: visible !important;
+      animation: none !important;
+      transition: none !important;
     }
 }

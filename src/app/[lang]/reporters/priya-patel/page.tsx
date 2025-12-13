@@ -15,16 +15,14 @@ import { Dialog, DialogContent, DialogTitle, DialogFooter } from '@/components/u
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
+
 
 export default function ReporterProfilePage() {
     const params = useParams<{ lang: 'en' | 'gu' }>();
     const { lang } = params;
     const [isCardOpen, setIsCardOpen] = useState(false);
     const [clientReporterUrl, setClientReporterUrl] = useState('');
-    const frontCardRef = useRef<HTMLDivElement>(null);
-    const backCardRef = useRef<HTMLDivElement>(null);
     
     const author = placeholderReporters.find((r) => r.id === 'priya-patel');
     
@@ -42,38 +40,37 @@ export default function ReporterProfilePage() {
     const authorArticles = placeholderArticles.filter(a => a.author === author.name);
 
     const handleDownload = async () => {
-        if (!frontCardRef.current || !backCardRef.current) return;
-    
-        const pdf = new jsPDF();
-    
-        const canvasFront = await html2canvas(frontCardRef.current, { scale: 2 });
-        const imgDataFront = canvasFront.toDataURL('image/png');
-    
-        const cardWidth = 340;
-        const cardHeight = 540;
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const ratio = cardHeight / cardWidth;
-        let finalWidth = pdfWidth * 0.8;
-        let finalHeight = finalWidth * ratio;
+        const frontNode = document.createElement('div');
+        const backNode = document.createElement('div');
         
-        if (finalHeight > pdfHeight * 0.9) {
-            finalHeight = pdfHeight * 0.9;
-            finalWidth = finalHeight / ratio;
-        }
+        document.body.appendChild(frontNode);
+        document.body.appendChild(backNode);
 
-        const x = (pdfWidth - finalWidth) / 2;
-        const y = (pdfHeight - finalHeight) / 2;
+        const frontDataUrl = await toPng(frontNode, {
+            cacheBust: true,
+            pixelRatio: 3,
+            backgroundColor: '#ffffff'
+        });
 
-        pdf.addImage(imgDataFront, 'PNG', x, y, finalWidth, finalHeight);
-    
-        const canvasBack = await html2canvas(backCardRef.current, { scale: 2 });
-        const imgDataBack = canvasBack.toDataURL('image/png');
-        pdf.addPage();
-        pdf.addImage(imgDataBack, 'PNG', x, y, finalWidth, finalHeight);
-    
-        pdf.save(`${author.name}-Press-Card.pdf`);
-    };
+        const backDataUrl = await toPng(backNode, {
+            cacheBust: true,
+            pixelRatio: 3,
+            backgroundColor: '#ffffff'
+        });
+
+        const downloadLinkFront = document.createElement('a');
+        downloadLinkFront.download = `${author.name}-Press-Card-Front.png`;
+        downloadLinkFront.href = frontDataUrl;
+        downloadLinkFront.click();
+
+        const downloadLinkBack = document.createElement('a');
+        downloadLinkBack.download = `${author.name}-Press-Card-Back.png`;
+        downloadLinkBack.href = backDataUrl;
+        downloadLinkBack.click();
+
+        document.body.removeChild(frontNode);
+        document.body.removeChild(backNode);
+    }
 
     return (
         <>
@@ -162,24 +159,24 @@ export default function ReporterProfilePage() {
                 </div>
             </div>
             <Dialog open={isCardOpen} onOpenChange={setIsCardOpen}>
-                <DialogContent className="bg-transparent border-none shadow-none p-4 sm:max-w-4xl">
+                 <DialogContent className="bg-transparent border-none shadow-none p-4 sm:max-w-4xl flex flex-col">
                     <VisuallyHidden>
                         <DialogTitle>Reporter Press Card</DialogTitle>
                     </VisuallyHidden>
-                    <div className="max-h-[75vh] overflow-y-auto">
+                    <div className="flex-grow overflow-y-auto">
                         <div className="flex flex-wrap justify-center items-center gap-8 p-4">
-                             <div ref={frontCardRef}>
+                             <div id="press-card-front">
                                 <PressCardFront reporter={author} lang={lang} />
                             </div>
-                            <div ref={backCardRef}>
+                            <div id="press-card-back">
                                 <PressCardBack reporter={author} lang={lang} />
                             </div>
                         </div>
                     </div>
-                     <DialogFooter className="sm:justify-center">
-                        <Button onClick={handleDownload}>
+                     <DialogFooter className="sm:justify-center flex-shrink-0">
+                         <Button id="download-png" onClick={handleDownload}>
                             <Download className="mr-2 h-4 w-4" />
-                            Download Cards
+                            Download as PNG
                         </Button>
                     </DialogFooter>
                 </DialogContent>
