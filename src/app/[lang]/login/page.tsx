@@ -108,25 +108,25 @@ export default function LoginPage() {
         toast({ title: 'Login Successful' });
         router.push(redirectUrl);
     } catch (error: any) {
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-             // Check if an account exists to give a better message
-            const methods = await fetchSignInMethodsForEmail(auth, email);
-            if (methods.length === 0) {
-                // No account exists, redirect to signup
-                router.push(`/${lang}/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectUrl)}`);
-                 toast({
-                    variant: 'default',
-                    title: 'No Account Found',
-                    description: 'Redirecting you to the sign up page.',
-                });
-            } else {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Login Failed',
-                    description: 'Incorrect password. Please try again.',
-                });
-            }
-        } else {
+        // This error code means the user doesn't exist.
+        if (error.code === 'auth/user-not-found') {
+            toast({
+                variant: 'default',
+                title: 'No Account Found',
+                description: 'Redirecting you to the sign up page.',
+            });
+            router.push(`/${lang}/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectUrl)}`);
+        } 
+        // This error code means the password was wrong.
+        else if (error.code === 'auth/invalid-credential') {
+             toast({
+                variant: 'destructive',
+                title: 'Login Failed',
+                description: 'Incorrect password. Please try again.',
+            });
+        } 
+        // Handle other potential errors.
+        else {
              toast({
                 variant: 'destructive',
                 title: 'Login Failed',
