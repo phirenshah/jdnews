@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Trash, Camera, Upload } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, Camera, Upload, CalendarIcon } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,15 +34,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useFirebase, useCollection, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase";
-import { collection, doc } from "firebase/firestore";
+import { collection, doc, query, where, getDocs } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export default function TeamAdminPage() {
     const { user: adminUser, role: adminRole, isLoading: isRoleLoading } = useUserRole();
@@ -66,7 +70,7 @@ export default function TeamAdminPage() {
         lastName: '',
         email: '',
         title: '',
-        dob: '',
+        dob: undefined as Date | undefined,
         officeLocation: '',
         profilePictureUrl: '',
     });
@@ -82,7 +86,7 @@ export default function TeamAdminPage() {
     
     const resetForm = () => {
         setNewReporter({
-            firstName: '', lastName: '', email: '', title: '', dob: '',
+            firstName: '', lastName: '', email: '', title: '', dob: undefined,
             officeLocation: '', profilePictureUrl: '',
         });
         setImageFile(null);
@@ -120,7 +124,23 @@ export default function TeamAdminPage() {
     };
 
     const handleAddReporter = async () => {
-        if(!newReporter.email || !authorsCollection || !firestore) return;
+        if(!newReporter.email || !authorsCollection || !firestore || !users) return;
+
+        // Find user by email to get their UID
+        const userQuery = query(usersCollection, where("email", "==", newReporter.email));
+        const querySnapshot = await getDocs(userQuery);
+        
+        if (querySnapshot.empty) {
+            toast({
+                variant: 'destructive',
+                title: 'User not found',
+                description: `No user with email ${newReporter.email} exists in the system. Please ensure they have signed up.`,
+            });
+            return;
+        }
+        
+        const userDoc = querySnapshot.docs[0];
+        const userId = userDoc.id;
 
         let uploadedImageUrl = '';
         if (imageFile) {
@@ -144,28 +164,37 @@ export default function TeamAdminPage() {
 
         try {
             const authorData = {
-              id: '',
+              id: '', // This will be updated with the doc ID later
               name: `${newReporter.firstName} ${newReporter.lastName}`,
               title: newReporter.title,
-              dob: newReporter.dob,
+              dob: newReporter.dob ? format(newReporter.dob, 'dd/MM/yyyy') : '',
               contact: newReporter.email,
               officeLocation: newReporter.officeLocation,
               verified: true,
               profilePictureUrl: uploadedImageUrl,
+              imageId: `reporter-${userId}`
             };
 
-            const userDocRef = doc(firestore, 'users', newReporter.email); 
-            const roleDocRef = doc(firestore, 'roles_admin', newReporter.email);
+            const userDocRef = doc(firestore, 'users', userId);
+            const roleDocRef = doc(firestore, 'roles', userId);
 
-            await setDocumentNonBlocking(userDocRef, {
-                email: newReporter.email,
+            setDocumentNonBlocking(userDocRef, {
                 firstName: newReporter.firstName,
                 lastName: newReporter.lastName,
                 role: 'reporter',
             }, { merge: true });
 
+            setDocumentNonBlocking(roleDocRef, { role: 'reporter' }, { merge: true });
+            
+            if (newReporter.title === 'Director') {
+                const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
+                setDocumentNonBlocking(adminRoleDocRef, {}, { merge: true });
+            }
+
             const docRef = await addDocumentNonBlocking(authorsCollection, authorData);
-            await setDocumentNonBlocking(docRef, { id: docRef.id }, { merge: true });
+            if (docRef) {
+                setDocumentNonBlocking(docRef, { id: docRef.id }, { merge: true });
+            }
             
             toast({
                 title: "Reporter Created",
@@ -183,33 +212,50 @@ export default function TeamAdminPage() {
     };
     
     const handleRoleChange = async (userId: string, newRole: string) => {
-      if (!firestore || !userId) return;
-      const userDocRef = doc(firestore, 'users', userId);
-      setDocumentNonBlocking(userDocRef, { role: newRole }, { merge: true });
-      if (newRole === 'director') {
-        const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
-        setDocumentNonBlocking(adminRoleDocRef, {}, { merge: true });
-      } else {
-        const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
-        deleteDocumentNonBlocking(adminRoleDocRef);
-      }
-      toast({
-        title: "Role Updated",
-        description: `User role has been changed to ${newRole}.`,
-      });
-    };
-
-    const handleDeleteUser = (userId: string, email?: string) => {
         if (!firestore || !userId) return;
         const userDocRef = doc(firestore, 'users', userId);
-        deleteDocumentNonBlocking(userDocRef);
-        const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
-        deleteDocumentNonBlocking(adminRoleDocRef);
+        const roleDocRef = doc(firestore, 'roles', userId);
+        
+        setDocumentNonBlocking(userDocRef, { role: newRole }, { merge: true });
+        setDocumentNonBlocking(roleDocRef, { role: newRole }, { merge: true });
+      
+        if (newRole === 'director') {
+          const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
+          setDocumentNonBlocking(adminRoleDocRef, {}, { merge: true });
+        } else {
+          const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
+          deleteDocumentNonBlocking(adminRoleDocRef);
+        }
         toast({
-            title: "User Data Deleted",
-            description: `User ${email} has been removed. Note: Auth account still exists.`,
+          title: "Role Updated",
+          description: `User role has been changed to ${newRole}.`,
         });
-    };
+      };
+  
+      const handleDeleteUser = async (userId: string, email?: string) => {
+          if (!firestore || !userId) return;
+  
+          // Find author doc by email to delete it
+          const authorsQuery = query(collection(firestore, 'authors'), where('contact', '==', email));
+          const authorDocs = await getDocs(authorsQuery);
+          authorDocs.forEach(authorDoc => {
+              deleteDocumentNonBlocking(authorDoc.ref);
+          });
+  
+          const userDocRef = doc(firestore, 'users', userId);
+          deleteDocumentNonBlocking(userDocRef);
+          
+          const roleDocRef = doc(firestore, 'roles', userId);
+          deleteDocumentNonBlocking(roleDocRef);
+  
+          const adminRoleDocRef = doc(firestore, 'roles_admin', userId);
+          deleteDocumentNonBlocking(adminRoleDocRef);
+  
+          toast({
+              title: "User Data Deleted",
+              description: `User ${email} has been removed from Firestore. Note: Auth account still exists.`,
+          });
+      };
 
     useEffect(() => {
         if (isCameraDialogOpen) {
@@ -262,7 +308,7 @@ export default function TeamAdminPage() {
                     <DialogHeader>
                         <DialogTitle>Add New Reporter</DialogTitle>
                         <DialogDescription>
-                            Fill in the details to create a new reporter profile.
+                            Fill in the details to create a new reporter profile. The user must have signed up first.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -317,8 +363,8 @@ export default function TeamAdminPage() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email (must match login email for role)</Label>
-                            <Input id="email" type="email" value={newReporter.email} onChange={(e) => setNewReporter({...newReporter, email: e.target.value})} />
+                            <Label htmlFor="email">User's Login Email</Label>
+                            <Input id="email" type="email" value={newReporter.email} onChange={(e) => setNewReporter({...newReporter, email: e.target.value})} placeholder="user@example.com"/>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="title">Title</Label>
@@ -327,7 +373,28 @@ export default function TeamAdminPage() {
                         <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-2">
                                 <Label htmlFor="dob">Date of Birth</Label>
-                                <Input id="dob" placeholder="DD/MM/YYYY" value={newReporter.dob} onChange={(e) => setNewReporter({...newReporter, dob: e.target.value})}/>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant={"outline"}
+                                      className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !newReporter.dob && "text-muted-foreground"
+                                      )}
+                                    >
+                                      <CalendarIcon className="mr-2 h-4 w-4" />
+                                      {newReporter.dob ? format(newReporter.dob, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                      mode="single"
+                                      selected={newReporter.dob}
+                                      onSelect={(date) => setNewReporter({...newReporter, dob: date})}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="office">Office Location</Label>
