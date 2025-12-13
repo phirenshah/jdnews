@@ -4,14 +4,14 @@ import { useParams } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Mail, Newspaper, Link as LinkIcon, Download, X, CreditCard } from 'lucide-react';
+import { CheckCircle, Mail, Newspaper, Link as LinkIcon, Download, CreditCard } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { placeholderReporters, placeholderArticles } from '@/lib/placeholder-data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import QRCode from 'qrcode.react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
@@ -162,11 +162,11 @@ export default function ReporterProfilePage() {
                 </div>
             </div>
             <Dialog open={isCardOpen} onOpenChange={setIsCardOpen}>
-                <DialogContent className="bg-transparent border-none shadow-none p-0 flex flex-col h-full max-h-[90vh] sm:max-w-4xl">
+                <DialogContent className="bg-transparent border-none shadow-none p-4 sm:max-w-4xl">
                     <VisuallyHidden>
                         <DialogTitle>Reporter Press Card</DialogTitle>
                     </VisuallyHidden>
-                    <div className="flex-grow overflow-y-auto">
+                    <div className="max-h-[75vh] overflow-y-auto">
                         <div className="flex flex-wrap justify-center items-center gap-8 p-4">
                              <div ref={frontCardRef}>
                                 <PressCardFront reporter={author} lang={lang} />
@@ -176,12 +176,12 @@ export default function ReporterProfilePage() {
                             </div>
                         </div>
                     </div>
-                     <div className="flex-shrink-0 p-4 bg-transparent text-center">
+                     <DialogFooter className="sm:justify-center">
                          <Button onClick={handleDownload}>
                             <Download className="mr-2 h-4 w-4" />
                             Download Cards
                         </Button>
-                    </div>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </>
