@@ -42,10 +42,9 @@ const navLinks = [
 function AuthButton({ lang }: { lang: string }) {
   const { user, isUserLoading } = useAuth();
   const { auth } = useFirebase();
-  const { role } = useUserRole();
+  const { role, isAdmin } = useUserRole();
 
   const canAccessDashboard = role && ['reporter', 'editor', 'director'].includes(role);
-  const isAdmin = role && role === 'director';
 
   if (isUserLoading) {
     return <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />;
@@ -82,7 +81,7 @@ function AuthButton({ lang }: { lang: string }) {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {canAccessDashboard && (
-             <Link href={`/${lang}/dashboard`}>
+             <Link href={`/admin/articles`}>
               <DropdownMenuItem>
                 <Newspaper className="mr-2 h-4 w-4" />
                 Dashboard
