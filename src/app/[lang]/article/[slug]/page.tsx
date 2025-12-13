@@ -63,7 +63,7 @@ export default function ArticlePage() {
     const { firestore } = useFirebase();
 
     const articlesQuery = useMemoFirebase(
-        () => firestore ? query(collection(firestore, 'articles'), where('slug', '==', slug)) : null,
+        () => firestore && slug ? query(collection(firestore, 'articles'), where('slug', '==', slug)) : null,
         [firestore, slug]
     );
 
@@ -79,7 +79,7 @@ export default function ArticlePage() {
     
     if (error) {
         console.error(error);
-        return <div className="container py-8 text-center">Error loading article.</div>
+        return <div className="container py-8 text-center">Error loading article. Please check your Firestore security rules and index configuration.</div>
     }
 
     const article = articles?.[0];
@@ -135,7 +135,7 @@ export default function ArticlePage() {
                         </div>
 
                         <div className="col-span-12 md:col-span-8 lg:col-span-7 prose prose-lg dark:prose-invert max-w-full font-body">
-                           {articleContent.split('\n').map((paragraph, index) => (
+                           {articleContent.split('\\n').map((paragraph, index) => (
                                 <p key={index}>{paragraph}</p>
                            ))}
                         </div>
