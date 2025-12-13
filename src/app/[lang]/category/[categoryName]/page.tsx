@@ -1,94 +1,64 @@
-
 'use client';
-
-import Image from 'next/image';
-import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { useParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
-import type { Article } from '@/lib/definitions';
-import { useArticles } from '@/contexts/ArticlesContext';
-import { useEffect, useState } from 'react';
 import * as React from 'react';
+import { useParams, notFound } from 'next/navigation';
+import { useRssFeed } from '@/hooks/use-rss-feed';
+import { getFeedUrl, sections } from '@/lib/categories';
+import { ArticleCard } from '@/components/article-card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Frown } from 'lucide-react';
 
-type StrippedArticle = Omit<Article, 'authorId' | 'contentEnglish' | 'contentGujarati'>;
-
-export default function CategoryPage({ params }: { params: Promise<{ lang: 'en' | 'gu', categoryName: string }> }) {
+export default function CategoryPage({
+  params,
+}: {
+  params: Promise<{ lang: 'en' | 'gu'; categoryName: string }>;
+}) {
   const { lang, categoryName } = React.use(params);
-  const { articles: allArticles } = useArticles();
-  const [filteredArticles, setFilteredArticles] = useState<StrippedArticle[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const categoryInfo = sections.find(
+    (s) => s.href === `/category/${categoryName}`
+  );
 
-  // Capitalize first letter for query
-  const formattedCategory = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase();
-
-  useEffect(() => {
-    setIsLoading(true);
-    if (allArticles) {
-      const filtered = allArticles.filter(
-        (article: StrippedArticle) => article.category === formattedCategory
-      );
-      setFilteredArticles(filtered);
-    }
-    setIsLoading(false);
-  }, [formattedCategory, allArticles]);
-  
-  const title = lang === 'en' ? formattedCategory : formattedCategory; // Add Gujarati translations if available
-
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="h-16 w-16 animate-spin" />
-      </div>
-    );
+  if (!categoryInfo) {
+    notFound();
   }
-  
-  if (!isLoading && !filteredArticles?.length) {
-      return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-4xl font-bold font-headline mb-8">{title}</h1>
-            <p>No articles found in this category yet.</p>
-        </div>
-      )
-  }
+
+  const feedUrl = getFeedUrl(categoryInfo.name, lang);
+  const { articles, isLoading, error } = useRssFeed(feedUrl);
+
+  const title = lang === 'en' ? categoryInfo.name : categoryInfo.name;
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold font-headline mb-8">{title}</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredArticles?.map((article) => {
-          const articleTitle = lang === 'en' ? article.titleEnglish : article.titleGujarati;
-          const articleExcerpt = lang === 'en' ? article.excerptEnglish : article.excerptGujarati;
-
-          return (
-            <Card key={article.id} className="flex flex-col shadow-md halo-effect">
-              <Link href={`/${lang}/article/${article.slug}`} className="flex flex-col flex-grow">
-                <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
-                  {article.imageUrl ? (
-                    <Image
-                      src={article.imageUrl}
-                      alt={articleTitle}
-                      fill
-                      className="object-cover transition-transform duration-300 hover:scale-105"
-                    />
-                  ) : <div className="w-full h-full bg-muted"></div>}
-                </div>
-                <CardContent className="p-4 flex flex-col flex-grow">
-                  <h3 className="font-headline text-xl font-bold mb-2 flex-grow">
-                    {articleTitle}
-                  </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    {articleExcerpt}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {new Date(article.publicationDate).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </p>
-                </CardContent>
-              </Link>
-            </Card>
-          );
-        })}
-      </div>
+      <h1 className="text-3xl font-bold font-headline mb-6 border-b-2 border-primary pb-2">
+        {title}
+      </h1>
+      {isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="flex flex-col space-y-3">
+              <Skeleton className="h-[125px] w-full rounded-lg" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {error && (
+        <Alert variant="destructive">
+          <Frown className="h-4 w-4" />
+          <AlertTitle>Error Fetching News</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {!isLoading && !error && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {articles.map((article) => (
+            <ArticleCard key={article.link} article={article} layout="vertical" />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

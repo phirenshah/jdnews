@@ -1,17 +1,15 @@
-
 export type Article = {
-  id: string;
+  title: string;
   slug: string;
-  titleEnglish: string;
-  titleGujarati: string;
-  excerptEnglish: string;
-  excerptGujarati: string;
-  contentEnglish: string;
-  contentGujarati: string;
-  author: string;
+  content: string;
   category: string;
-  publicationDate: any;
-  imageUrl: string;
+  lang: string;
+  coverImage: string;
+  authorName: string;
+  authorId: string;
+  published: boolean;
+  featured: boolean;
+  createdAt: any; // Firestore Timestamp
 };
 
 export type Reporter = {

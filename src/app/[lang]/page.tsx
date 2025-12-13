@@ -1,120 +1,103 @@
-
 'use client';
 import * as React from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRssFeed } from '@/hooks/use-rss-feed';
+import { getFeedUrl } from '@/lib/categories';
+import { Skeleton } from '@/components/ui/skeleton';
+import { BreakingNewsTicker } from '@/components/breaking-news-ticker';
+import { FeaturedStory } from '@/components/featured-story';
+import { ArticleCard } from '@/components/article-card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Frown, Newspaper } from 'lucide-react';
 import { AdContainer } from '@/components/ad-container';
-import { Separator } from '@/components/ui/separator';
-import { useArticles } from '@/contexts/ArticlesContext';
 
-export default function HomePage({ params }: { params: Promise<{ lang: 'en' | 'gu' }> }) {
+export default function HomePage({
+  params,
+}: {
+  params: Promise<{ lang: 'en' | 'gu' }>;
+}) {
   const { lang } = React.use(params);
-  const { articles } = useArticles();
+  const feedUrl = getFeedUrl('Top Stories', lang);
+  const {
+    articles,
+    isLoading,
+    error,
+  } = useRssFeed(feedUrl);
 
-  if (articles.length === 0) {
-    // Optional: show a loading state
-    return <div>Loading articles...</div>;
-  }
-  
-  const heroArticle = articles[0];
-  const secondaryArticles = articles.slice(1, 5);
+  const heroArticle = articles.length > 0 ? articles[0] : null;
+  const topSubArticles = articles.slice(1, 5);
+  const secondaryArticles = articles.slice(5, 13);
+  const breakingNews = articles.slice(0, 10);
+
+  const renderSkeleton = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2">
+        <Skeleton className="h-[400px] w-full rounded-lg" />
+        <div className="mt-4 space-y-2">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+      </div>
+      <div className="space-y-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 w-full" />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main content */}
-        <div className="lg:col-span-9 space-y-8">
-          {/* Hero Section */}
-          <Card className="overflow-hidden shadow-lg halo-effect">
-            <Link href={`/${lang}/article/${heroArticle.slug}`}>
-              <div className="relative h-96 w-full">
-                {heroArticle.imageUrl && (
-                  <Image
-                    src={heroArticle.imageUrl}
-                    alt={heroArticle.titleEnglish}
-                    fill
-                    className="object-cover transition-transform duration-300 hover:scale-105"
-                    priority
-                  />
-                )}
-              </div>
-              <CardHeader>
-                <CardTitle className="font-headline text-3xl lg:text-4xl leading-tight">
-                  {lang === 'en' ? heroArticle.titleEnglish : heroArticle.titleGujarati}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-lg">
-                  {lang === 'en' ? heroArticle.excerptEnglish : heroArticle.excerptGujarati}
-                </p>
-              </CardContent>
-            </Link>
-          </Card>
+    <div className="container mx-auto px-2 sm:px-4 py-6">
+      {isLoading && <Skeleton className="h-10 w-full mb-4" />}
+      {!isLoading && !error && breakingNews.length > 0 && (
+        <BreakingNewsTicker articles={breakingNews} />
+      )}
 
-          {/* Secondary Articles */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {secondaryArticles.map((article) => {
-              return (
-                <Card key={article.id} className="flex flex-col shadow-md halo-effect">
-                  <Link href={`/${lang}/article/${article.slug}`} className="flex flex-col flex-grow">
-                    <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
-                      {article.imageUrl && (
-                        <Image
-                          src={article.imageUrl}
-                          alt={lang === 'en' ? article.titleEnglish : article.titleGujarati}
-                          fill
-                          className="object-cover transition-transform duration-300 hover:scale-105"
-                        />
-                      )}
-                    </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h3 className="font-headline text-xl font-bold mb-2 flex-grow">
-                        {lang === 'en' ? article.titleEnglish : article.titleGujarati}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {lang === 'en' ? article.excerptEnglish : article.excerptGujarati}
-                      </p>
-                    </div>
-                  </Link>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <aside className="lg:col-span-3 space-y-8">
-          <AdContainer type="vertical" />
-          
-          <Card className="halo-effect">
-            <CardHeader>
-              <CardTitle className="font-headline text-xl">From Other Sources</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.entries({}).map(([source, items]: [string, any[]], index) => (
-                <div key={source}>
-                  <h4 className="font-bold mb-2">{source}</h4>
-                  <ul className="space-y-2">
-                    {items.map((item) => (
-                      <li key={item.title}>
-                        <Link href={item.link} className="text-sm hover:text-primary hover:underline">
-                          {item.title}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  {index < Object.keys({}).length - 1 && <Separator className="mt-4"/>}
-                </div>
+      <main className="mt-6">
+        {isLoading && renderSkeleton()}
+        {error && (
+          <Alert variant="destructive">
+            <Frown className="h-4 w-4" />
+            <AlertTitle>Error Fetching Top Stories</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        {!isLoading && !error && heroArticle && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <FeaturedStory article={heroArticle} />
+            </div>
+            <div className="space-y-4">
+              {topSubArticles.map((article) => (
+                <ArticleCard
+                  key={article.link}
+                  article={article}
+                  layout="horizontal"
+                  showImage={true}
+                />
               ))}
-            </CardContent>
-          </Card>
-        </aside>
+            </div>
+          </div>
+        )}
       </main>
 
-      <div className="my-12 flex w-full justify-center">
+       <div className="my-8 flex w-full justify-center">
         <AdContainer type="horizontal" className="w-full justify-center" />
       </div>
+
+      {!isLoading && !error && secondaryArticles.length > 0 && (
+        <section className="mt-8">
+           <h2 className="text-2xl font-bold font-headline mb-4 border-b-2 border-primary pb-2 flex items-center gap-2">
+            <Newspaper />
+            More News
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {secondaryArticles.map((article) => (
+               <ArticleCard key={article.link} article={article} layout="vertical" />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

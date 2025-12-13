@@ -1,28 +1,25 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { placeholderArticles as defaultArticles } from '@/lib/placeholder-data';
-import type { Article } from '@/lib/definitions';
-
-type StrippedArticle = Omit<Article, 'authorId' | 'contentEnglish' | 'contentGujarati'>;
+import { RssArticle } from '@/lib/rss';
 
 interface ArticlesContextType {
-  articles: StrippedArticle[];
-  addArticle: (article: StrippedArticle) => void;
+  articles: RssArticle[];
+  setArticles: (articles: RssArticle[]) => void;
+  addArticle: (article: RssArticle) => void;
 }
 
 const ArticlesContext = createContext<ArticlesContextType | undefined>(undefined);
 
 export const ArticlesProvider = ({ children }: { children: ReactNode }) => {
-  const [articles, setArticles] = useState<StrippedArticle[]>(defaultArticles);
+  const [articles, setArticles] = useState<RssArticle[]>([]);
 
-  const addArticle = (article: StrippedArticle) => {
+  const addArticle = (article: RssArticle) => {
     setArticles(prevArticles => [article, ...prevArticles]);
   };
 
   return (
-    <ArticlesContext.Provider value={{ articles, addArticle }}>
+    <ArticlesContext.Provider value={{ articles, setArticles, addArticle }}>
       {children}
     </ArticlesContext.Provider>
   );
