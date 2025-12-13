@@ -21,6 +21,7 @@ import { collection, doc, query, where } from 'firebase/firestore';
 import type { Reporter, Article } from '@/lib/definitions';
 import { useCollection } from '@/firebase';
 
+export const dynamic = 'force-dynamic';
 
 export default function ReporterProfilePage() {
     const params = useParams<{ lang: 'en' | 'gu', id: string }>();
@@ -42,17 +43,17 @@ export default function ReporterProfilePage() {
     );
 
     const authorArticlesQuery = useMemoFirebase(
-      () => (articlesCollectionRef && id ? query(articlesCollectionRef, where('authorId', '==', id)) : null),
-      [articlesCollectionRef, id]
+      () => (articlesCollectionRef && author?.id ? query(articlesCollectionRef, where('authorId', '==', author.id)) : null),
+      [articlesCollectionRef, author?.id]
     );
     
     const { data: authorArticles, isLoading: areArticlesLoading } = useCollection<Article>(authorArticlesQuery);
     
     useEffect(() => {
         if (typeof window !== 'undefined' && author) {
-            setClientReporterUrl(`${window.location.origin}/${lang}/reporters/${id}`);
+            setClientReporterUrl(`${window.location.origin}/${lang}/reporters/${author.id}`);
         }
-    }, [lang, author, id]);
+    }, [lang, author]);
     
     if (isAuthorLoading) {
         return (
@@ -112,7 +113,7 @@ export default function ReporterProfilePage() {
                             <div className="bg-card p-6 rounded-lg shadow-md">
                                 <h3 className="font-bold text-lg mb-4 text-center font-headline">Digital Press Card</h3>
                                 <div className="w-48 h-48 mx-auto bg-white p-2 rounded-md flex items-center justify-center">
-                                <QRCode
+                                {clientReporterUrl && <QRCode
                                     value={clientReporterUrl}
                                     size={176}
                                     bgColor="#ffffff"
@@ -124,7 +125,7 @@ export default function ReporterProfilePage() {
                                         width: 32,
                                         excavate: true,
                                     }}
-                                    />
+                                    />}
                                 </div>
                                 <p className="text-xs text-muted-foreground text-center mt-2">Scan to verify authenticity</p>
                             </div>
@@ -151,10 +152,10 @@ export default function ReporterProfilePage() {
                                     <Newspaper className="w-5 h-5 mr-3 text-muted-foreground" />
                                     <span>{authorArticles?.length ?? 0} Articles Published</span>
                                 </div>
-                                <div className="flex items-center">
+                                {clientReporterUrl && <div className="flex items-center">
                                 <LinkIcon className="w-5 h-5 mr-3 text-muted-foreground" />
                                 <Link href={clientReporterUrl} className="text-primary hover:underline truncate">{clientReporterUrl}</Link>
-                                </div>
+                                </div>}
                             </div>
 
                             <Separator className="my-8" />
@@ -162,14 +163,18 @@ export default function ReporterProfilePage() {
                             <div className="space-y-4">
                                 {areArticlesLoading && <div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin"/></div>}
                                 {!areArticlesLoading && authorArticles && authorArticles.length > 0 ? (
-                                    authorArticles.map(article => (
-                                        <Link key={article.id} href={`/${lang}/article/${article.slug}`} className="block hover:bg-muted/50 p-3 rounded-md">
-                                            <h3 className="font-bold">{lang === 'en' ? article.titleEnglish : article.titleGujarati}</h3>
-                                            {article.publicationDate && (
-                                                <p className="text-sm text-muted-foreground">{new Date(article.publicationDate.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                            )}
-                                        </Link>
-                                    ))
+                                    authorArticles.map(article => {
+                                        const title = lang === 'en' ? article.titleEnglish : article.titleGujarati;
+                                        const slug = title?.toLowerCase().replace(/\s+/g, '-');
+                                        return (
+                                            <Link key={article.id} href={`/${lang}/article/${slug}`} className="block hover:bg-muted/50 p-3 rounded-md">
+                                                <h3 className="font-bold">{title}</h3>
+                                                {article.publicationDate && (
+                                                    <p className="text-sm text-muted-foreground">{new Date(article.publicationDate.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                                )}
+                                            </Link>
+                                        )
+                                    })
                                 ) : (
                                    !areArticlesLoading && <p className="text-muted-foreground">No articles published yet.</p>
                                 )}
