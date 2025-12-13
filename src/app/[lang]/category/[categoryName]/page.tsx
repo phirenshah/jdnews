@@ -6,16 +6,18 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { useParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { placeholderArticles } from '@/lib/placeholder-data';
+import type { Article } from '@/lib/definitions';
+import { useArticles } from '@/contexts/ArticlesContext';
 import { useEffect, useState } from 'react';
 
-type Article = (typeof placeholderArticles)[0];
+type StrippedArticle = Omit<Article, 'authorId' | 'contentEnglish' | 'contentGujarati'>;
 
 export default function CategoryPage() {
   const params = useParams();
   const lang = params.lang as 'en' | 'gu';
   const categoryName = params.categoryName as string;
-  const [articles, setArticles] = useState<Article[]>([]);
+  const { articles: allArticles } = useArticles();
+  const [filteredArticles, setFilteredArticles] = useState<StrippedArticle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Capitalize first letter for query
@@ -23,14 +25,14 @@ export default function CategoryPage() {
 
   useEffect(() => {
     setIsLoading(true);
-    const storedArticles = localStorage.getItem('articles');
-    const articlesToFilter = storedArticles ? JSON.parse(storedArticles) : placeholderArticles;
-    const filteredArticles = articlesToFilter.filter(
-      (article: Article) => article.category === formattedCategory
-    );
-    setArticles(filteredArticles);
+    if (allArticles) {
+      const filtered = allArticles.filter(
+        (article: StrippedArticle) => article.category === formattedCategory
+      );
+      setFilteredArticles(filtered);
+    }
     setIsLoading(false);
-  }, [formattedCategory]);
+  }, [formattedCategory, allArticles]);
   
   const title = lang === 'en' ? formattedCategory : formattedCategory; // Add Gujarati translations if available
 
@@ -42,7 +44,7 @@ export default function CategoryPage() {
     );
   }
   
-  if (!isLoading && !articles?.length) {
+  if (!isLoading && !filteredArticles?.length) {
       return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-4xl font-bold font-headline mb-8">{title}</h1>
@@ -55,7 +57,7 @@ export default function CategoryPage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold font-headline mb-8">{title}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {articles?.map((article) => {
+        {filteredArticles?.map((article) => {
           const articleTitle = lang === 'en' ? article.titleEnglish : article.titleGujarati;
           const articleExcerpt = lang === 'en' ? article.excerptEnglish : article.excerptGujarati;
 

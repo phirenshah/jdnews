@@ -10,11 +10,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { AdContainer } from '@/components/ad-container';
 import type { Reporter } from '@/lib/definitions';
-import { placeholderArticles, placeholderReporters } from '@/lib/placeholder-data';
+import { placeholderReporters } from '@/lib/placeholder-data';
 import { fullPlaceholderArticles } from '@/lib/placeholder-data-full';
 import { useState, useEffect } from 'react';
+import { useArticles } from '@/contexts/ArticlesContext';
 
-type Article = (typeof placeholderArticles)[0] & { contentEnglish: string, contentGujarati: string, author: string, publicationDate: string };
+type Article = ReturnType<typeof useArticles>['articles'][0] & { contentEnglish: string, contentGujarati: string };
 
 function AuthorDisplay({ author }: { author: Reporter | null }) {
     if (!author) {
@@ -50,21 +51,22 @@ export default function ArticlePage() {
     const lang = params.lang as 'en' | 'gu';
     const slug = params.slug as string;
 
+    const { articles } = useArticles();
+
     const [article, setArticle] = useState<Article | null | undefined>(undefined);
     const [author, setAuthor] = useState<Reporter | null>(null);
 
     useEffect(() => {
-        const storedArticles = localStorage.getItem('articles');
-        const articlesToSearch = storedArticles ? JSON.parse(storedArticles) : placeholderArticles;
+        const articlesToSearch = articles;
         
-        const articleExcerpt = articlesToSearch.find((a: Article) => a.slug === slug);
-        const articleContent = fullPlaceholderArticles.find(a => a.slug === slug);
+        const articleExcerpt = articlesToSearch.find((a) => a.slug === slug);
+        const articleContentData = fullPlaceholderArticles.find(a => a.slug === slug);
     
         if (articleExcerpt) {
             const fullArticle = {
                 ...articleExcerpt,
-                contentEnglish: articleContent?.contentEnglish || '',
-                contentGujarati: articleContent?.contentGujarati || '',
+                contentEnglish: articleContentData?.contentEnglish || articleExcerpt.excerptEnglish, // Fallback to excerpt
+                contentGujarati: articleContentData?.contentGujarati || articleExcerpt.excerptGujarati, // Fallback to excerpt
             };
             setArticle(fullArticle as Article);
 
@@ -73,7 +75,7 @@ export default function ArticlePage() {
         } else {
             setArticle(null);
         }
-    }, [slug]);
+    }, [slug, articles]);
 
     if (article === undefined) {
         return (
