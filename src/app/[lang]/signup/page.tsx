@@ -32,7 +32,6 @@ const formatErrorMessage = (code: string) => {
       case 'auth/wrong-password': return 'Incorrect password.';
       case 'auth/email-already-in-use': return 'An account with this email already exists.';
       case 'auth/weak-password': return 'Password should be at least 6 characters.';
-      case 'auth/popup-closed-by-user': return 'Sign in was cancelled.';
       default: return 'An error occurred. Please try again.';
     }
 };

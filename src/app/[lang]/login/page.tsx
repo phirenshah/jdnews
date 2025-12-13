@@ -14,8 +14,6 @@ import { Label } from '@/components/ui/label';
 import Image from 'next/image';
 import { useState, FormEvent, useEffect } from 'react';
 import {
-  GoogleAuthProvider,
-  signInWithPopup,
   signInWithEmailAndPassword,
   fetchSignInMethodsForEmail,
 } from 'firebase/auth';
@@ -34,7 +32,6 @@ const formatErrorMessage = (code: string) => {
       case 'auth/wrong-password': return 'Incorrect password.';
       case 'auth/email-already-in-use': return 'An account with this email already exists.';
       case 'auth/weak-password': return 'Password should be at least 6 characters.';
-      case 'auth/popup-closed-by-user': return 'Sign in was cancelled.';
       default: return 'An error occurred. Please try again.';
     }
 };
@@ -105,27 +102,6 @@ export default function LoginPage() {
         setIsLoading(false);
     }
   };
-  
-    const handleGoogleLogin = async () => {
-    if (!auth) return;
-    setIsLoading(true);
-
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast({ title: 'Login successful' });
-      // The useEffect will handle the redirect
-    } catch (err: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Google Sign-In Failed',
-        description: formatErrorMessage(err.code),
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
 
   if (isUserLoading || user) {
     return (
@@ -156,27 +132,6 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-            <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
-            >
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Continue with Google
-            </Button>
-
-            <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                        Or continue with
-                    </span>
-                </div>
-            </div>
-
             {step === 'email' ? (
                 <form onSubmit={handleEmailCheck} className="space-y-4">
                     <div className="space-y-2">
