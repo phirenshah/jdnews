@@ -2,13 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, User, UserCog, Newspaper } from 'lucide-react';
+import { Menu, Search, User, UserCog } from 'lucide-react';
 import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useUser } from '@/firebase/auth/use-user';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +30,8 @@ import { cn } from '@/lib/utils';
 import { signOut } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useUser } from '@/firebase/auth/use-user';
+
 
 const navLinks = [
   { name: 'Team', href: '/team' },

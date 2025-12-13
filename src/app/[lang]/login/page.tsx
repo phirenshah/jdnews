@@ -14,18 +14,16 @@ import Image from 'next/image';
 import { useState, useEffect, FormEvent } from 'react';
 import {
   GoogleAuthProvider,
-  signInWithRedirect,
+  signInWithPopup,
   signInWithEmailAndPassword,
-  getRedirectResult,
+  createUserWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth';
 import { useFirebase, useUser } from '@/firebase';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import type { UserProfile } from '@/lib/definitions';
-
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const GoogleIcon = () => (
   <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
@@ -48,117 +46,95 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const formatErrorMessage = (code: string) => {
+    switch (code) {
+      case 'auth/invalid-email': return 'Invalid email address format.';
+      case 'auth/user-disabled': return 'This account has been disabled.';
+      case 'auth/user-not-found': return 'No account found with this email.';
+      case 'auth/invalid-credential': return 'Incorrect email or password.';
+      case 'auth/wrong-password': return 'Incorrect password.';
+      case 'auth/email-already-in-use': return 'An account with this email already exists.';
+      case 'auth/weak-password': return 'Password should be at least 6 characters.';
+      case 'auth/popup-closed-by-user': return 'Sign in was cancelled.';
+      default: return 'An error occurred. Please try again.';
+    }
+};
+
 export default function LoginPage() {
   const params = useParams();
   const lang = params.lang as string;
-  const { auth, firestore } = useFirebase();
-  const { user, isUserLoading: isAuthLoading } = useUser();
+  const { auth } = useFirebase();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
+  const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const redirectUrl = searchParams.get('redirect') || `/${lang}/profile`;
-  
-  useEffect(() => {
-    // This effect handles the user already being logged in and redirecting them.
-    if (isAuthLoading) {
-      return; // Wait until auth state is determined
-    }
-    if (user) {
-      router.replace(redirectUrl);
-    } else {
-      // Only set loading to false if auth is done and there's no user.
-      // This allows the redirect result check to complete first.
-      setIsLoading(false);
-    }
-  }, [user, isAuthLoading, router, redirectUrl]);
 
   useEffect(() => {
-    // This effect specifically handles the result of a Google sign-in redirect.
-    const processRedirectResult = async () => {
-      if (auth && firestore && !user) { // Only run if not already logged in
-        try {
-          const result = await getRedirectResult(auth);
-          if (result) {
-            // User signed in via redirect.
-            setIsLoading(true); // Show loader while we process the result
-            const firebaseUser = result.user;
-            const userRef = doc(firestore, 'users', firebaseUser.uid);
-            
-            const userProfile: Partial<UserProfile> = {
-                id: firebaseUser.uid,
-                email: firebaseUser.email || '',
-                firstName: firebaseUser.displayName?.split(' ')[0] || '',
-                lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
-                role: 'member',
-            };
-            
-            setDocumentNonBlocking(userRef, userProfile, { merge: true });
-            
-            toast({ title: 'Login Successful', description: 'Welcome back!' });
-            // The onAuthStateChanged listener will now have the user, and the first useEffect will handle the redirect.
-          }
-        } catch (error: any) {
-          console.error("Error processing redirect result:", error);
-          toast({
-            variant: 'destructive',
-            title: 'Google Sign-In Failed',
-            description: error.message,
-          });
-          setIsLoading(false); // Stop loading on failure
-        }
-      }
-    };
-    
-    processRedirectResult();
-  }, [auth, firestore, toast, user]);
+    if (!isUserLoading && user) {
+      router.replace(redirectUrl);
+    }
+  }, [user, isUserLoading, router, redirectUrl]);
 
   const handleGoogleSignIn = async () => {
     if (!auth) return;
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-        prompt: 'select_account'
-    });
-    await signInWithRedirect(auth, provider);
-  };
-
-  const handleEmailSignIn = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!auth || !email || !password) return;
-    setIsLoading(true);
-
     try {
-        await signInWithEmailAndPassword(auth, email, password);
-        toast({ title: 'Login Successful' });
-        // The onAuthStateChanged listener will update the user state,
-        // and the main useEffect will handle the redirect.
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged in the provider will handle the rest
+      toast({ title: 'Login Successful', description: 'Welcome back!' });
     } catch (error: any) {
-        setIsLoading(false); // Stop loading on failure
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-            toast({
-                variant: 'destructive',
-                title: 'Login Failed',
-                description: 'Incorrect email or password. Please try again or sign up.',
-            });
-        } else {
-             toast({
-                variant: 'destructive',
-                title: 'Login Failed',
-                description: error.message,
-            });
-        }
+      toast({
+        variant: 'destructive',
+        title: 'Google Sign-In Failed',
+        description: formatErrorMessage(error.code),
+      });
+    } finally {
+        setIsLoading(false);
     }
   };
 
-  if (isLoading) {
+  const handleEmailAuth = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!auth) return;
+    setIsLoading(true);
+
+    try {
+      if (isLoginView) {
+        await signInWithEmailAndPassword(auth, email, password);
+        toast({ title: 'Login Successful' });
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const newUserName = `${firstName} ${lastName}`.trim();
+        await updateProfile(userCredential.user, { displayName: newUserName });
+        toast({ title: 'Account Created Successfully' });
+      }
+      // onAuthStateChanged will handle redirect
+    } catch (error: any) {
+       toast({
+          variant: 'destructive',
+          title: isLoginView ? 'Login Failed' : 'Sign-up Failed',
+          description: formatErrorMessage(error.code),
+      });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  if (isUserLoading || user) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
   }
@@ -177,15 +153,17 @@ export default function LoginPage() {
             />
           </Link>
           <CardTitle className="text-2xl font-headline">
-            Welcome to JD News
+            {isLoginView ? 'Welcome Back' : 'Create an Account'}
           </CardTitle>
-          <CardDescription>Sign in to continue</CardDescription>
+          <CardDescription>
+            {isLoginView ? 'Sign in to continue to JD News' : 'Join JD News today.'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
-              <GoogleIcon />
-              Sign in with Google
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                Continue with Google
             </Button>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -198,24 +176,44 @@ export default function LoginPage() {
               </div>
             </div>
             
-            <form onSubmit={handleEmailSignIn} className="space-y-4">
+            <form onSubmit={handleEmailAuth} className="space-y-4">
+               {!isLoginView && (
+                 <div className='grid grid-cols-2 gap-4'>
+                    <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input id="firstName" type="text" placeholder="John" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input id="lastName" type="text" placeholder="Doe" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                    </div>
+                </div>
+               )}
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
-                 <div className="space-y-2">
+                 <div className="relative space-y-2">
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                    <Input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required />
+                     <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-7 text-muted-foreground"
+                    >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
                 </div>
-                <Button type="submit" className="w-full">
-                  Sign In
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isLoginView ? 'Sign In' : 'Create Account'}
                 </Button>
             </form>
             <div className="text-center text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <Link href={`/${lang}/signup?redirect=${encodeURIComponent(redirectUrl)}`} className="underline hover:text-primary">
-                    Sign up
-                </Link>
+                {isLoginView ? "Don't have an account?" : "Already have an account?"}{' '}
+                <button onClick={() => setIsLoginView(!isLoginView)} className="underline hover:text-primary">
+                    {isLoginView ? 'Sign up' : 'Sign in'}
+                </button>
             </div>
           </div>
         </CardContent>

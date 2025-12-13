@@ -2,7 +2,7 @@
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
+import { Firestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
@@ -67,16 +67,40 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
     userError: null,
   });
 
-  // Effect to subscribe to Firebase auth state changes
+  // Effect to subscribe to Firebase auth state changes and create user profile
   useEffect(() => {
-    if (!auth) { 
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
+    if (!auth || !firestore) { 
+      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth or Firestore service not provided.") });
       return;
     }
 
     const unsubscribe = onAuthStateChanged(
       auth,
-      (firebaseUser) => {
+      async (firebaseUser) => {
+        if (firebaseUser) {
+          // User is signed in, check for profile and create if it doesn't exist
+          const userDocRef = doc(firestore, 'users', firebaseUser.uid);
+          try {
+            const docSnap = await getDoc(userDocRef);
+            if (!docSnap.exists()) {
+              // Document doesn't exist, create it
+              const displayName = firebaseUser.displayName || '';
+              const [firstName, ...lastNameParts] = displayName.split(' ');
+              const lastName = lastNameParts.join(' ');
+              
+              await setDoc(userDocRef, {
+                id: firebaseUser.uid,
+                email: firebaseUser.email,
+                firstName: firstName || '',
+                lastName: lastName || '',
+                role: 'member', // Default role
+              }, { merge: true });
+            }
+          } catch (error) {
+            console.error("Error creating/checking user profile:", error);
+            // Don't block login if profile creation fails, but log it
+          }
+        }
         setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
       },
       (error) => { 
@@ -85,7 +109,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       }
     );
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, firestore]);
 
   // Memoize the context value
   const contextValue = useMemo((): FirebaseContextState => {
@@ -162,13 +186,3 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
   
   return memoized;
 }
-
-/**
- * Hook specifically for accessing the authenticated user's state.
- * This provides the User object, loading status, and any auth errors.
- * @returns {UserHookResult} Object with user, isUserLoading, userError.
- */
-export const useUser = (): UserHookResult => {
-  const { user, isUserLoading, userError } = useFirebase();
-  return { user, isUserLoading, userError };
-};
