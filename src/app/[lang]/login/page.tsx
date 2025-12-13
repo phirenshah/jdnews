@@ -74,11 +74,18 @@ export default function LoginPage() {
             router.push(`/${lang}/signup?email=${encodeURIComponent(email)}`);
         }
     } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: formatErrorMessage(error.code),
-        });
+        // A common error is auth/invalid-email, which we want to show to the user.
+        // Other errors can be treated as if the user doesn't exist, for a smoother flow.
+        if (error.code === 'auth/invalid-email') {
+             toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: formatErrorMessage(error.code),
+            });
+        } else {
+            // For other errors, assume user doesn't exist to allow signup.
+            router.push(`/${lang}/signup?email=${encodeURIComponent(email)}`);
+        }
     } finally {
         setIsLoading(false);
     }
