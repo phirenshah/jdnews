@@ -170,9 +170,8 @@ export default function ReporterProfilePage() {
                                 {!areArticlesLoading && authorArticles && authorArticles.length > 0 ? (
                                     authorArticles.map(article => {
                                         const title = lang === 'en' ? article.titleEnglish : article.titleGujarati;
-                                        const slug = title?.toLowerCase().replace(/\s+/g, '-');
                                         return (
-                                            <Link key={article.id} href={`/${lang}/article/${slug}`} className="block hover:bg-muted/50 p-3 rounded-md">
+                                            <Link key={article.id} href={`/${lang}/article/${article.slug}`} className="block hover:bg-muted/50 p-3 rounded-md">
                                                 <h3 className="font-bold">{title}</h3>
                                                 {article.publicationDate && (
                                                     <p className="text-sm text-muted-foreground">{new Date(article.publicationDate.seconds * 1000).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
