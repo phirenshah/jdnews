@@ -11,16 +11,23 @@ export interface RssArticle {
 }
 
 function extractImage(item: Element): string | null {
-  const enclosure = item.querySelector('enclosure');
-  if (enclosure) return enclosure.getAttribute('url');
-  
-  const mediaContent = item.getElementsByTagNameNS('*', 'content')[0];
-  if (mediaContent && mediaContent.getAttribute('url')) return mediaContent.getAttribute('url');
+    // Prefer media:content
+    const mediaContent = item.querySelector('media\\:content, content');
+    if (mediaContent && mediaContent.getAttribute('url')) {
+        return mediaContent.getAttribute('url');
+    }
 
-  const description = item.querySelector('description')?.textContent || '';
-  const imgRegex = /<img[^>]+src="([^">]+)"/;
-  const match = description.match(imgRegex);
-  return match ? match[1] : null;
+    // Fallback to enclosure
+    const enclosure = item.querySelector('enclosure');
+    if (enclosure && enclosure.getAttribute('url')) {
+        return enclosure.getAttribute('url');
+    }
+
+    // Fallback to parsing img tag from description
+    const description = item.querySelector('description')?.textContent || '';
+    const imgRegex = /<img[^>]+src="([^">]+)"/;
+    const match = description.match(imgRegex);
+    return match ? match[1] : null;
 };
 
 function stripHtml(html: string): string {
@@ -44,16 +51,18 @@ export function formatDate(dateStr: string): string {
 }
 
 export async function fetchAndParseRss(feedUrl: string): Promise<RssArticle[]> {
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`;
+  const proxyUrl = `/api/rss?url=${encodeURIComponent(feedUrl)}`;
   const response = await fetch(proxyUrl);
-  const data = await response.json();
   
-  if (!data.contents) throw new Error(`No content received from ${feedUrl}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch RSS feed from proxy: ${response.statusText}`);
+  }
 
   if (typeof window === 'undefined') return [];
 
+  const xmlText = await response.text();
   const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
+  const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
   const errorNode = xmlDoc.querySelector('parsererror');
 
   if (errorNode) {
