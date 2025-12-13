@@ -2,7 +2,7 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, RecaptchaVerifier } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
@@ -31,6 +31,14 @@ export function getSdks(firebaseApp: FirebaseApp) {
     firestore: getFirestore(firebaseApp)
   };
 }
+
+export function getRecaptchaVerifier(auth: any, container: HTMLElement) {
+    const recaptchaVerifier = new RecaptchaVerifier(auth, container, {
+        size: 'invisible'
+    });
+    return recaptchaVerifier;
+}
+
 
 export * from './provider';
 export * from './client-provider';
