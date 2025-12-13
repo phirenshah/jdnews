@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Trash, Edit, RefreshCw, Loader2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, Edit, RefreshCw, Loader2, Upload, Camera } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -33,13 +33,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { collection, doc, query, where } from "firebase/firestore";
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useCollection, useFirebase, useMemoFirebase } from "@/firebase";
 import type { Reporter, UserProfile } from "@/lib/definitions";
+import Image from "next/image";
+import axios from "axios";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 const reporterTitles = [
@@ -73,6 +76,15 @@ export default function TeamAdminPage() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
 
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
+    const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+
+
     const availableUsers = useMemo(() => {
         if (!users || !authors) return users;
         const authorEmails = new Set(authors.map(author => author.contact.toLowerCase()));
@@ -83,11 +95,12 @@ export default function TeamAdminPage() {
         if (selectedUser) {
             setFirstName(selectedUser.firstName || '');
             setLastName(selectedUser.lastName || '');
+            setImagePreview(selectedUser.profilePictureUrl || `https://avatar.vercel.sh/${selectedUser.email}.png`);
         }
     }, [selectedUser]);
     
 
-    const handleAddReporter = () => {
+    const handleAddReporter = async () => {
         if (!firestore || !selectedUser || !reporterTitle || !firstName) {
             toast({
                 variant: 'destructive',
@@ -97,18 +110,28 @@ export default function TeamAdminPage() {
             return;
         }
 
-        // Check if the user is already an author
-        const isAlreadyAuthor = authors?.some(author => author.contact === selectedUser.email);
-        if(isAlreadyAuthor) {
-            toast({
-                variant: 'destructive',
-                title: 'User is already an author',
-                description: `${selectedUser.firstName} is already in the team.`
-            });
-            return;
+        let finalImageUrl = selectedUser.profilePictureUrl || `https://avatar.vercel.sh/${selectedUser.email}.png`;
+
+        if (imageFile) {
+             try {
+                const formData = new FormData();
+                formData.append('key', "3f5f08b61f4298484f11df25a094c176"); // Use a public key or from env
+                formData.append('image', imageFile);
+
+                const response = await axios.post('https://api.imgbb.com/1/upload', formData);
+                finalImageUrl = response.data.data.url;
+            } catch (error) {
+                console.error("Image upload failed:", error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Image Upload Failed',
+                    description: 'Could not upload the profile picture. Please try again.',
+                });
+                return;
+            }
         }
 
-        const authorId = selectedUser.email.split('@')[0].toLowerCase();
+        const authorId = selectedUser.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/gi, '-');
         const newName = `${firstName} ${lastName}`.trim();
 
         const newAuthorData: Partial<Reporter> = {
@@ -119,16 +142,15 @@ export default function TeamAdminPage() {
             dob: reporterDob,
             officeLocation: reporterOffice,
             verified: true,
-            profilePictureUrl: selectedUser.profilePictureUrl || `https://avatar.vercel.sh/${selectedUser.email}.png`
+            profilePictureUrl: finalImageUrl
         };
 
         if (authorsCollection) {
             const newAuthorRef = doc(authorsCollection, authorId);
             setDocumentNonBlocking(newAuthorRef, newAuthorData, { merge: true });
 
-            // Also update the user's name in the users collection
             const userDocRef = doc(firestore, 'users', selectedUser.id);
-            setDocumentNonBlocking(userDocRef, { firstName, lastName }, { merge: true });
+            setDocumentNonBlocking(userDocRef, { firstName, lastName, profilePictureUrl: finalImageUrl }, { merge: true });
 
             toast({
                 title: 'Reporter Added',
@@ -157,7 +179,68 @@ export default function TeamAdminPage() {
         setReporterOffice('');
         setFirstName('');
         setLastName('');
+        setImageFile(null);
+        setImagePreview(null);
     };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCameraCapture = () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (video && canvas) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d')?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            canvas.toBlob(blob => {
+                if (blob) {
+                    const file = new File([blob], "capture.png", { type: "image/png" });
+                    setImageFile(file);
+                    setImagePreview(canvas.toDataURL('image/png'));
+                }
+            }, 'image/png');
+            setIsCameraDialogOpen(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isCameraDialogOpen) {
+            const getCameraPermission = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({video: true});
+                setHasCameraPermission(true);
+        
+                if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                }
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                setHasCameraPermission(false);
+                toast({
+                variant: 'destructive',
+                title: 'Camera Access Denied',
+                description: 'Please enable camera permissions in your browser settings.',
+                });
+            }
+            };
+            getCameraPermission();
+        } else {
+            if (videoRef.current?.srcObject) {
+                const stream = videoRef.current.srcObject as MediaStream;
+                stream.getTracks().forEach(track => track.stop());
+            }
+        }
+    }, [isCameraDialogOpen, toast]);
 
     if (areAuthorsLoading || areUsersLoading) {
         return <div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 animate-spin" /></div>
@@ -179,7 +262,7 @@ export default function TeamAdminPage() {
                         Add Reporter
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[625px]">
                     <DialogHeader>
                         <DialogTitle>Add New Reporter</DialogTitle>
                         <DialogDescription>
@@ -205,18 +288,60 @@ export default function TeamAdminPage() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
-
+                        
                          {selectedUser && (
-                            <div className="grid grid-cols-2 gap-4">
+                            <>
                                 <div className="space-y-2">
-                                    <Label htmlFor="firstName">First Name</Label>
-                                    <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                                    <Label>Profile Picture</Label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center overflow-hidden">
+                                            {imagePreview ? (
+                                                <Image src={imagePreview} alt="Profile preview" width={96} height={96} className="object-cover h-24 w-24" />
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">Preview</span>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                                <Upload className="mr-2 h-4 w-4" />
+                                                Upload
+                                            </Button>
+                                            <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden"/>
+                                            <Dialog open={isCameraDialogOpen} onOpenChange={setIsCameraDialogOpen}>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="outline" size="sm"><Camera className="mr-2 h-4 w-4" />Take</Button>
+                                                </DialogTrigger>
+                                                <DialogContent>
+                                                    <DialogHeader><DialogTitle>Camera</DialogTitle></DialogHeader>
+                                                        <div className="relative">
+                                                        <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
+                                                        {hasCameraPermission === false && (
+                                                            <Alert variant="destructive" className="mt-4">
+                                                                <AlertTitle>Camera Access Required</AlertTitle>
+                                                                <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
+                                                            </Alert>
+                                                        )}
+                                                        </div>
+                                                        <canvas ref={canvasRef} className="hidden" />
+                                                    <DialogFooter>
+                                                        <Button onClick={handleCameraCapture} disabled={!hasCameraPermission}>Take Picture</Button>
+                                                    </DialogFooter>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="lastName">Last Name</Label>
-                                    <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="firstName">First Name</Label>
+                                        <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="lastName">Last Name</Label>
+                                        <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                                    </div>
                                 </div>
-                            </div>
+                            </>
                         )}
 
                          <div className="space-y-2">
