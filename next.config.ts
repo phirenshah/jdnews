@@ -46,6 +46,12 @@ const nextConfig: NextConfig = {
         hostname: 'avatar.vercel.sh',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.labnol.org',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
