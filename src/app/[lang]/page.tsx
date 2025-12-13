@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -116,7 +117,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
         </aside>
       </main>
 
-      <div className="my-12 flex justify-center">
+      <div className="my-12 flex w-full justify-center">
         <AdContainer type="horizontal" />
       </div>
     </div>

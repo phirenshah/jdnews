@@ -77,9 +77,8 @@ export function AdContainer({ type, className }: AdContainerProps) {
         <Image
           src={adToDisplay.url}
           alt={adToDisplay.name}
-          width={adWidth}
-          height={adHeight}
-          className="object-cover"
+          fill
+          className="object-contain"
         />
       );
       if (adToDisplay.linkUrl) {
@@ -110,11 +109,9 @@ export function AdContainer({ type, className }: AdContainerProps) {
       style={{width: `${adWidth + 32}px`, height: `${adHeight + 40}px`}}
     >
       <span className="font-semibold">Advertisement</span>
-      <div className="relative" style={{width: `${adWidth}px`, height: `${adHeight}px`}}>
+      <div className="relative overflow-hidden" style={{width: `${adWidth}px`, height: `${adHeight}px`}}>
         {renderAdContent()}
       </div>
     </div>
   );
 }
-
-    
