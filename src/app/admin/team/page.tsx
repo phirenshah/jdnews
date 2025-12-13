@@ -42,12 +42,19 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
 export default function TeamAdminPage() {
-    const { user: adminUser, role: adminRole } = useUserRole();
+    const { user: adminUser, role: adminRole, isLoading: isRoleLoading } = useUserRole();
     const { firestore } = useFirebase();
     const { toast } = useToast();
+    const isAdmin = adminRole === 'director';
 
-    const usersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]);
-    const { data: users, isLoading } = useCollection(usersCollection);
+    const usersCollection = useMemoFirebase(() => {
+        if (firestore && isAdmin) {
+            return collection(firestore, 'users');
+        }
+        return null;
+    }, [firestore, isAdmin]);
+    
+    const { data: users, isLoading: areUsersLoading } = useCollection(usersCollection);
 
     const [isAddReporterDialogOpen, setIsAddReporterDialogOpen] = useState(false);
     const [newReporter, setNewReporter] = useState({
@@ -131,6 +138,8 @@ export default function TeamAdminPage() {
             description: `User ${email} has been removed from the database. Note: Their auth account still exists.`,
         });
     };
+
+    const isLoading = isRoleLoading || areUsersLoading;
 
   return (
     <Card>
@@ -269,4 +278,3 @@ export default function TeamAdminPage() {
     </Card>
   );
 }
-

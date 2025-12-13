@@ -4,7 +4,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
+    /* ---------------- Helpers ---------------- */
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -13,23 +14,20 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function getUserRole(uid) {
-      return get(/databases/$(database)/documents/roles/$(uid)).data.role;
-    }
-
     function isAdmin() {
-      return isSignedIn() && getUserRole(request.auth.uid) == 'director';
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    // Rules for collections
+    /* ---------------- USERS ---------------- */
+
     match /users/{userId} {
-      // Admins have full control over user documents.
+
+      // Admin: full control
       allow get, list, create, update, delete: if isAdmin();
-      
-      // Regular users can get, create, and update their own document,
-      // but they cannot change their role.
-      allow get, create: if isOwner(userId);
-      allow update: if isOwner(userId) && request.resource.data.role == resource.data.role;
+
+      // Normal user: manage own profile (no delete)
+      allow get, create, update: if isOwner(userId);
     }
     
     match /roles/{userId} {
@@ -39,29 +37,34 @@ service cloud.firestore {
       allow list: if false; 
     }
 
+    /* ---------------- AUTHORS ---------------- */
+
     match /authors/{authorId} {
-      // Anyone can read author profiles.
       allow get, list: if true;
-      // Only admins can create, update, or delete authors.
       allow create, update, delete: if isAdmin();
     }
 
+    /* ---------------- ARTICLES ---------------- */
+
     match /articles/{articleId} {
-      // Anyone can read articles.
       allow get, list: if true;
-      // Only admins can create, update, or delete articles.
       allow create, update, delete: if isAdmin();
     }
-    
+
+    /* ---------------- DONATIONS ---------------- */
+
     match /donations/{donationId} {
-      // Admins can get any donation, users can only get their own.
       allow get: if isAdmin() || isOwner(resource.data.userId);
-      // Only admins can list all donations.
       allow list: if isAdmin();
-      // An authenticated user can create a donation for themselves.
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      // Users can update or delete their own donations.
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid;
       allow update, delete: if isOwner(resource.data.userId);
+    }
+
+    /* ---------------- ADMIN ROLES ---------------- */
+
+    match /roles_admin/{uid} {
+      allow read, write: if false;
     }
   }
 }
