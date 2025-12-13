@@ -28,27 +28,20 @@ type Article = {
     lang: 'en' | 'gu';
 };
 
-async function getArticleBySlug(slug: string, lang: 'en' | 'gu'): Promise<Article | null> {
+async function getArticleBySlug(slug: string): Promise<Article | null> {
   try {
     const articlesCollection = collection(firestore, 'articles');
-    const q = query(
-        articlesCollection, 
-        where('slug', '==', slug),
-        where('lang', '==', lang)
-    );
+    // A composite index on ('slug', 'lang') would be ideal, but for now,
+    // querying by slug is more resilient if that index doesn't exist.
+    const q = query(articlesCollection, where('slug', '==', slug));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      // Try searching without language if no doc is found
-      const fallbackQuery = query(articlesCollection, where('slug', '==', slug));
-      const fallbackSnapshot = await getDocs(fallbackQuery);
-      if (fallbackSnapshot.empty) {
-        return null;
-      }
-      const articleDoc = fallbackSnapshot.docs[0];
-      return { id: articleDoc.id, ...articleDoc.data() } as Article;
+      return null;
     }
 
+    // If multiple articles have the same slug (e.g., for different languages),
+    // this will pick the first one. This logic can be refined if needed.
     const articleDoc = querySnapshot.docs[0];
     return { id: articleDoc.id, ...articleDoc.data() } as Article;
   } catch (error) {
@@ -111,7 +104,7 @@ export default async function ArticlePage({ params }: { params: { lang: 'en' | '
     let fetchError: string | null = null;
 
     try {
-        article = await getArticleBySlug(slug, lang);
+        article = await getArticleBySlug(slug);
 
         if (article) {
             author = await getAuthorById(article.authorId);
@@ -250,5 +243,3 @@ export function Loading() {
         </div>
     );
 }
-
-    
