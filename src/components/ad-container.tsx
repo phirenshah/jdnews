@@ -70,8 +70,17 @@ export function AdContainer({ type, className }: AdContainerProps) {
   }
 
   if (!adToDisplay) {
-    // Optional: Render a placeholder or nothing if no ad is found
-    return null;
+    // Render a placeholder or nothing if no ad is found
+    return (
+        <div className={cn(
+            'flex flex-col items-center justify-center bg-muted/50 border border-dashed rounded-lg p-4 space-y-2 text-muted-foreground text-xs',
+            className
+          )}
+          style={{ width: adWidth, height: adHeight }}
+          >
+            <span className="font-semibold">Advertisement</span>
+        </div>
+    );
   }
 
   const renderAdContent = () => {
@@ -117,12 +126,12 @@ export function AdContainer({ type, className }: AdContainerProps) {
         className
       )}
       style={{
-          width: type === 'horizontal' ? 'max-content' : adWidth, 
-          height: 'max-content'
+          width: adWidth,
+          height: 'auto' // Let height be determined by content + padding
       }}
     >
       <span className="font-semibold">Advertisement</span>
-      <div className="relative overflow-hidden bg-background" style={{width: adWidth, height: adHeight}}>
+      <div className="relative overflow-hidden bg-background w-full" style={{height: adHeight}}>
         {renderAdContent()}
       </div>
     </div>
