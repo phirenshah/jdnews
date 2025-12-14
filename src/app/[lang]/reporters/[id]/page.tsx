@@ -200,7 +200,7 @@ export default function ReporterProfilePage() {
                                 <PressCardFront reporter={author} lang={lang} />
                             </div>
                             <div ref={backCardRef}>
-                                <PressCardBack reporter={author} lang={lang} />
+                                <PressCardBack reporter={author} reporterUrl={clientReporterUrl} lang={lang} />
                             </div>
                         </div>
                     </div>

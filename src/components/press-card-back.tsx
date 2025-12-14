@@ -6,12 +6,13 @@ import QRCode from 'qrcode.react';
 
 export function PressCardBack({
   reporter,
+  reporterUrl,
   lang,
 }: {
   reporter: Reporter;
+  reporterUrl: string;
   lang: string;
 }) {
-  const reporterUrl = `https://www.jdnews.in/${lang}/reporters/${reporter.id}`;
 
   const t = {
     headOffice: lang === 'en' ? 'Head Office' : 'મુખ્ય કાર્યાલય',
@@ -49,7 +50,7 @@ export function PressCardBack({
       <div className="flex items-center justify-center relative">
         <div className="text-center">
           <div className="w-32 h-32 mx-auto bg-white p-2 rounded-md">
-            <QRCode
+            {reporterUrl && <QRCode
               value={reporterUrl}
               size={112}
               bgColor="#ffffff"
@@ -61,7 +62,7 @@ export function PressCardBack({
                 width: 24,
                 excavate: true,
               }}
-            />
+            />}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Verify Authenticity
