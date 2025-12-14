@@ -19,20 +19,16 @@ export function PressCardFront({
 
   return (
     <div className="w-[320px] h-[504px] bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
-      <div className="py-2 flex justify-center items-center">
-        <Image
-          src="/logo.png"
-          alt="JD News Logo"
-          width={100}
-          height={23}
-          style={{
-            paddingTop: '4px',
-            paddingBottom: '4px',
-          }}
-        />
-      </div>
       <div className="border-t w-full"></div>
-      <div className="flex-grow flex flex-col items-center justify-start text-center px-4 py-2 pt-8">
+      <div className="flex-grow flex flex-col items-center justify-start text-center px-4 pt-6">
+        <div className="h-[40px] flex items-center justify-center mb-4">
+            <Image
+            src="/logo.png"
+            alt="JD News Logo"
+            width={100}
+            height={23}
+            />
+        </div>
         {reporter.profilePictureUrl && (
           <div className="w-36 h-36 relative">
             <Image
