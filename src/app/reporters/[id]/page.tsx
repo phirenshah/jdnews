@@ -179,7 +179,7 @@ export default function ReporterProfilePage() {
                             <h2 className="text-2xl font-bold font-headline mb-4">Recent Articles</h2>
                             <div className="space-y-4">
                                 {authorArticles && authorArticles.length > 0 ? (
-                                    authorArticles.map(article => {
+                                    authorArticles.map((article: any) => {
                                         const title = article.title;
                                         return (
                                             <Link key={article.id} href={`/article/${article.slug}`} className="block hover:bg-muted/50 p-3 rounded-md">
