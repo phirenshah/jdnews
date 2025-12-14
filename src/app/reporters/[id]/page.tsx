@@ -17,7 +17,6 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Reporter } from '@/lib/definitions';
-import { placeholderArticles } from '@/lib/placeholder-data';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
@@ -66,7 +65,7 @@ export default function ReporterProfilePage() {
         );
     }
     
-    const handleDownload = async () => {
+     const handleDownload = async () => {
         const frontNode = frontCardRef.current;
         const backNode = backCardRef.current;
         if (!frontNode || !backNode) return;
@@ -74,30 +73,39 @@ export default function ReporterProfilePage() {
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
     
-        // Standard credit card size (ID-1) in mm
         const cardWidthMM = 85.6;
         const cardHeightMM = 53.98;
     
-        // Calculate position to center the card on the PDF page
         const x = (pdfWidth - cardWidthMM) / 2;
-        const y = 20; // Margin from top
+        const y = 20; 
     
         const addImageToPdf = async (node: HTMLDivElement, pageNumber: number) => {
-             const canvasOptions = {
-                scale: 3, // Increase scale for better resolution
-                useCORS: true,
-                willReadFrequently: true,
-                width: node.offsetWidth,
-                height: node.offsetHeight,
+            // Temporarily set a fixed size for accurate capture
+            const originalStyle = {
+                width: node.style.width,
+                height: node.style.height,
             };
-            const canvas = await html2canvas(node, canvasOptions);
+            node.style.width = '320px';
+            node.style.height = '504px';
+            
+            const canvas = await html2canvas(node, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: null,
+                width: 320, 
+                height: 504, 
+            });
+            
+            // Restore original styles
+            node.style.width = originalStyle.width;
+            node.style.height = originalStyle.height;
+
             const imgData = canvas.toDataURL('image/png', 1.0);
     
             if (pageNumber > 1) {
                 pdf.addPage();
             }
             
-            // Use the standard card dimensions for printing
             pdf.addImage(imgData, 'PNG', x, y, cardWidthMM, cardHeightMM);
         };
     
