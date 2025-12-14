@@ -19,8 +19,8 @@ export function PressCardFront({
   return (
     <div className="w-[320px] h-[504px] bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
       <div className="border-t w-full"></div>
-      <div className="flex-grow flex flex-col items-center justify-start text-center px-4 pt-6">
-        <div className="h-[40px] flex items-center justify-center">
+      <div className="flex-grow flex flex-col items-center text-center px-4">
+        <div className="h-[40px] flex items-center justify-center pt-6">
             <Image
             src="/logo.png"
             alt="JD News Logo"
