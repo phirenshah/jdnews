@@ -150,8 +150,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
                 src="/logo.png"
                 alt="JD News Logo"
                 width={120}
-                height="0"
-                style={{ height: 'auto' }}
+                height={27}
               />
             </Link>
             <nav className="flex flex-col gap-4">
@@ -269,8 +268,8 @@ export function Header({ lang }: { lang: string }) {
               src="/logo.png"
               alt="JD News Logo"
               width={120}
-              height="0"
-              style={{ height: 'auto' }}
+              height={27}
+              priority
             />
           </Link>
         </div>

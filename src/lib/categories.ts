@@ -8,6 +8,7 @@ export const sections = [
   { name: 'Entertainment', href: '/category/entertainment' },
   { name: 'Health', href: '/category/health' },
   { name: 'Science & Tech', href: '/category/tech' },
+  { name: 'Videos', href: '/videos' },
 ];
 
 export const CATEGORY_LABELS: Record<string, string> = {
