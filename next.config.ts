@@ -52,6 +52,12 @@ const nextConfig: NextConfig = {
         hostname: 'www.labnol.org',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
