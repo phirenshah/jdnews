@@ -47,8 +47,8 @@ export default function ReporterProfilePage() {
     }, [author]);
     
     useEffect(() => {
-        if (typeof window !== 'undefined' && author) {
-            setClientReporterUrl(`${window.location.origin}/${lang}/reporters/${author.id}`);
+        if (author) {
+            setClientReporterUrl(`https://jdnews.in/${lang}/reporters/${author.id}`);
         }
     }, [lang, author]);
     
@@ -82,7 +82,6 @@ export default function ReporterProfilePage() {
         // Standard credit card size (ID-1) in mm
         const cardWidthMM = 85.6;
         const cardHeightMM = 53.98;
-        const cardAspectRatio = cardHeightMM / cardWidthMM;
     
         // Calculate position to center the card on the PDF page
         const x = (pdfWidth - cardWidthMM) / 2;
@@ -103,8 +102,8 @@ export default function ReporterProfilePage() {
                 pdf.addPage();
             }
             
-            // Here, we use the card's aspect ratio to ensure it's not distorted.
-            pdf.addImage(imgData, 'PNG', x, y, cardWidthMM, cardWidthMM * (node.offsetHeight / node.offsetWidth));
+            // Use the standard card dimensions for printing
+            pdf.addImage(imgData, 'PNG', x, y, cardWidthMM, cardHeightMM);
         };
     
         await addImageToPdf(frontNode, 1);
@@ -233,7 +232,3 @@ export default function ReporterProfilePage() {
         </>
     )
 }
-
-    
-
-    
