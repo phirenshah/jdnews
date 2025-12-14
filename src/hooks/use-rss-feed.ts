@@ -11,8 +11,24 @@ export interface RssArticle {
   category?: string;
 }
 
-const CACHE_KEY = 'rss_feed_cache';
+export interface YouTubeVideo {
+    id: {
+      videoId: string;
+    };
+    snippet: {
+      title: string;
+      description: string;
+      thumbnails: {
+        high: {
+          url: string;
+        };
+      };
+    };
+  }
+
+const CACHE_KEY = 'content_cache';
 const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes
+const WORKER_URL = 'https://still-king-03f4.agentk1710.workers.dev';
 
 export const RSS_FEEDS: Record<string, string> = {
   topStories: 'https://www.gujaratsamachar.com/rss/top-stories',
@@ -47,11 +63,11 @@ function stripHtml(html: string): string {
 }
 
 async function fetchAndParseRss(feedUrl: string): Promise<RssArticle[]> {
-  const proxyUrl = `/api/rss?type=rss&url=${encodeURIComponent(feedUrl)}`;
+  const proxyUrl = `${WORKER_URL}/?type=rss&url=${encodeURIComponent(feedUrl)}`;
   const response = await fetch(proxyUrl);
   
   if (!response.ok) {
-    throw new Error(`Failed to fetch RSS feed from proxy: ${response.statusText}`);
+    throw new Error(`Failed to fetch RSS feed from worker: ${response.statusText}`);
   }
 
   if (typeof window === 'undefined') return [];
@@ -80,21 +96,34 @@ async function fetchAndParseRss(feedUrl: string): Promise<RssArticle[]> {
   });
 }
 
+async function fetchYoutubeVideos(): Promise<YouTubeVideo[]> {
+    const proxyUrl = `${WORKER_URL}/?type=youtube`;
+    const response = await fetch(proxyUrl);
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to fetch YouTube videos' }));
+        throw new Error(errorData.error || 'Failed to fetch YouTube videos');
+    }
+    const data = await response.json();
+    return data.items || [];
+}
+
 export const useNewsAggregator = () => {
   const [news, setNews] = useState<Record<string, RssArticle[]>>({});
+  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadAllNews = useCallback(async (forceRefresh = false) => {
+  const loadAllContent = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
 
     if (!forceRefresh) {
       const cached = sessionStorage.getItem(CACHE_KEY);
       if (cached) {
-        const { timestamp, data } = JSON.parse(cached);
+        const { timestamp, newsData, videoData } = JSON.parse(cached);
         if (Date.now() - timestamp < CACHE_DURATION) {
-          setNews(data);
+          setNews(newsData || {});
+          setVideos(videoData || []);
           setLoading(false);
           return;
         }
@@ -102,30 +131,39 @@ export const useNewsAggregator = () => {
     }
 
     try {
-      const promises = Object.entries(RSS_FEEDS).map(async ([key, url]) => {
-        const items = await fetchAndParseRss(url);
-        return [key, items];
-      });
-
-      const results = await Promise.all(promises);
-      const newsData = Object.fromEntries(results);
+      // Fetch RSS and YouTube data in parallel
+      const [rssResults, youtubeResults] = await Promise.all([
+        Promise.all(
+          Object.entries(RSS_FEEDS).map(async ([key, url]) => {
+            const items = await fetchAndParseRss(url);
+            return [key, items] as [string, RssArticle[]];
+          })
+        ),
+        fetchYoutubeVideos()
+      ]);
+      
+      const newsData = Object.fromEntries(rssResults);
 
       sessionStorage.setItem(CACHE_KEY, JSON.stringify({
         timestamp: Date.now(),
-        data: newsData
+        newsData: newsData,
+        videoData: youtubeResults,
       }));
 
       setNews(newsData);
+      setVideos(youtubeResults);
+
     } catch (err: any) {
-      setError(err.message || 'Failed to load news feeds.');
+      setError(err.message || 'Failed to load content.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadAllNews();
-  }, [loadAllNews]);
+    loadAllContent();
+  }, [loadAllContent]);
 
-  return { news, loading, error, refresh: () => loadAllNews(true) };
+  return { news, videos, loading, error, refresh: () => loadAllContent(true) };
 };
+

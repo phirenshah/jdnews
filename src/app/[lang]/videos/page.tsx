@@ -1,50 +1,14 @@
 
 'use client';
-import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Film, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
-
-interface YouTubeVideo {
-  id: {
-    videoId: string;
-  };
-  snippet: {
-    title: string;
-    description: string;
-    thumbnails: {
-      high: {
-        url: string;
-      };
-    };
-  };
-}
+import { useNewsAggregator } from '@/hooks/use-rss-feed';
 
 export default function VideosPage() {
-  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchVideos() {
-      try {
-        const response = await fetch('/api/rss?type=youtube');
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch videos');
-        }
-        const data = await response.json();
-        setVideos(data.items);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchVideos();
-  }, []);
+  const { videos, loading, error } = useNewsAggregator();
 
   const renderSkeletons = () => (
     Array.from({ length: 6 }).map((_, i) => (
@@ -74,7 +38,7 @@ export default function VideosPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error Loading Videos</AlertTitle>
           <AlertDescription>
-            {error}. This may be due to a missing API key or other configuration issues.
+            {error}. Please try refreshing the page.
           </AlertDescription>
         </Alert>
       ) : (
