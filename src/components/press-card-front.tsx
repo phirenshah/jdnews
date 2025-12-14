@@ -18,16 +18,15 @@ export function PressCardFront({
 
   return (
     <div className="w-[320px] h-[504px] bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
-      <div className="border-t w-full"></div>
+      <div className="h-[40px] flex items-center justify-center pt-6">
+          <Image
+          src="/logo.png"
+          alt="JD News Logo"
+          width={100}
+          height={23}
+          />
+      </div>
       <div className="flex-grow flex flex-col items-center text-center px-4">
-        <div className="h-[40px] flex items-center justify-center pt-6">
-            <Image
-            src="/logo.png"
-            alt="JD News Logo"
-            width={100}
-            height={23}
-            />
-        </div>
         
         <div className="mt-4">
             {reporter.profilePictureUrl && (
@@ -62,7 +61,7 @@ export function PressCardFront({
           </div>
           <div className="flex items-center gap-3 my-4">
             <Building className="w-4 h-4 text-muted-foreground" />
-            <span className="truncate">
+            <span>
               <span className="font-semibold">{t.office}:</span>{' '}
               {reporter.officeLocation}
             </span>
