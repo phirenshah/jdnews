@@ -78,32 +78,37 @@ export default function ReporterProfilePage() {
     
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
     
         // Standard credit card size (ID-1) in mm
         const cardWidthMM = 85.6;
         const cardHeightMM = 53.98;
+        const cardAspectRatio = cardHeightMM / cardWidthMM;
     
-        // Calculate position to center the card
+        // Calculate position to center the card on the PDF page
         const x = (pdfWidth - cardWidthMM) / 2;
-        const y = (pdfHeight - cardHeightMM) / 2;
+        const y = 20; // Margin from top
     
-        const addImageToPdf = async (node: HTMLDivElement) => {
-            const canvas = await html2canvas(node, {
+        const addImageToPdf = async (node: HTMLDivElement, pageNumber: number) => {
+             const canvasOptions = {
                 scale: 3, // Increase scale for better resolution
                 useCORS: true,
                 willReadFrequently: true,
-            });
-            const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', x, y, cardWidthMM, cardHeightMM);
+                width: node.offsetWidth,
+                height: node.offsetHeight,
+            };
+            const canvas = await html2canvas(node, canvasOptions);
+            const imgData = canvas.toDataURL('image/png', 1.0);
+    
+            if (pageNumber > 1) {
+                pdf.addPage();
+            }
+            
+            // Here, we use the card's aspect ratio to ensure it's not distorted.
+            pdf.addImage(imgData, 'PNG', x, y, cardWidthMM, cardWidthMM * (node.offsetHeight / node.offsetWidth));
         };
     
-        // Add front page
-        await addImageToPdf(frontNode);
-    
-        // Add back page
-        pdf.addPage();
-        await addImageToPdf(backNode);
+        await addImageToPdf(frontNode, 1);
+        await addImageToPdf(backNode, 2);
     
         pdf.save(`${author.name}-Press-Card.pdf`);
     };
@@ -228,5 +233,7 @@ export default function ReporterProfilePage() {
         </>
     )
 }
+
+    
 
     
