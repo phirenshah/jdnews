@@ -21,7 +21,7 @@ export function PressCardBack({
   };
 
   return (
-    <div className="w-[340px] h-[540px] bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col justify-between p-4 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-card via-card to-muted/50">
+    <div className="w-[320px] h-[504px] bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col justify-between p-4 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-card via-card to-muted/50">
       <div
         className="absolute inset-0 bg-repeat bg-center opacity-5"
         style={{

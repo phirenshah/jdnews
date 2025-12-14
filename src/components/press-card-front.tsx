@@ -18,7 +18,7 @@ export function PressCardFront({
   };
 
   return (
-    <div className="w-[340px] h-[540px] bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
+    <div className="w-[320px] h-[504px] bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
       <div className="py-2 flex justify-center items-center">
         <Image
           src="/logo.png"
