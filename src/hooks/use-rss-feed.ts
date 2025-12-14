@@ -167,3 +167,16 @@ export const useNewsAggregator = () => {
   return { news, videos, loading, error, refresh: () => loadAllContent(true) };
 };
 
+export function formatDate(dateStr: string): string {
+    try {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = (now.getTime() - date.getTime()) / 1000; // seconds
+
+        if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+        return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    } catch (e) {
+        return '';
+    }
+}
