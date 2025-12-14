@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import QRCode from 'qrcode.react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
