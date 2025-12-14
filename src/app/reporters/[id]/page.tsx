@@ -80,26 +80,13 @@ export default function ReporterProfilePage() {
         const y = 20; 
     
         const addImageToPdf = async (node: HTMLDivElement, pageNumber: number) => {
-            // Temporarily set a fixed size for accurate capture
-            const originalStyle = {
-                width: node.style.width,
-                height: node.style.height,
-            };
-            node.style.width = '320px';
-            node.style.height = '504px';
-            
-            const canvas = await html2canvas(node, {
-                scale: 3,
+             const canvasOptions = {
+                scale: 3, // Increase scale for better resolution
                 useCORS: true,
-                backgroundColor: null,
-                width: 320, 
-                height: 504, 
-            });
-            
-            // Restore original styles
-            node.style.width = originalStyle.width;
-            node.style.height = originalStyle.height;
-
+                width: node.offsetWidth,
+                height: node.offsetHeight,
+            };
+            const canvas = await html2canvas(node, canvasOptions);
             const imgData = canvas.toDataURL('image/png', 1.0);
     
             if (pageNumber > 1) {
