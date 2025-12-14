@@ -10,14 +10,13 @@ import { Separator } from '@/components/ui/separator';
 import QRCode from 'qrcode.react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { Reporter, Article } from '@/lib/definitions';
+import type { Reporter } from '@/lib/definitions';
 import { placeholderArticles } from '@/lib/placeholder-data';
 import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -77,28 +76,26 @@ export default function ReporterProfilePage() {
         const backNode = backCardRef.current;
         if (!frontNode || !backNode) return;
     
-        const pdf = new jsPDF('p', 'mm', 'a4'); // Use standard A4 size
+        const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
     
-        // Function to capture a node and add it to the PDF
+        // Standard credit card size (ID-1) in mm
+        const cardWidthMM = 85.6;
+        const cardHeightMM = 53.98;
+    
+        // Calculate position to center the card
+        const x = (pdfWidth - cardWidthMM) / 2;
+        const y = (pdfHeight - cardHeightMM) / 2;
+    
         const addImageToPdf = async (node: HTMLDivElement) => {
             const canvas = await html2canvas(node, {
-                scale: 2,
+                scale: 3, // Increase scale for better resolution
                 useCORS: true,
                 willReadFrequently: true,
             });
             const imgData = canvas.toDataURL('image/png');
-            
-            // Define card dimensions in mm (standard ID-1 card size is 85.6mm x 53.98mm)
-            const cardWidth = 85.6;
-            const cardHeight = 54;
-            
-            // Calculate position to center the card on the PDF page
-            const x = (pdfWidth - cardWidth) / 2;
-            const y = (pdfHeight - cardHeight) / 2;
-    
-            pdf.addImage(imgData, 'PNG', x, y, cardWidth, cardHeight);
+            pdf.addImage(imgData, 'PNG', x, y, cardWidthMM, cardHeightMM);
         };
     
         // Add front page
@@ -231,3 +228,5 @@ export default function ReporterProfilePage() {
         </>
     )
 }
+
+    
