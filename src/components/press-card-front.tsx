@@ -1,4 +1,3 @@
-
 'use client';
 import Image from 'next/image';
 import { Reporter } from '@/lib/definitions';
@@ -21,7 +20,7 @@ export function PressCardFront({
     <div className="w-[320px] h-[504px] bg-card text-card-foreground rounded-lg shadow-xl overflow-hidden border flex flex-col">
       <div className="border-t w-full"></div>
       <div className="flex-grow flex flex-col items-center justify-start text-center px-4 pt-6">
-        <div className="h-[40px] flex items-center justify-center mb-4">
+        <div className="h-[40px] flex items-center justify-center">
             <Image
             src="/logo.png"
             alt="JD News Logo"
@@ -29,17 +28,21 @@ export function PressCardFront({
             height={23}
             />
         </div>
-        {reporter.profilePictureUrl && (
-          <div className="w-36 h-36 relative">
-            <Image
-                src={reporter.profilePictureUrl}
-                alt={`${reporter.name}`}
-                fill
-                sizes="144px"
-                className="rounded-full border-4 border-primary/50 object-cover"
-            />
-          </div>
-        )}
+        
+        <div className="mt-4">
+            {reporter.profilePictureUrl && (
+            <div className="w-36 h-36 relative">
+                <Image
+                    src={reporter.profilePictureUrl}
+                    alt={`${reporter.name}`}
+                    fill
+                    sizes="144px"
+                    className="rounded-full border-4 border-primary/50 object-cover"
+                />
+            </div>
+            )}
+        </div>
+
         <h3 className="font-headline text-2xl font-bold mt-4">{reporter.name}</h3>
         <p className="text-primary font-medium">{reporter.title}</p>
 
