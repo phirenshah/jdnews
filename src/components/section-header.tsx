@@ -12,11 +12,12 @@ export function SectionHeader({ lang }: { lang: string }) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   useEffect(() => {
-    // For category pages like /en/category/sports
+    // For category pages like /en/category/national
     const categoryMatch = pathname.match(/\/category\/([^/]+)/);
     if (categoryMatch) {
       const categoryName = categoryMatch[1];
-      const section = sections.find(s => s.href.includes(categoryName));
+      // Find the section where the href ends with the category name for an exact match
+      const section = sections.find(s => s.href.endsWith(`/${categoryName}`));
       setActiveSection(section ? section.name : null);
       return;
     }
