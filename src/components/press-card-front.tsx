@@ -24,11 +24,10 @@ export function PressCardFront({
           src="/logo.png"
           alt="JD News Logo"
           width={100}
-          height={0}
+          height={23}
           style={{
             paddingTop: '4px',
             paddingBottom: '4px',
-            height: 'auto',
           }}
         />
       </div>
@@ -40,6 +39,7 @@ export function PressCardFront({
                 src={reporter.profilePictureUrl}
                 alt={`${reporter.name}`}
                 fill
+                sizes="144px"
                 className="rounded-full border-4 border-primary/50 object-cover"
             />
           </div>

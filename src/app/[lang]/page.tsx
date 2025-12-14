@@ -10,6 +10,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, ChevronRight, Newspaper } from 'lucide-react';
 import { AdContainer } from '@/components/ad-container';
 import Link from 'next/link';
+import { RssArticle } from '@/hooks/use-rss-feed';
 
 const SectionTitle = ({ title, id, href }: { title: string, id: string, href: string }) => (
   <div id={id} className="flex items-center justify-between border-l-4 border-primary pl-3 mb-4 mt-8">
@@ -73,7 +74,7 @@ export default function HomePage({
     </div>
   );
 
-  const renderCategorySection = (title: string, articles: any[], categoryId: string) => {
+  const renderCategorySection = (title: string, articles: RssArticle[], categoryId: string) => {
     if (loading && !articles.length) {
       return (
         <section id={categoryId}>
@@ -109,7 +110,7 @@ export default function HomePage({
           {loading && !topStories.length ? renderSkeleton() : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-8">
-                {topStories[0] && <FeaturedStory article={topStories[0]} />}
+                {topStories[0] && <FeaturedStory article={topStories[0]} priority />}
               </div>
               <div className="lg:col-span-4 flex flex-col h-full bg-card rounded-md shadow-sm border border-border/60 overflow-hidden">
                 <div className="bg-muted px-4 py-2 border-b font-bold text-sm text-primary uppercase flex items-center gap-2">

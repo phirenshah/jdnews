@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import QRCode from 'qrcode.react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { PressCardFront } from '@/components/press-card-front';
 import { PressCardBack } from '@/components/press-card-back';
@@ -48,8 +48,8 @@ export default function ReporterProfilePage() {
     }, [author]);
     
     useEffect(() => {
-        if (author) {
-            setClientReporterUrl(`https://www.jdnews.in/${lang}/reporters/${author.id}`);
+        if (typeof window !== 'undefined' && author) {
+            setClientReporterUrl(`${window.location.origin}/${lang}/reporters/${author.id}`);
         }
     }, [lang, author]);
     
@@ -188,9 +188,12 @@ export default function ReporterProfilePage() {
             </div>
             {author && <Dialog open={isCardOpen} onOpenChange={setIsCardOpen}>
                 <DialogContent className="bg-transparent border-none shadow-none p-4 sm:max-w-4xl flex flex-col max-h-[90vh]">
-                    <VisuallyHidden>
-                        <DialogTitle>Reporter Press Card</DialogTitle>
-                    </VisuallyHidden>
+                    <DialogHeader>
+                        <DialogTitle>Reporter Press Card: {author.name}</DialogTitle>
+                         <DialogDescription>
+                            Official press card for {author.name}. You can download this card as a PDF.
+                        </DialogDescription>
+                    </DialogHeader>
                     <div className="flex-grow overflow-y-auto">
                         <div className="flex flex-wrap justify-center items-center gap-8 p-4">
                             <div ref={frontCardRef}>
