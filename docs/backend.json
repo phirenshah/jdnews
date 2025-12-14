@@ -5,35 +5,23 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Article",
       "type": "object",
-      "description": "Represents a news article in the Bilingual News Hub.",
+      "description": "Represents a news article in the News Hub.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the Article entity."
         },
-        "titleEnglish": {
+        "title": {
           "type": "string",
-          "description": "Title of the article in English."
+          "description": "Title of the article."
         },
-        "titleGujarati": {
+        "content": {
           "type": "string",
-          "description": "Title of the article in Gujarati."
+          "description": "Content of the article."
         },
-        "contentEnglish": {
-          "type": "string",
-          "description": "Content of the article in English."
-        },
-        "contentGujarati": {
-          "type": "string",
-          "description": "Content of the article in Gujarati."
-        },
-        "excerptEnglish": {
+        "excerpt": {
             "type": "string",
-            "description": "A short summary of the article in English."
-        },
-        "excerptGujarati": {
-            "type": "string",
-            "description": "A short summary of the article in Gujarati."
+            "description": "A short summary of the article."
         },
         "authorId": {
           "type": "string",
@@ -62,10 +50,8 @@
       },
       "required": [
         "id",
-        "titleEnglish",
-        "titleGujarati",
-        "contentEnglish",
-        "contentGujarati",
+        "title",
+        "content",
         "authorId",
         "publicationDate"
       ]

@@ -7,17 +7,15 @@ import QRCode from 'qrcode.react';
 export function PressCardBack({
   reporter,
   reporterUrl,
-  lang,
 }: {
   reporter: Reporter;
   reporterUrl: string;
-  lang: string;
 }) {
 
   const t = {
-    headOffice: lang === 'en' ? 'Head Office' : 'મુખ્ય કાર્યાલય',
-    officePhone: lang === 'en' ? 'Office Phone' : 'ઓફિસ ફોન',
-    tagline: lang === 'en' ? 'With The Truth' : 'સત્યની સાથે',
+    headOffice: 'Head Office',
+    officePhone: 'Office Phone',
+    tagline: 'With The Truth',
   };
 
   return (

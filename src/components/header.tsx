@@ -3,7 +3,6 @@
 
 import Link from 'next/link';
 import { Menu, Search, User, UserCog } from 'lucide-react';
-import { LanguageToggle } from '@/components/language-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +39,7 @@ const navLinks = [
   { name: 'Advertise', href: '/advertise' },
 ];
 
-function AuthButton({ lang }: { lang: string }) {
+function AuthButton() {
   const { user, isUserLoading } = useUser();
   const { auth } = useFirebase();
   const { isAdmin } = useUserRole();
@@ -79,7 +78,7 @@ function AuthButton({ lang }: { lang: string }) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-           <Link href={`/${lang}/profile`}>
+           <Link href="/profile">
               <DropdownMenuItem>
                 <UserCog className="mr-2 h-4 w-4" />
                 Profile
@@ -105,7 +104,7 @@ function AuthButton({ lang }: { lang: string }) {
 
   return (
     <Button variant="ghost" size="icon" asChild>
-      <Link href={`/${lang}/login`}>
+      <Link href="/login">
         <User className="h-[1.2rem] w-[1.2rem]" />
         <span className="sr-only">Login</span>
       </Link>
@@ -113,7 +112,7 @@ function AuthButton({ lang }: { lang: string }) {
   );
 }
 
-const MobileNav = ({ lang }: { lang: string }) => {
+const MobileNav = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const [isMounted, setIsMounted] = useState(false);
@@ -142,7 +141,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
           </SheetHeader>
           <div className="flex flex-col gap-4 p-4">
             <Link
-              href={`/${lang}`}
+              href="/"
               className="flex items-center space-x-2 mb-4"
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -155,7 +154,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
             </Link>
             <nav className="flex flex-col gap-4">
               <Link
-                href={`/${lang}`}
+                href="/"
                 className="text-lg font-medium text-foreground/80 hover:text-primary"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -164,9 +163,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
-                  href={
-                    link.href.startsWith('#') ? link.href : `/${lang}${link.href}`
-                  }
+                  href={link.href}
                   className="text-lg font-medium text-foreground/80 hover:text-primary"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -177,11 +174,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
             <div className="mt-4 border-t pt-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Auth</span>
-                <AuthButton lang={lang} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Language</span>
-                <LanguageToggle />
+                <AuthButton />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Theme</span>
@@ -195,7 +188,7 @@ const MobileNav = ({ lang }: { lang: string }) => {
   );
 };
 
-export function Header({ lang }: { lang: string }) {
+export function Header() {
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -244,16 +237,14 @@ export function Header({ lang }: { lang: string }) {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
-            <LanguageToggle />
             <ThemeToggle />
-            <AuthButton lang={lang} />
+            <AuthButton />
           </div>
 
           <div className="flex items-center md:hidden">
-            <LanguageToggle />
             <ThemeToggle />
-            <AuthButton lang={lang} />
-            <MobileNav lang={lang} />
+            <AuthButton />
+            <MobileNav />
           </div>
         </>
     )
@@ -263,7 +254,7 @@ export function Header({ lang }: { lang: string }) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <div className="mr-4 flex">
-          <Link href={`/${lang}`} className="flex items-center">
+          <Link href="/" className="flex items-center">
             <Image
               src="/logo.png"
               alt="JD News Logo"
@@ -278,9 +269,7 @@ export function Header({ lang }: { lang: string }) {
           {navLinks.map((link) => (
             <Link
               key={link.name}
-              href={
-                link.href.startsWith('#') ? link.href : `/${lang}${link.href}`
-              }
+              href={link.href}
               className="transition-colors hover:text-foreground/80 text-foreground/60"
             >
               {link.name}

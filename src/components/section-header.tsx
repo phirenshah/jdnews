@@ -7,12 +7,12 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { sections } from '@/lib/categories';
 
-export function SectionHeader({ lang }: { lang: string }) {
+export function SectionHeader() {
   const pathname = usePathname();
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   useEffect(() => {
-    // For category pages like /en/category/national
+    // For category pages like /category/national
     const categoryMatch = pathname.match(/\/category\/([^/]+)/);
     if (categoryMatch) {
       const categoryName = categoryMatch[1];
@@ -23,20 +23,20 @@ export function SectionHeader({ lang }: { lang: string }) {
     }
 
     // For the homepage
-    if (pathname === `/${lang}`) {
+    if (pathname === `/`) {
         setActiveSection('Top Stories');
         return;
     }
     
     // For other top-level pages
-    const topLevelMatch = sections.find(s => `/${lang}${s.href}` === pathname);
+    const topLevelMatch = sections.find(s => s.href === pathname);
     if(topLevelMatch) {
       setActiveSection(topLevelMatch.name);
     } else {
       setActiveSection(null);
     }
 
-  }, [pathname, lang]);
+  }, [pathname]);
 
   return (
     <nav className="border-b bg-background/80 backdrop-blur-sm sticky top-16 z-40">
@@ -46,7 +46,7 @@ export function SectionHeader({ lang }: { lang: string }) {
             className="flex items-center space-x-6 md:space-x-8 overflow-x-auto py-2"
           >
             {sections.map((section) => {
-              const href = section.href === '/' ? `/${lang}` : `/${lang}${section.href}`;
+              const href = section.href;
               return (
                 <li key={section.name}>
                   <Link

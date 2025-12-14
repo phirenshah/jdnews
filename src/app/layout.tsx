@@ -3,6 +3,9 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
+import { Header } from '@/components/header';
+import { SectionHeader } from '@/components/section-header';
+import { Footer } from '@/components/footer';
 
 export const metadata: Metadata = {
   title: 'JD News',
@@ -33,7 +36,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            {children}
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <SectionHeader />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
             <Toaster />
           </FirebaseClientProvider>
         </ThemeProvider>

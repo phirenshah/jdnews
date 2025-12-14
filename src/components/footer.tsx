@@ -4,7 +4,7 @@ import { Twitter, Facebook, Instagram, Heart, Youtube } from 'lucide-react';
 import Image from 'next/image';
 import { sections } from '@/lib/categories';
 
-export function Footer({ lang }: { lang: string }) {
+export function Footer() {
   const currentYear = new Date().getFullYear();
 
   const footerSections = sections.filter(s => s.href !== '/');
@@ -14,7 +14,7 @@ export function Footer({ lang }: { lang: string }) {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center sm:text-left">
           <div className="space-y-4 md:col-span-1 flex flex-col items-center sm:items-start">
-            <Link href={`/${lang}`} className="flex items-center">
+            <Link href="/" className="flex items-center">
               <Image src="/logo.png" alt="JD News Logo" width={120} height={27} />
             </Link>
             <p className="text-sm">
@@ -31,7 +31,7 @@ export function Footer({ lang }: { lang: string }) {
             <h3 className="font-semibold text-foreground mb-4">Sections</h3>
             <ul className="space-y-2">
               {footerSections.slice(0, 5).map(section => (
-                <li key={section.name}><Link href={`/${lang}${section.href}`} className="hover:text-primary">{section.name}</Link></li>
+                <li key={section.name}><Link href={section.href} className="hover:text-primary">{section.name}</Link></li>
               ))}
             </ul>
           </div>
@@ -39,19 +39,19 @@ export function Footer({ lang }: { lang: string }) {
             <h3 className="font-semibold text-foreground mb-4">Support</h3>
             <ul className="space-y-2">
               <li>
-                <Link href={`/${lang}/donate`} className="hover:text-primary flex items-center gap-1.5 justify-center sm:justify-start">
+                <Link href="/donate" className="hover:text-primary flex items-center gap-1.5 justify-center sm:justify-start">
                   Donate <Heart className="w-4 h-4 text-red-500" />
                 </Link>
               </li>
-              <li><Link href={`/${lang}/advertise`} className="hover:text-primary">Advertise</Link></li>
+              <li><Link href="/advertise" className="hover:text-primary">Advertise</Link></li>
               <li><Link href="#" className="hover:text-primary">Careers</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold text-foreground mb-4">About</h3>
             <ul className="space-y-2">
-              <li><Link href={`/${lang}/about`} className="hover:text-primary">About Us</Link></li>
-              <li><Link href={`/${lang}/team`} className="hover:text-primary">Our Team</Link></li>
+              <li><Link href="/about" className="hover:text-primary">About Us</Link></li>
+              <li><Link href="/team" className="hover:text-primary">Our Team</Link></li>
               <li><Link href="#" className="hover:text-primary">Contact</Link></li>
               <li><Link href="#" className="hover:text-primary">Privacy Policy</Link></li>
             </ul>
