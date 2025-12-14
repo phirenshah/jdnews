@@ -63,7 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
                 <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
                     <Link href="/en" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-                        <Image src="/logo.png" alt="JD News Logo" width={100} height={0} style={{height: 'auto'}} />
+                        <Image src="/logo.png" alt="JD News Logo" width={100} height={23} />
                         <span className="sr-only">JD News</span>
                     </Link>
                     {navItems.map(item => (
@@ -93,7 +93,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <SheetContent side="left">
                         <nav className="grid gap-6 text-lg font-medium">
                             <Link href="/en" className="flex items-center gap-2 text-lg font-semibold" onClick={() => setIsSheetOpen(false)}>
-                                <Image src="/logo.png" alt="JD News Logo" width={100} height={0} style={{height: 'auto'}} />
+                                <Image src="/logo.png" alt="JD News Logo" width={100} height={23} />
                                 <span className="sr-only">JD News</span>
                             </Link>
                             {navItems.map(item => (

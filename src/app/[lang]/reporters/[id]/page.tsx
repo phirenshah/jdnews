@@ -82,13 +82,13 @@ export default function ReporterProfilePage() {
         const pdfHeight = pdf.internal.pageSize.getHeight();
     
         // Capture front
-        const frontCanvas = await html2canvas(frontNode, { scale: 2 });
+        const frontCanvas = await html2canvas(frontNode, { scale: 2, useCORS: true, canvas: document.createElement('canvas'), context: '2d', willReadFrequently: true } as any);
         const frontImgData = frontCanvas.toDataURL('image/png');
         pdf.addImage(frontImgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     
         // Capture back
         pdf.addPage();
-        const backCanvas = await html2canvas(backNode, { scale: 2 });
+        const backCanvas = await html2canvas(backNode, { scale: 2, useCORS: true, canvas: document.createElement('canvas'), context: '2d', willReadFrequently: true } as any);
         const backImgData = backCanvas.toDataURL('image/png');
         pdf.addImage(backImgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     

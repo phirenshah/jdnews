@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 
 const locales = ['en', 'gu'];
@@ -41,8 +42,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Skip all internal paths (_next)
-    '/((?!_next|api|assets|favicon.ico|sw.js|admin).*)',
-    // Optional: only run on root (/) URL
-    // '/'
+    // and paths with file extensions
+    '/((?!_next|api|assets|favicon.ico|sw.js|admin|.*\\..*).*)'
   ],
 };
