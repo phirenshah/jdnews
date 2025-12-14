@@ -77,20 +77,36 @@ export default function ReporterProfilePage() {
         const backNode = backCardRef.current;
         if (!frontNode || !backNode) return;
     
-        const pdf = new jsPDF('p', 'px', [340, 540]);
+        const pdf = new jsPDF('p', 'mm', 'a4'); // Use standard A4 size
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
     
-        // Capture front
-        const frontCanvas = await html2canvas(frontNode, { scale: 2, useCORS: true, canvas: document.createElement('canvas'), context: '2d', willReadFrequently: true } as any);
-        const frontImgData = frontCanvas.toDataURL('image/png');
-        pdf.addImage(frontImgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        // Function to capture a node and add it to the PDF
+        const addImageToPdf = async (node: HTMLDivElement) => {
+            const canvas = await html2canvas(node, {
+                scale: 2,
+                useCORS: true,
+                willReadFrequently: true,
+            });
+            const imgData = canvas.toDataURL('image/png');
+            
+            // Define card dimensions in mm (standard ID-1 card size is 85.6mm x 53.98mm)
+            const cardWidth = 85.6;
+            const cardHeight = 54;
+            
+            // Calculate position to center the card on the PDF page
+            const x = (pdfWidth - cardWidth) / 2;
+            const y = (pdfHeight - cardHeight) / 2;
     
-        // Capture back
+            pdf.addImage(imgData, 'PNG', x, y, cardWidth, cardHeight);
+        };
+    
+        // Add front page
+        await addImageToPdf(frontNode);
+    
+        // Add back page
         pdf.addPage();
-        const backCanvas = await html2canvas(backNode, { scale: 2, useCORS: true, canvas: document.createElement('canvas'), context: '2d', willReadFrequently: true } as any);
-        const backImgData = backCanvas.toDataURL('image/png');
-        pdf.addImage(backImgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        await addImageToPdf(backNode);
     
         pdf.save(`${author.name}-Press-Card.pdf`);
     };
